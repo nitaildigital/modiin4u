@@ -34,6 +34,7 @@ class _AdminFlagsScreenState extends ConsumerState<AdminFlagsScreen>
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const AdminPageHeader(divider: false),
         // ─── Tab Bar ───
         Container(
           decoration: BoxDecoration(
@@ -183,6 +184,7 @@ class _FeatureFlagsTab extends ConsumerWidget {
 
         // ─── Toolbar ───
         AdminListToolbar(
+          showTitle: false,
           search: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -442,6 +444,7 @@ class _RemoteConfigTab extends ConsumerWidget {
         ),
         // ─── Toolbar ───
         AdminListToolbar(
+          showTitle: false,
           search: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

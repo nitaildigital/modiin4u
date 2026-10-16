@@ -22,6 +22,7 @@ class AdminStepsSection extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
+          const AdminPageHeader(divider: false),
           Container(
             color: Colors.white,
             child: TabBar(

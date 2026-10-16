@@ -47,26 +47,6 @@ class _AdminRedirectsScreenState extends ConsumerState<AdminRedirectsScreen> {
 
     return Column(
       children: [
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: k.accentSoft,
-            borderRadius: BorderRadius.circular(k.radius),
-          ),
-          child: Text(
-            tr(
-              'כשכתובת של עמוד משתנה או שעמוד יורד, הפניה שולחת מבקרים וגוגל מהכתובת הישנה לחדשה. '
-                  'קבועה (301) מעבירה לכתובת החדשה את מקומה של הישנה בגוגל; זמנית (302) לא. '
-                  'הפניה שכובתה נשארת ברשימה ואפשר להפעיל אותה שוב. שינוי מגיע לאתר תוך כ-5 דקות.',
-              'When a page\'s address changes or a page goes, a redirect sends visitors and Google from the old address to the new one. '
-                  'Permanent (301) passes the old address\'s place in Google to the new one; temporary (302) does not. '
-                  'A redirect turned off stays in the list and can be turned on again. A change reaches the site within about 5 minutes.',
-            ),
-            style: k.body.copyWith(fontSize: 13),
-          ),
-        ),
         AdminListToolbar(
           search: AdminSearchField(
             controller: _searchController,
@@ -95,6 +75,26 @@ class _AdminRedirectsScreenState extends ConsumerState<AdminRedirectsScreen> {
               onPressed: () => _edit(null),
             ),
           ],
+        ),
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: k.accentSoft,
+            borderRadius: BorderRadius.circular(k.radius),
+          ),
+          child: Text(
+            tr(
+              'כשכתובת של עמוד משתנה או שעמוד יורד, הפניה שולחת מבקרים וגוגל מהכתובת הישנה לחדשה. '
+                  'קבועה (301) מעבירה לכתובת החדשה את מקומה של הישנה בגוגל; זמנית (302) לא. '
+                  'הפניה שכובתה נשארת ברשימה ואפשר להפעיל אותה שוב. שינוי מגיע לאתר תוך כ-5 דקות.',
+              'When a page\'s address changes or a page goes, a redirect sends visitors and Google from the old address to the new one. '
+                  'Permanent (301) passes the old address\'s place in Google to the new one; temporary (302) does not. '
+                  'A redirect turned off stays in the list and can be turned on again. A change reaches the site within about 5 minutes.',
+            ),
+            style: k.body.copyWith(fontSize: 13),
+          ),
         ),
         Expanded(
           child: rows.when(

@@ -38,63 +38,6 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
 
     return Column(
       children: [
-        // ─── Stats bar ───
-        // Only once the list is in; a failed load is shown by the table.
-        if (asyncData.valueOrNull case final list?)
-          Builder(
-            builder: (context) {
-              final live = list.where(_isLive).length;
-              final totalImpressions = list.fold<int>(
-                0,
-                (s, c) => s + ((c['impressions'] as int?) ?? 0),
-              );
-              final totalClicks = list.fold<int>(
-                0,
-                (s, c) => s + ((c['clicks'] as int?) ?? 0),
-              );
-              final ctr = totalImpressions > 0
-                  ? (totalClicks / totalImpressions * 100)
-                  : 0.0;
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _StatChip(tr('מוצגים באתר עכשיו', 'Shown on the site now'), '$live', AppColors.success),
-                    const SizedBox(width: 16),
-                    _StatChip(
-                      tr('חשיפות', 'Impressions'),
-                      _formatNumber(totalImpressions),
-                      AppColors.midBlue,
-                    ),
-                    const SizedBox(width: 16),
-                    _StatChip(
-                      tr('קליקים', 'Clicks'),
-                      _formatNumber(totalClicks),
-                      AppColors.navy,
-                    ),
-                    const SizedBox(width: 16),
-                    _StatChip(
-                      tr('CTR ממוצע', 'Average CTR'),
-                      '${ctr.toStringAsFixed(1)}%',
-                      AppColors.gold,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-
         AdminListToolbar(
           search: AdminSearchField(
             controller: _searchController,
@@ -152,6 +95,62 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
             ),
           ],
         ),
+        // ─── Stats bar ───
+        // Only once the list is in; a failed load is shown by the table.
+        if (asyncData.valueOrNull case final list?)
+          Builder(
+            builder: (context) {
+              final live = list.where(_isLive).length;
+              final totalImpressions = list.fold<int>(
+                0,
+                (s, c) => s + ((c['impressions'] as int?) ?? 0),
+              );
+              final totalClicks = list.fold<int>(
+                0,
+                (s, c) => s + ((c['clicks'] as int?) ?? 0),
+              );
+              final ctr = totalImpressions > 0
+                  ? (totalClicks / totalImpressions * 100)
+                  : 0.0;
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.border.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _StatChip(tr('מוצגים באתר עכשיו', 'Shown on the site now'), '$live', AppColors.success),
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      tr('חשיפות', 'Impressions'),
+                      _formatNumber(totalImpressions),
+                      AppColors.midBlue,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      tr('קליקים', 'Clicks'),
+                      _formatNumber(totalClicks),
+                      AppColors.navy,
+                    ),
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      tr('CTR ממוצע', 'Average CTR'),
+                      '${ctr.toStringAsFixed(1)}%',
+                      AppColors.gold,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
 
         // ─── Table ───
         Expanded(
@@ -188,39 +187,21 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
               }
               return Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.border.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 84),
-                        _Col(tr('קמפיין', 'Campaign'), flex: 3),
-                        _Col(tr('מיקום', 'Location'), flex: 2),
-                        if (isWide) _Col(tr('חשיפות', 'Impressions'), flex: 1),
-                        if (isWide) _Col(tr('קליקים', 'Clicks'), flex: 1),
-                        if (isWide) _Col('CTR', flex: 1),
-                        _Col(tr('סטטוס', 'Status'), flex: 2),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
+                  AdminTableHeader(
+                    children: [
+                      const SizedBox(width: 84),
+                      _Col(tr('קמפיין', 'Campaign'), flex: 3),
+                      _Col(tr('מיקום', 'Location'), flex: 2),
+                      if (isWide) _Col(tr('חשיפות', 'Impressions'), flex: 1),
+                      if (isWide) _Col(tr('קליקים', 'Clicks'), flex: 1),
+                      if (isWide) _Col('CTR', flex: 1),
+                      _Col(tr('סטטוס', 'Status'), flex: 2),
+                      const SizedBox(width: 40),
+                    ],
                   ),
                   Expanded(
-                    child: ListView.separated(
+                    child: ListView.builder(
                       itemCount: list.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: AppColors.border.withValues(alpha: 0.3),
-                      ),
                       itemBuilder: (_, i) {
                         final c = list[i];
                         final status = c['status'] as String? ?? 'draft';
@@ -232,194 +213,188 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
                             ? (clicks / impressions * 100)
                             : 0.0;
 
-                        return InkWell(
+                        return AdminTableRow(
                           onTap: () => _showEditor(context, ref, campaign: c),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                // The creative itself, so a campaign with no
-                                // picture — which the site cannot draw — is
-                                // obvious at a glance.
-                                NetworkPhoto(
-                                  url: c['desktop_image'] as String?,
-                                  width: 72,
-                                  height: 40,
-                                  radius: BorderRadius.circular(4),
-                                  icon: Icons.image_not_supported_outlined,
-                                  iconSize: 16,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 3,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        c['name'] as String? ?? '',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.navy,
-                                        ),
-                                      ),
-                                      Text(
-                                        business?['name'] as String? ?? '',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 11,
-                                          color: AppColors.grayLight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        slot?['label'] as String? ?? '',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                          color: AppColors.grayText,
-                                        ),
-                                      ),
-                                      Text(
-                                        slot?['code'] as String? ?? '',
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 10,
-                                          color: AppColors.grayLight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      _formatNumber(impressions),
+                          child: Row(
+                            children: [
+                              // The creative itself, so a campaign with no
+                              // picture — which the site cannot draw — is
+                              // obvious at a glance.
+                              NetworkPhoto(
+                                url: c['desktop_image'] as String?,
+                                width: 72,
+                                height: 40,
+                                radius: BorderRadius.circular(4),
+                                icon: Icons.image_not_supported_outlined,
+                                iconSize: 16,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c['name'] as String? ?? '',
                                       style: TextStyle(
                                         fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
-                                        fontFeatures: [
-                                          const FontFeature.tabularFigures(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      _formatNumber(clicks),
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
-                                        fontFeatures: [
-                                          const FontFeature.tabularFigures(),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      '${ctr.toStringAsFixed(1)}%',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: ctr > 3
-                                            ? AppColors.success
-                                            : AppColors.grayText,
+                                        color: AppColors.navy,
                                       ),
                                     ),
-                                  ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _StatusPill(status),
-                                      const SizedBox(height: 4),
-                                      _SiteState(campaign: c),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuButton<String>(
-                                  icon: const Icon(
-                                    Icons.more_vert,
-                                    size: 18,
-                                    color: AppColors.grayLight,
-                                  ),
-                                  onSelected: (v) => _handleAction(v, c),
-                                  itemBuilder: (_) => [
-                                    PopupMenuItem(
-                                      value: 'edit',
-                                      child: Text(
-                                        tr('עריכה', 'Edit'),
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 13,
-                                        ),
+                                    Text(
+                                      business?['name'] as String? ?? '',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 11,
+                                        color: AppColors.grayLight,
                                       ),
                                     ),
-                                    if (status != 'active')
-                                      PopupMenuItem(
-                                        value: 'activate',
-                                        child: Text(
-                                          tr('הפעל', 'Activate'),
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    if (status == 'active')
-                                      PopupMenuItem(
-                                        value: 'pause',
-                                        child: Text(
-                                          tr('השהה', 'Pause'),
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    // Removing a campaign ends it rather than
-                                    // deleting it: the client asked for
-                                    // nothing permanent, and "ended" is the
-                                    // `campaign_status` that takes a banner
-                                    // off the site and keeps the record.
-                                    if (status != 'ended')
-                                      PopupMenuItem(
-                                        value: 'end',
-                                        child: Text(
-                                          tr('הסרה מהאתר', 'Take off the site'),
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 13,
-                                            color: AppColors.error,
-                                          ),
-                                        ),
-                                      ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      slot?['label'] as String? ?? '',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 13,
+                                        color: AppColors.grayText,
+                                      ),
+                                    ),
+                                    Text(
+                                      slot?['code'] as String? ?? '',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 10,
+                                        color: AppColors.grayLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    _formatNumber(impressions),
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      fontFeatures: [
+                                        const FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    _formatNumber(clicks),
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      fontFeatures: [
+                                        const FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    '${ctr.toStringAsFixed(1)}%',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: ctr > 3
+                                          ? AppColors.success
+                                          : AppColors.grayText,
+                                    ),
+                                  ),
+                                ),
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    _StatusPill(status),
+                                    const SizedBox(height: 4),
+                                    _SiteState(campaign: c),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  size: 18,
+                                  color: AppColors.grayLight,
+                                ),
+                                onSelected: (v) => _handleAction(v, c),
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(
+                                      tr('עריכה', 'Edit'),
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  if (status != 'active')
+                                    PopupMenuItem(
+                                      value: 'activate',
+                                      child: Text(
+                                        tr('הפעל', 'Activate'),
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  if (status == 'active')
+                                    PopupMenuItem(
+                                      value: 'pause',
+                                      child: Text(
+                                        tr('השהה', 'Pause'),
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  // Removing a campaign ends it rather than
+                                  // deleting it: the client asked for
+                                  // nothing permanent, and "ended" is the
+                                  // `campaign_status` that takes a banner
+                                  // off the site and keeps the record.
+                                  if (status != 'ended')
+                                    PopupMenuItem(
+                                      value: 'end',
+                                      child: Text(
+                                        tr('הסרה מהאתר', 'Take off the site'),
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 13,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -1445,12 +1420,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayText,
-        ),
       ),
     );
   }

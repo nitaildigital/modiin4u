@@ -75,8 +75,6 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
 
     return Column(
       children: [
-        const _HowThisWorksNote(),
-
         // ─── Toolbar ───
         AdminListToolbar(
           search: Row(
@@ -124,6 +122,7 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
             ),
           ],
         ),
+        const _HowThisWorksNote(),
 
         // Tables that could not be read are named, not passed off as empty.
         if (asyncData.hasValue && notifier.failures.isNotEmpty)

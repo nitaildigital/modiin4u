@@ -292,38 +292,23 @@ class _ListingTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 62),
-              _Col(tr('כתובת', 'Address'), flex: 3),
-              _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
-              _Col(tr('סוג', 'Type'), flex: 1),
-              _Col(tr('חדרים', 'Rooms'), flex: 1),
-              if (isWide) _Col(tr('מ״ר', 'sqm'), flex: 1),
-              _Col(tr('מחיר', 'Price'), flex: 2),
-              _Col(tr('סטטוס', 'Status'), flex: 1),
-              if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
-              const SizedBox(width: 40),
-            ],
-          ),
+        AdminTableHeader(
+          children: [
+            const SizedBox(width: 62),
+            _Col(tr('כתובת', 'Address'), flex: 3),
+            _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
+            _Col(tr('סוג', 'Type'), flex: 1),
+            _Col(tr('חדרים', 'Rooms'), flex: 1),
+            if (isWide) _Col(tr('מ״ר', 'sqm'), flex: 1),
+            _Col(tr('מחיר', 'Price'), flex: 2),
+            _Col(tr('סטטוס', 'Status'), flex: 1),
+            if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
+            const SizedBox(width: 40),
+          ],
         ),
         Expanded(
-          child: ListView.separated(
+          child: ListView.builder(
             itemCount: listings.length,
-            separatorBuilder: (_, _) => Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.3),
-            ),
             itemBuilder: (_, i) {
               final l = listings[i];
               final kind = l['kind'] as String? ?? 'sale';
@@ -335,105 +320,112 @@ class _ListingTable extends StatelessWidget {
               final isFeatured = l['is_featured'] as bool? ?? false;
               final isBroker = l['is_broker'] as bool? ?? false;
 
-              return InkWell(
+              return AdminTableRow(
                 onTap: () => onTap(l),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      NetworkPhoto(
-                        url: l['cover_url'] as String?,
-                        width: 52,
-                        height: 36,
-                        radius: BorderRadius.circular(6),
-                        icon: Icons.apartment_outlined,
-                        iconSize: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                if (isFeatured)
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.only(end: 4),
-                                    child: Icon(
-                                      Icons.star,
-                                      size: 14,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                // The title, as residents see it; the row
-                                // showed only the address, so two flats in
-                                // one building looked the same.
-                                Flexible(
-                                  child: Text(
-                                    _listingTitle(l),
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.navy,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    NetworkPhoto(
+                      url: l['cover_url'] as String?,
+                      width: 52,
+                      height: 36,
+                      radius: BorderRadius.circular(6),
+                      icon: Icons.apartment_outlined,
+                      iconSize: 16,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (isFeatured)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 4),
+                                  child: Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: AppColors.gold,
                                   ),
                                 ),
-                              ],
-                            ),
-                            // Where, and who posted it.
-                            if (_listingSubline(l).isNotEmpty)
-                              Text(
-                                _listingSubline(l),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 11,
-                                  color: AppColors.grayText,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            if (isBroker)
-                              Text(
-                                tr('מתווך', 'Agent'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 10,
-                                  color: AppColors.grayLight,
+                              // The title, as residents see it; the row
+                              // showed only the address, so two flats in
+                              // one building looked the same.
+                              Flexible(
+                                child: Text(
+                                  _listingTitle(l),
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        // The name comes from the join; the list read a
-                        // `neighborhood` key nothing sets, so it was blank.
-                        child: Text(
-                          (l['neighborhoods'] as Map?)?['name'] as String? ??
-                              '',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubik,
-                            fontSize: 13,
+                            ],
                           ),
+                          // Where, and who posted it.
+                          if (_listingSubline(l).isNotEmpty)
+                            Text(
+                              _listingSubline(l),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 11,
+                                color: AppColors.grayText,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (isBroker)
+                            Text(
+                              tr('מתווך', 'Agent'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 10,
+                                color: AppColors.grayLight,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      // The name comes from the join; the list read a
+                      // `neighborhood` key nothing sets, so it was blank.
+                      child: Text(
+                        (l['neighborhoods'] as Map?)?['name'] as String? ??
+                            '',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 13,
                         ),
                       ),
-                      Expanded(
-                        flex: 1,
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: _TypeBadge(kind),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: _TypeBadge(kind),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        '${l['rooms'] ?? '—'}',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 13,
+                          color: AppColors.grayText,
                         ),
                       ),
+                    ),
+                    if (isWide)
                       Expanded(
                         flex: 1,
                         child: Text(
-                          '${l['rooms'] ?? '—'}',
+                          '${l['sqm'] ?? '—'}',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
@@ -441,138 +433,125 @@ class _ListingTable extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
-                          child: Text(
-                            '${l['sqm'] ?? '—'}',
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 13,
-                              color: AppColors.grayText,
-                            ),
-                          ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _formatPrice(price, kind),
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.navy,
                         ),
+                      ),
+                    ),
+                    Expanded(flex: 1, child: _StatusPill(status)),
+                    if (isWide)
                       Expanded(
-                        flex: 2,
+                        flex: 1,
                         child: Text(
-                          _formatPrice(price, kind),
+                          '${l['view_count'] ?? 0}',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.navy,
+                            color: AppColors.grayText,
                           ),
                         ),
                       ),
-                      Expanded(flex: 1, child: _StatusPill(status)),
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: AppColors.grayLight,
+                      ),
+                      onSelected: (v) => onAction(v, l),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
                           child: Text(
-                            '${l['view_count'] ?? 0}',
+                            tr('עריכה', 'Edit'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
-                              color: AppColors.grayText,
                             ),
                           ),
                         ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: AppColors.grayLight,
-                        ),
-                        onSelected: (v) => onAction(v, l),
-                        itemBuilder: (_) => [
+                        if (status == 'pending') ...[
                           PopupMenuItem(
-                            value: 'edit',
+                            value: 'approve',
                             child: Text(
-                              tr('עריכה', 'Edit'),
+                              tr('אישור ופרסום', 'Approve and publish'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'reject',
+                            child: Text(
+                              tr('דחייה', 'Reject'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (status != 'active' && status != 'pending')
+                          PopupMenuItem(
+                            value: 'activate',
+                            child: Text(
+                              tr('הפעל', 'Activate'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
                               ),
                             ),
                           ),
-                          if (status == 'pending') ...[
-                            PopupMenuItem(
-                              value: 'approve',
-                              child: Text(
-                                tr('אישור ופרסום', 'Approve and publish'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  color: AppColors.success,
-                                ),
+                        if (status == 'active')
+                          PopupMenuItem(
+                            value: 'sold',
+                            child: Text(
+                              kind == 'rent' ? tr('סמן כהושכר', 'Mark as rented') : tr('סמן כנמכר', 'Mark as sold'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
                               ),
                             ),
-                            PopupMenuItem(
-                              value: 'reject',
-                              child: Text(
-                                tr('דחייה', 'Reject'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  color: AppColors.error,
-                                ),
+                          ),
+                        if (status != 'expired')
+                          PopupMenuItem(
+                            value: 'expire',
+                            child: Text(
+                              tr('סמן כפג תוקף', 'Mark as expired'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
                               ),
                             ),
-                          ],
-                          if (status != 'active' && status != 'pending')
-                            PopupMenuItem(
-                              value: 'activate',
-                              child: Text(
-                                tr('הפעל', 'Activate'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
+                          ),
+                        // "Remove" sets status = 'removed', the same as
+                        // "דחייה" on a pending listing, so it is offered
+                        // only where it does something of its own.
+                        if (status != 'pending' && status != 'removed')
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              // The row is not removed; it becomes status = 'removed'.
+                              tr('הסר', 'Remove'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.error,
                               ),
                             ),
-                          if (status == 'active')
-                            PopupMenuItem(
-                              value: 'sold',
-                              child: Text(
-                                kind == 'rent' ? tr('סמן כהושכר', 'Mark as rented') : tr('סמן כנמכר', 'Mark as sold'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          if (status != 'expired')
-                            PopupMenuItem(
-                              value: 'expire',
-                              child: Text(
-                                tr('סמן כפג תוקף', 'Mark as expired'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          // "Remove" sets status = 'removed', the same as
-                          // "דחייה" on a pending listing, so it is offered
-                          // only where it does something of its own.
-                          if (status != 'pending' && status != 'removed')
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text(
-                                // The row is not removed; it becomes status = 'removed'.
-                                tr('הסר', 'Remove'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -1431,12 +1410,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

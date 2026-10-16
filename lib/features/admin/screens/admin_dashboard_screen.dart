@@ -180,6 +180,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// reached by the search or by a reload rather than by a click on it.
   final _selectedItemKey = GlobalKey();
 
+  /// Tells an editor's frame ([_EditorFrame]) that the sidebar changed: it
+  /// is built on another page, which this state's setState does not reach.
+  final _changes = _ShellChanges();
+
+  /// This page, so that leaving an editor can come back to exactly it.
+  ModalRoute<dynamic>? _route;
+
+  void _update(VoidCallback change) {
+    setState(change);
+    _changes.ping();
+  }
+
   void _revealSelected() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final row = _selectedItemKey.currentContext;
@@ -204,6 +216,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
+    _changes.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -215,7 +228,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       final section = prefs.getInt(_sectionKey);
       final collapsed = prefs.getBool(_collapsedKey) ?? false;
       if (!mounted) return;
-      setState(() {
+      _update(() {
         if (section != null && section >= 0 && section < _sections.length) {
           _selectedSection = section;
         }
@@ -237,7 +250,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   void _select(int i) {
     final fromSearch = _query.trim().isNotEmpty;
-    setState(() {
+    _update(() {
       _selectedSection = i;
       _query = '';
     });
@@ -252,7 +265,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   void _toggleCollapsed() {
-    setState(() => _collapsed = !_collapsed);
+    _update(() => _collapsed = !_collapsed);
     _remember(_collapsedKey, _collapsed);
   }
 
@@ -285,8 +298,40 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final q = _query.trim().toLowerCase();
     return [
       for (var i = 0; i < _sections.length; i++)
-        if (_canOpen(i) && _sections[i].$1.toLowerCase().contains(q)) i,
+        if (_mayOpen(i) && _sections[i].$1.toLowerCase().contains(q)) i,
     ];
+  }
+
+  /// [_canOpen] for an editor's frame, which is built outside this
+  /// screen's build and so may only read the permissions, not watch them.
+  bool _mayOpen(int i) =>
+      AdminPermissions.of(ref.read(adminPermissionsProvider)).canView(_sectionModules[i]);
+
+  /// From an editor's frame: asks before leaving the editor — the editors
+  /// do not know whether anything was changed — then goes to section [i].
+  Future<void> _leaveEditorFor(BuildContext frame, int i) async {
+    final leave = await showDialog<bool>(
+      context: frame,
+      // The frame's own context is above the panel's theme, which it builds.
+      builder: (ctx) => Theme(
+        data: AdminKit.of(ctx).theme(Theme.of(ctx)),
+        child: Directionality(
+        textDirection: adminDir,
+        child: AlertDialog(
+          title: Text(tr('לצאת מהעמוד?', 'Leave this page?')),
+          content: Text(tr('מה שלא נשמר לא יישמר.', 'Anything not saved will be lost.')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('להישאר', 'Stay'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('לצאת', 'Leave'))),
+          ],
+        ),
+      ),
+      ),
+    );
+    if (leave != true || !frame.mounted) return;
+    final route = _route;
+    Navigator.of(frame).popUntil((r) => route == null ? r.isFirst : r == route);
+    if (mounted) _select(i);
   }
 
   /// The panel in the language chosen in Settings. A switch rebuilds the
@@ -295,6 +340,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// Dates, pickers and the like follow through the overridden locale.
   @override
   Widget build(BuildContext context) {
+    _route = ModalRoute.of(context);
     // The rows appear once the role's permissions are read, after the
     // section was restored; bring the restored one into view then.
     ref.listen(adminPermissionsProvider, (_, next) {
@@ -329,7 +375,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       searchFocus: _searchFocus,
       query: _query,
       matches: _query.trim().isEmpty ? null : _matches,
-      onQuery: (v) => setState(() => _query = v),
+      onQuery: (v) => _update(() => _query = v),
       onSearchTap: _focusSearch,
       selectedKey: _selectedItemKey,
     );
@@ -376,7 +422,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     Expanded(
                       // A section comes in with a short fade and rise rather
                       // than replacing the last one in a single frame.
-                      child: AnimatedSwitcher(
+                      child: AdminShellScope(
+                        frame: (page) => _EditorFrame(shell: this, page: page),
+                        child: AnimatedSwitcher(
                         duration: k.motion,
                         reverseDuration: const Duration(milliseconds: 120),
                         switchInCurve: k.curve,
@@ -393,10 +441,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                             child: child,
                           ),
                         ),
-                        child: KeyedSubtree(
+                        child: AdminSectionScope(
                           key: ValueKey(_selectedSection),
+                          title: _sections[_selectedSection].$1,
+                          group: _groupOf(_selectedSection),
                           child: _buildSection(),
                         ),
+                      ),
                       ),
                     ),
                   ],
@@ -452,6 +503,137 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 }
 
+class _ShellChanges extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
+/// The panel's sidebar and top bar around an editor page, so that writing
+/// an article keeps the panel around it as the CRM's detail pages do. The
+/// editor stays a page of its own on the navigator; this draws the shell's
+/// sidebar again over it, from the shell's state, with its own search box
+/// and keys (one of each may be on the screen at a time).
+class _EditorFrame extends StatefulWidget {
+  final _AdminDashboardScreenState shell;
+  final Widget page;
+  const _EditorFrame({required this.shell, required this.page});
+
+  @override
+  State<_EditorFrame> createState() => _EditorFrameState();
+}
+
+class _EditorFrameState extends State<_EditorFrame> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _searchFocus = FocusNode();
+  final _selectedItemKey = GlobalKey();
+
+  _AdminDashboardScreenState get s => widget.shell;
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_onKey);
+    // The list opens where the section is, not at its top.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final row = _selectedItemKey.currentContext;
+      if (row != null && row.mounted) Scrollable.ensureVisible(row, alignment: 0.3);
+    });
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  bool _onKey(KeyEvent event) {
+    final keyboard = HardwareKeyboard.instance;
+    if (event is! KeyDownEvent || event.logicalKey != LogicalKeyboardKey.keyK) return false;
+    if (!keyboard.isMetaPressed && !keyboard.isControlPressed) return false;
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return false;
+    _focusSearch();
+    return true;
+  }
+
+  void _focusSearch() {
+    final wide = MediaQuery.sizeOf(context).width > 800;
+    if (wide && s._collapsed) s._toggleCollapsed();
+    if (!wide) _scaffoldKey.currentState?.openDrawer();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchFocus.requestFocus());
+  }
+
+  void _choose(int i) {
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) Navigator.of(context).pop();
+    s._leaveEditorFor(context, i);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: s._changes,
+      builder: (context, _) {
+        final k = AdminKit.of(context);
+        final wide = MediaQuery.sizeOf(context).width > 800;
+        final selected = s._selectedSection;
+        Widget sidebar({required bool collapsed, required VoidCallback onToggle}) => _Sidebar(
+          sections: _AdminDashboardScreenState._sections,
+          selected: selected,
+          onSelect: _choose,
+          sectionGroups: _AdminDashboardScreenState._sectionGroups,
+          visible: s._mayOpen,
+          collapsed: collapsed,
+          onToggle: onToggle,
+          searchController: s._searchController,
+          searchFocus: _searchFocus,
+          query: s._query,
+          matches: s._query.trim().isEmpty ? null : s._matches,
+          onQuery: (v) => s._update(() => s._query = v),
+          onSearchTap: _focusSearch,
+          selectedKey: _selectedItemKey,
+        );
+        return Theme(
+          data: k.theme(Theme.of(context)),
+          child: Directionality(
+            textDirection: adminDir,
+            child: Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: k.page,
+              drawer: wide
+                  ? null
+                  : Drawer(
+                      width: 280,
+                      backgroundColor: k.surface,
+                      shape: const RoundedRectangleBorder(),
+                      child: sidebar(collapsed: false, onToggle: () => Navigator.of(context).pop()),
+                    ),
+              body: Row(
+                children: [
+                  if (wide) sidebar(collapsed: s._collapsed, onToggle: s._toggleCollapsed),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _AdminTopBar(
+                          group: _AdminDashboardScreenState._groupOf(selected),
+                          sectionName: _AdminDashboardScreenState._sections[selected].$1,
+                          isWide: wide,
+                          showLanguage: false,
+                          onMenu: () => _scaffoldKey.currentState?.openDrawer(),
+                          onOpenSettings: () => _choose(_AdminDashboardScreenState._settingsSection),
+                        ),
+                        Expanded(child: widget.page),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// A section the administrator's role does not include — reached only by a
 /// link that skips the sidebar, since the sidebar leaves it out.
 class _NoAccess extends StatelessWidget {
@@ -501,12 +683,17 @@ class _AdminTopBar extends ConsumerWidget {
   final bool isWide;
   final VoidCallback onMenu;
   final VoidCallback onOpenSettings;
+
+  /// Off in an editor's frame: the switch rebuilds the panel, and the
+  /// editor over it would stay in the language it was opened in.
+  final bool showLanguage;
   const _AdminTopBar({
     required this.group,
     required this.sectionName,
     required this.isWide,
     required this.onMenu,
     required this.onOpenSettings,
+    this.showLanguage = true,
   });
 
   @override
@@ -531,27 +718,30 @@ class _AdminTopBar extends ConsumerWidget {
             ),
             const SizedBox(width: 12),
           ],
+          // Where you are, as a breadcrumb; the page's own heading under
+          // the bar carries the title large, as the CRM's pages do.
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                if (group.isNotEmpty)
-                  Text(
-                    group,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: k.hint.copyWith(fontSize: 12, height: 1.2),
+                if (group.isNotEmpty) ...[
+                  Text(group, style: k.hint.copyWith(fontSize: 13.5)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Icon(
+                      Directionality.of(context) == TextDirection.rtl
+                          ? Icons.chevron_left_rounded
+                          : Icons.chevron_right_rounded,
+                      size: 18,
+                      color: k.muted,
+                    ),
                   ),
-                // The section comes in with the content under it.
-                AnimatedSwitcher(
-                  duration: k.motion,
+                ],
+                Flexible(
                   child: Text(
                     sectionName,
-                    key: ValueKey(sectionName),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: k.title.copyWith(fontSize: 19, height: 1.3),
+                    style: k.label.copyWith(fontSize: 13.5, color: k.ink),
                   ),
                 ),
               ],
@@ -564,15 +754,17 @@ class _AdminTopBar extends ConsumerWidget {
               tooltip: 'www.modiin4u.co.il',
               onTap: () => launchUrl(Uri.parse('https://www.modiin4u.co.il/')),
             ),
-          const SizedBox(width: 8),
           // The language switch from Settings, one click away. It names the
           // language the panel is in, as the CRM's "HE" does.
-          _TopBarButton(
-            icon: IconsaxPlusLinear.translate,
-            label: adminEnglish.value ? 'EN' : 'HE',
-            tooltip: adminEnglish.value ? 'עברית' : 'English',
-            onTap: () => setAdminEnglish(!adminEnglish.value),
-          ),
+          if (showLanguage) ...[
+            const SizedBox(width: 8),
+            _TopBarButton(
+              icon: IconsaxPlusLinear.translate,
+              label: adminEnglish.value ? 'EN' : 'HE',
+              tooltip: adminEnglish.value ? 'עברית' : 'English',
+              onTap: () => setAdminEnglish(!adminEnglish.value),
+            ),
+          ],
           const SizedBox(width: 8),
           _TopBarButton(
             icon: IconsaxPlusLinear.setting_2,
@@ -1365,6 +1557,15 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const AdminPageHeader(),
+        Expanded(child: _settingsList()),
+      ],
+    );
+  }
+
+  Widget _settingsList() {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [

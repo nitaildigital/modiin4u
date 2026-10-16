@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../providers/admin_analytics_provider.dart';
 import '../providers/admin_permissions_provider.dart';
 import '../admin_language.dart';
+import '../ui/admin_kit.dart';
 
 /// The Analytics section, on what the database can actually be asked.
 ///
@@ -49,6 +51,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen>
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const AdminPageHeader(divider: false),
         Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -1009,61 +1012,80 @@ class _StatCard extends StatelessWidget {
     required this.color,
   });
 
+  /// The figure's icon, from the table it is counted from, as the CRM's
+  /// cards carry one beside the label.
+  static IconData _iconFor(String source) {
+    const byTable = <String, IconData>{
+      'offer_claims': IconsaxPlusLinear.ticket,
+      'push_devices': IconsaxPlusLinear.mobile,
+      'revenue_transactions': IconsaxPlusLinear.wallet_3,
+      'articles': IconsaxPlusLinear.document_text,
+      'businesses': IconsaxPlusLinear.shop,
+      'events': IconsaxPlusLinear.calendar,
+      'listings': IconsaxPlusLinear.building_3,
+      'neighborhoods': IconsaxPlusLinear.building,
+      'categories': IconsaxPlusLinear.category_2,
+      'profiles': IconsaxPlusLinear.profile_2user,
+      'reviews': IconsaxPlusLinear.star,
+      'comments': IconsaxPlusLinear.message_text,
+      'favorites': IconsaxPlusLinear.heart,
+      'offers': IconsaxPlusLinear.discount_shape,
+      'campaigns': IconsaxPlusLinear.magicpen,
+      'pending': IconsaxPlusLinear.wallet_3,
+    };
+    for (final e in byTable.entries) {
+      if (source.contains(e.key)) return e.value;
+    }
+    return IconsaxPlusLinear.chart_2;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
     // Which table a number counts is there on hover: printed under every
     // number, `'businesses · status = 'active` read as code to the client.
     return Tooltip(
       message: source,
       child: Container(
-      width: 200,
-      height: 108,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.adminCardBorder, width: 1),
-        boxShadow: const [BoxShadow(color: Color(0x0DB8B8B8), blurRadius: 4)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: AppFonts.inter,
-                    fontSize: 12,
-                    color: AppColors.adminTextLight,
+        width: 210,
+        height: 116,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: k.surface,
+          borderRadius: BorderRadius.circular(k.radius),
+          border: Border.all(color: k.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  child: Icon(_iconFor(source), size: 17, color: color),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: AppFonts.inter,
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: AppColors.adminTextDark,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: k.label.copyWith(color: k.ink),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+            const Spacer(),
+            Text(
+              text,
+              style: k.title.copyWith(fontSize: 26, height: 1.1),
+            ),
+          ],
+        ),
       ),
     );
   }

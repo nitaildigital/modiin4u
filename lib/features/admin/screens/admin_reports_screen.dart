@@ -64,50 +64,6 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
 
     return Column(
       children: [
-        // ─── Stats ───
-        if (loaded != null)
-          Builder(
-            builder: (_) {
-              final list = loaded;
-              final open = list.where((r) => r['status'] == 'open').length;
-              final investigating = list
-                  .where((r) => r['status'] == 'reviewed')
-                  .length;
-              final resolved = list
-                  .where((r) => r['status'] == 'resolved')
-                  .length;
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.border.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _StatChip(tr('פתוחים', 'Open'), '$open', AppColors.error),
-                    const SizedBox(width: 12),
-                    _StatChip(tr('בטיפול', 'In progress'), '$investigating', AppColors.gold),
-                    const SizedBox(width: 12),
-                    _StatChip(tr('נפתרו', 'Resolved'), '$resolved', AppColors.success),
-                    const SizedBox(width: 12),
-                    _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
-                  ],
-                ),
-              );
-            },
-          ),
-
-        // Nothing files reports yet; an empty list should not read as
-        // "nothing wrong".
-        const _WhereReportsComeFromNote(),
-
         // ─── Toolbar ───
         AdminListToolbar(
           filters: [
@@ -168,6 +124,49 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
           ],
           count: loaded != null ? tr('${loaded.length} דיווחים', '${loaded.length} reports') : null,
         ),
+        // ─── Stats ───
+        if (loaded != null)
+          Builder(
+            builder: (_) {
+              final list = loaded;
+              final open = list.where((r) => r['status'] == 'open').length;
+              final investigating = list
+                  .where((r) => r['status'] == 'reviewed')
+                  .length;
+              final resolved = list
+                  .where((r) => r['status'] == 'resolved')
+                  .length;
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.border.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _StatChip(tr('פתוחים', 'Open'), '$open', AppColors.error),
+                    const SizedBox(width: 12),
+                    _StatChip(tr('בטיפול', 'In progress'), '$investigating', AppColors.gold),
+                    const SizedBox(width: 12),
+                    _StatChip(tr('נפתרו', 'Resolved'), '$resolved', AppColors.success),
+                    const SizedBox(width: 12),
+                    _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
+                  ],
+                ),
+              );
+            },
+          ),
+
+        // Nothing files reports yet; an empty list should not read as
+        // "nothing wrong".
+        const _WhereReportsComeFromNote(),
 
         // ─── Table ───
         Expanded(

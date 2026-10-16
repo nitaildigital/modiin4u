@@ -96,48 +96,6 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
 
     return Column(
       children: [
-        // ─── Stats ───
-        if (list != null)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.border.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                _StatChip(
-                  tr('ממתינות', 'Pending'),
-                  '${list.where((c) => c['status'] == 'pending').length}',
-                  AppColors.gold,
-                ),
-                const SizedBox(width: 12),
-                _StatChip(
-                  tr('מאושרות', 'Approved'),
-                  '${list.where((c) => c['status'] == 'approved').length}',
-                  AppColors.success,
-                ),
-                const SizedBox(width: 12),
-                // `report_count` is how many residents reported the comment.
-                _StatChip(
-                  tr('דווחו', 'Reported'),
-                  '${list.where((c) => ((c['report_count'] as num?) ?? 0) > 0).length}',
-                  AppColors.error,
-                ),
-                const SizedBox(width: 12),
-                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
-              ],
-            ),
-          ),
-
-        // Nothing creates comments yet; an empty list should not read as
-        // "all caught up".
-        const _NothingWritesThisNote(),
-
         // ─── Toolbar ───
         AdminListToolbar(
           search: AdminSearchField(
@@ -195,6 +153,47 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
           ],
           count: list != null ? tr('${list.length} תגובות', '${list.length} comments') : null,
         ),
+        // ─── Stats ───
+        if (list != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                _StatChip(
+                  tr('ממתינות', 'Pending'),
+                  '${list.where((c) => c['status'] == 'pending').length}',
+                  AppColors.gold,
+                ),
+                const SizedBox(width: 12),
+                _StatChip(
+                  tr('מאושרות', 'Approved'),
+                  '${list.where((c) => c['status'] == 'approved').length}',
+                  AppColors.success,
+                ),
+                const SizedBox(width: 12),
+                // `report_count` is how many residents reported the comment.
+                _StatChip(
+                  tr('דווחו', 'Reported'),
+                  '${list.where((c) => ((c['report_count'] as num?) ?? 0) > 0).length}',
+                  AppColors.error,
+                ),
+                const SizedBox(width: 12),
+                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
+              ],
+            ),
+          ),
+
+        // Nothing creates comments yet; an empty list should not read as
+        // "all caught up".
+        const _NothingWritesThisNote(),
 
         // ─── List ───
         Expanded(

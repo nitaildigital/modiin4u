@@ -61,6 +61,36 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
 
     return Column(
       children: [
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש לפי עסק / חשבונית...', 'Search by business / invoice...'),
+            onChanged: (v) => _debouncer.run(
+              () => ref
+                  .read(adminRevenueListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v),
+            ),
+          ),
+          filters: [
+            for (final e in {'': tr('הכל', 'All'), ..._paymentStatuses}.entries)
+              AdminFilterChip(e.value, _statusFilter == e.key, () {
+                setState(() => _statusFilter = e.key);
+                ref
+                    .read(adminRevenueListProvider.notifier)
+                    .setStatusFilter(e.key.isEmpty ? null : e.key);
+              }),
+          ],
+          count: loaded == null
+              ? null
+              : tr('${loaded.length} רשומות', '${loaded.length} records'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('רשומה חדשה', 'New record'),
+              onPressed: () => _showEditor(),
+            ),
+          ],
+        ),
         // ─── Stats ───
         // Worked out from the rows, for the month and year it is now. This
         // read "August" and summed every paid row as the year, whatever the
@@ -138,37 +168,6 @@ class _AdminRevenueScreenState extends ConsumerState<AdminRevenueScreen> {
               );
             },
           ),
-
-        AdminListToolbar(
-          search: AdminSearchField(
-            controller: _searchController,
-            width: isWide ? 280 : 180,
-            hint: tr('חיפוש לפי עסק / חשבונית...', 'Search by business / invoice...'),
-            onChanged: (v) => _debouncer.run(
-              () => ref
-                  .read(adminRevenueListProvider.notifier)
-                  .setSearch(v.isEmpty ? null : v),
-            ),
-          ),
-          filters: [
-            for (final e in {'': tr('הכל', 'All'), ..._paymentStatuses}.entries)
-              AdminFilterChip(e.value, _statusFilter == e.key, () {
-                setState(() => _statusFilter = e.key);
-                ref
-                    .read(adminRevenueListProvider.notifier)
-                    .setStatusFilter(e.key.isEmpty ? null : e.key);
-              }),
-          ],
-          count: loaded == null
-              ? null
-              : tr('${loaded.length} רשומות', '${loaded.length} records'),
-          actions: [
-            AdminToolbarButton(
-              label: tr('רשומה חדשה', 'New record'),
-              onPressed: () => _showEditor(),
-            ),
-          ],
-        ),
 
         // ─── Table ───
         Expanded(
