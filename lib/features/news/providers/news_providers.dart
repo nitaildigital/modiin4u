@@ -142,32 +142,16 @@ final featuredArticleProvider = FutureProvider<Article?>((ref) async {
   return articles.isEmpty ? null : pickHeroArticle(articles);
 });
 
-const _featuredDays = 14;
-
 /// The rule itself, in one place. The phone's list built its own copy of it
 /// and the two would drift apart, which is how the web and the phone came to
 /// disagree elsewhere in this app.
-Article pickHeroArticle(List<Article> articles) {
-  bool hasPicture(Article a) => (a.imageUrl ?? '').isNotEmpty;
-  // A featured story leads while it is news — within [_featuredDays] of the
-  // newest story. Nothing ever un-features one, so the two featured in
-  // August (sample stories, no picture) led the News tab over October's
-  // (15 Oct). Featuring a story in the panel still puts it first.
-  final newest = articles
-      .map((a) => a.publishedAt)
-      .reduce((x, y) => x.isAfter(y) ? x : y);
-  bool featured(Article a) =>
-      a.isFeatured && newest.difference(a.publishedAt).inDays <= _featuredDays;
-
-  return articles.firstWhere(
-    (a) => featured(a) && hasPicture(a),
-    orElse: () => articles.firstWhere(
-      featured,
-      orElse: () =>
-          articles.firstWhere(hasPicture, orElse: () => articles.first),
-    ),
-  );
-}
+///
+/// The newest published story leads, always (Harshit, 16 Oct). A featured
+/// flag no longer jumps the queue: nothing ever un-features a story, so the
+/// two featured in August (sample stories, no picture) kept leading the News
+/// tab over everything published since.
+Article pickHeroArticle(List<Article> articles) =>
+    articles.reduce((x, y) => y.publishedAt.isAfter(x.publishedAt) ? y : x);
 
 /// Every published article except the one in the hero slot.
 final restOfArticlesProvider = FutureProvider<List<Article>>((ref) async {
