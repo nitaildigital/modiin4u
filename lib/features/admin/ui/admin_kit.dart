@@ -57,6 +57,8 @@ class AdminKit {
     isDense: true,
     filled: true,
     fillColor: surface,
+    // A field under the pointer was filled with the rows' hover grey.
+    hoverColor: subtle,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
@@ -276,6 +278,7 @@ class AdminKit {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        hoverColor: subtle,
         isDense: true,
         hintStyle: hint,
         labelStyle: label,

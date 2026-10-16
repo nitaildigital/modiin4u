@@ -176,6 +176,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final _searchFocus = FocusNode();
   String _query = '';
 
+  /// On the selected section's row, to bring it into view when it was
+  /// reached by the search or by a reload rather than by a click on it.
+  final _selectedItemKey = GlobalKey();
+
+  void _revealSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final row = _selectedItemKey.currentContext;
+      if (row == null || !row.mounted) return;
+      Scrollable.ensureVisible(
+        row,
+        alignment: 0.3,
+        duration: AdminKit.of(row).motion,
+        curve: AdminKit.of(row).curve,
+      );
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -204,6 +221,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         }
         _collapsed = collapsed;
       });
+      _revealSelected();
     } catch (_) {
       // Storage blocked: the panel opens on the overview, sidebar open.
     }
@@ -218,6 +236,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   void _select(int i) {
+    final fromSearch = _query.trim().isNotEmpty;
     setState(() {
       _selectedSection = i;
       _query = '';
@@ -227,6 +246,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     // On a narrow screen the sidebar is a drawer; a choice closes it.
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) Navigator.of(context).pop();
     _remember(_sectionKey, i);
+    // The list behind the search was where it was left; the row now chosen
+    // may be far below it (Revenue, found by "rev", sat off screen).
+    if (fromSearch) _revealSelected();
   }
 
   void _toggleCollapsed() {
@@ -273,6 +295,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   /// Dates, pickers and the like follow through the overridden locale.
   @override
   Widget build(BuildContext context) {
+    // The rows appear once the role's permissions are read, after the
+    // section was restored; bring the restored one into view then.
+    ref.listen(adminPermissionsProvider, (_, next) {
+      if (next.hasValue) _revealSelected();
+    });
     return ValueListenableBuilder<bool>(
       valueListenable: adminEnglish,
       builder: (context, english, _) => Localizations.override(
@@ -304,6 +331,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       matches: _query.trim().isEmpty ? null : _matches,
       onQuery: (v) => setState(() => _query = v),
       onSearchTap: _focusSearch,
+      selectedKey: _selectedItemKey,
     );
 
     // The kit's fields, switches, checkboxes and chips for every screen and
@@ -316,6 +344,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         child: Scaffold(
           key: _scaffoldKey,
           backgroundColor: k.page,
+          onDrawerChanged: (open) {
+            if (open) _revealSelected();
+          },
           // Below 800 px the sidebar is a drawer behind the top bar's menu
           // button; it was a row of 35 chips to scroll sideways.
           drawer: isWide
@@ -494,7 +525,7 @@ class _AdminTopBar extends ConsumerWidget {
         children: [
           if (!isWide) ...[
             _TopBarButton(
-              icon: IconsaxPlusLinear.menu_1,
+              icon: Icons.menu_rounded,
               tooltip: tr('תפריט', 'Menu'),
               onTap: onMenu,
             ),
@@ -558,19 +589,15 @@ class _AdminTopBar extends ConsumerWidget {
           // invented person this panel used to be built around.
           // A menu on it: the panel had no way to sign out, and on the
           // website /profile and /settings lead home, so neither did the site.
-          PopupMenuButton<String>(
-            tooltip: '',
-            position: PopupMenuPosition.under,
-            offset: const Offset(0, 8),
-            onSelected: (v) async {
-              if (v != 'out') return;
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-            itemBuilder: (_) => [
+          // A MenuAnchor rather than a PopupMenuButton: its menu is built
+          // where the button is, so it reads the panel's direction — the
+          // popup opened over the whole app and was right to left in English.
+          MenuAnchor(
+            alignmentOffset: const Offset(0, 8),
+            menuChildren: [
               if (signedIn != null)
-                PopupMenuItem<String>(
-                  enabled: false,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -579,20 +606,21 @@ class _AdminTopBar extends ConsumerWidget {
                     ],
                   ),
                 ),
-              if (signedIn != null) const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                value: 'out',
-                child: Row(
-                  children: [
-                    Icon(IconsaxPlusLinear.logout, size: 18, color: k.danger),
-                    const SizedBox(width: 10),
-                    Text(tr('התנתקות', 'Sign out'), style: k.body.copyWith(color: k.danger)),
-                  ],
-                ),
+              if (signedIn != null) const Divider(),
+              MenuItemButton(
+                leadingIcon: Icon(IconsaxPlusLinear.logout, size: 18, color: k.danger),
+                onPressed: () async {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) context.go('/login');
+                },
+                child: Text(tr('התנתקות', 'Sign out'), style: k.body.copyWith(color: k.danger)),
               ),
             ],
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+            builder: (context, menu, _) => InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => menu.isOpen ? menu.close() : menu.open(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -623,10 +651,11 @@ class _AdminTopBar extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(IconsaxPlusLinear.arrow_down_1, size: 16, color: k.muted),
+                    Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: k.muted),
                   ],
                 ],
               ),
+            ),
             ),
           ),
         ],
@@ -705,6 +734,7 @@ class _Sidebar extends StatelessWidget {
   final List<int>? matches;
   final ValueChanged<String> onQuery;
   final VoidCallback onSearchTap;
+  final Key selectedKey;
 
   const _Sidebar({
     required this.sections,
@@ -719,6 +749,7 @@ class _Sidebar extends StatelessWidget {
     required this.matches,
     required this.onQuery,
     required this.onSearchTap,
+    required this.selectedKey,
     this.sectionGroups = const {},
   });
 
@@ -741,7 +772,7 @@ class _Sidebar extends StatelessWidget {
             final full = box.maxWidth > 190;
             return Column(
               children: [
-                _header(k, full),
+                _header(k, full, Directionality.of(context) == TextDirection.rtl),
                 Padding(
                   padding: EdgeInsets.fromLTRB(full ? 14 : 12, 4, full ? 14 : 12, 8),
                   child: full ? _searchField(k) : _railButton(k, IconsaxPlusLinear.search_normal_1, tr('חיפוש', 'Search'), onSearchTap),
@@ -760,7 +791,9 @@ class _Sidebar extends StatelessWidget {
     );
   }
 
-  Widget _header(AdminKit k, bool full) => SizedBox(
+  /// The fold button's arrow points the way the sidebar will go: towards
+  /// its own edge to fold, away from it to open — mirrored in Hebrew.
+  Widget _header(AdminKit k, bool full, bool rtl) => SizedBox(
     height: 64,
     child: Padding(
       padding: EdgeInsets.symmetric(horizontal: full ? 16 : 12),
@@ -782,11 +815,11 @@ class _Sidebar extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                _railButton(k, IconsaxPlusLinear.sidebar_right, tr('צמצום התפריט', 'Collapse menu'), onToggle, size: 36),
+                _railButton(k, rtl ? IconsaxPlusLinear.sidebar_right : IconsaxPlusLinear.sidebar_left, tr('צמצום התפריט', 'Collapse menu'), onToggle, size: 36),
               ],
             )
           : Center(
-              child: _railButton(k, IconsaxPlusLinear.sidebar_left, tr('הרחבת התפריט', 'Expand menu'), onToggle),
+              child: _railButton(k, rtl ? IconsaxPlusLinear.sidebar_left : IconsaxPlusLinear.sidebar_right, tr('הרחבת התפריט', 'Expand menu'), onToggle),
             ),
     ),
   );
@@ -959,6 +992,7 @@ class _Sidebar extends StatelessWidget {
       ),
     );
     return Padding(
+      key: sel ? selectedKey : null,
       padding: EdgeInsets.symmetric(horizontal: full ? 14 : 12, vertical: 1),
       // Folded, the name is a tooltip beside the icon.
       child: full ? tile : Tooltip(message: label, preferBelow: false, child: tile),
