@@ -50,7 +50,7 @@ export default async function NeighborhoodPage({ params }: Props) {
   const t = tr(lang);
   const path = `/neighborhood/${n.id}/`;
   const name = localName(n.name, n.name_en, lang);
-  const [photos, figures, rating, sale, rent, businesses] = await Promise.all([
+  const [{ photos, alts }, figures, rating, sale, rent, businesses] = await Promise.all([
     neighborhoodPhotos(n), neighborhoodFigures(n.id), neighborhoodRating(n.id),
     hoodListings(n.id, 'sale'), hoodListings(n.id, 'rent'), hoodBusinesses(n.id, lang),
   ]);
@@ -119,7 +119,7 @@ export default async function NeighborhoodPage({ params }: Props) {
 
       {/* PHONE — the photographs */}
       <div className="desk:hidden">
-        <PhoneGallery photos={photos} alt={name} back="/search-apartments/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')} hood />
+        <PhoneGallery photos={photos} alts={alts} alt={name} back="/search-apartments/" backLabel={t('חזרה לנדל״ן', 'Back to Real Estate')} hood />
       </div>
 
       <div className="wrap">
@@ -173,7 +173,7 @@ export default async function NeighborhoodPage({ params }: Props) {
             </div>
           </div>
           <div className="hidden min-w-0 desk:block desk:flex-[942] desk:pt-[25px]">
-            <Mosaic photos={photos} alt={name} fourUp={false} height={425} radius={10} gap={8} inset={12} showAll={t('כל התמונות', 'Show all photos')} hood />
+            <Mosaic photos={photos} alts={alts} alt={name} fourUp={false} height={425} radius={10} gap={8} inset={12} showAll={t('כל התמונות', 'Show all photos')} hood />
           </div>
         </div>
 

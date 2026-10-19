@@ -118,15 +118,24 @@ export const neighborhoodById = cache(async (id: string): Promise<Neighborhood |
 });
 
 /** Its photographs, the one set as its picture first, then its gallery from
- *  `entity_media` (neighborhoodPhotosProvider). */
-export async function neighborhoodPhotos(n: Pick<Neighborhood, 'id' | 'image_url'>): Promise<string[]> {
-  const { data } = await db.from('entity_media').select('sort_order, media(url)')
+ *  `entity_media` (neighborhoodPhotosProvider). `alts` runs alongside: the
+ *  description the panel's gallery editor gave each photo, '' where none. */
+export async function neighborhoodPhotos(n: Pick<Neighborhood, 'id' | 'image_url'>): Promise<{ photos: string[]; alts: string[] }> {
+  const { data } = await db.from('entity_media').select('sort_order, media(url,alt_text)')
     .eq('entity_type', 'neighborhood').eq('entity_id', n.id).eq('role', 'gallery').order('sort_order', { ascending: true });
   const photos: string[] = [];
-  const add = (u: unknown) => { if (typeof u === 'string' && u.trim() && !photos.includes(u)) photos.push(u); };
+  const alts: string[] = [];
+  const add = (u: unknown, alt?: string | null) => {
+    if (typeof u !== 'string' || !u.trim()) return;
+    const at = photos.indexOf(u);
+    // The picture set on the row is also in the gallery: keep its description.
+    if (at >= 0) { if (!alts[at] && alt?.trim()) alts[at] = alt.trim(); return; }
+    photos.push(u);
+    alts.push(alt?.trim() ?? '');
+  };
   add(n.image_url);
-  for (const r of (data ?? []) as unknown as { media: { url: string } | null }[]) add(r.media?.url);
-  return photos;
+  for (const r of (data ?? []) as unknown as { media: { url: string; alt_text: string | null } | null }[]) add(r.media?.url, r.media?.alt_text);
+  return { photos, alts };
 }
 
 async function count(table: 'listings' | 'businesses', filters: [string, string][]): Promise<number | null> {
