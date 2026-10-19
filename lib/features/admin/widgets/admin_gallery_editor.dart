@@ -35,13 +35,21 @@ class AdminGalleryPhoto {
   Uint8List? bytes;
   String? fileName;
 
+  /// What the page tells search engines and screen readers the picture
+  /// shows (`media.alt_text`), and the text as stored, so a save only
+  /// rewrites the photos whose text changed.
+  String alt = '';
+  String storedAlt = '';
+
   AdminGalleryPhoto.stored({
     required this.entityMediaId,
     required this.mediaId,
     required this.url,
     required this.filePath,
     required this.storedOrder,
-  });
+    String? alt,
+  }) : alt = (alt ?? '').trim(),
+       storedAlt = (alt ?? '').trim();
 
   AdminGalleryPhoto.picked({required this.bytes, required this.fileName});
 
@@ -98,7 +106,7 @@ class AdminGalleryController extends ChangeNotifier {
     try {
       final rows = await SupabaseConfig.client
           .from('entity_media')
-          .select('id, sort_order, media_id, media(url, file_path)')
+          .select('id, sort_order, media_id, media(url, file_path, alt_text)')
           .eq('entity_type', entityType)
           .eq('entity_id', entityId)
           .eq('role', role)
@@ -113,6 +121,7 @@ class AdminGalleryController extends ChangeNotifier {
               url: (r['media'] as Map?)?['url'] as String?,
               filePath: (r['media'] as Map?)?['file_path'] as String?,
               storedOrder: (r['sort_order'] as num?)?.toInt(),
+              alt: (r['media'] as Map?)?['alt_text'] as String?,
             ),
         ]);
       _removed.clear();
@@ -138,6 +147,11 @@ class AdminGalleryController extends ChangeNotifier {
     photos.insert(to, p);
     _dirty = true;
     notifyListeners();
+  }
+
+  void setAlt(AdminGalleryPhoto p, String text) {
+    p.alt = text.trim();
+    _dirty = true;
   }
 
   void removeAt(int index) {
@@ -171,6 +185,16 @@ class AdminGalleryController extends ChangeNotifier {
       if (!p.isNew) continue;
       await _upload(p, entityId, i);
       notifyListeners();
+    }
+
+    // ── Alt text ──
+    for (final p in photos) {
+      if (p.alt == p.storedAlt || p.mediaId == null) continue;
+      await client
+          .from('media')
+          .update({'alt_text': p.alt.isEmpty ? null : p.alt})
+          .eq('id', p.mediaId!);
+      p.storedAlt = p.alt;
     }
 
     // ── Moved ──
@@ -264,6 +288,7 @@ class AdminGalleryController extends ChangeNotifier {
             'size_bytes': bytes.lengthInBytes,
             'width': size?.$1,
             'height': size?.$2,
+            'alt_text': p.alt.isEmpty ? null : p.alt,
             'folder': folder,
             'uploaded_by': client.auth.currentUser?.id,
           })
@@ -289,6 +314,7 @@ class AdminGalleryController extends ChangeNotifier {
         ..url = url
         ..filePath = path
         ..storedOrder = order
+        ..storedAlt = p.alt
         ..bytes = null;
     } catch (_) {
       // Leave nothing half-made behind: a file with no record, or a record
@@ -340,11 +366,7 @@ class AdminGalleryEditor extends StatefulWidget {
   final AdminGalleryController controller;
   final String? title;
 
-  const AdminGalleryEditor({
-    super.key,
-    required this.controller,
-    this.title,
-  });
+  const AdminGalleryEditor({super.key, required this.controller, this.title});
 
   @override
   State<AdminGalleryEditor> createState() => _AdminGalleryEditorState();
@@ -380,10 +402,22 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
       }
       _c.addPicked(picked);
       if (tooBig > 0 && mounted) {
-        setState(() => _error = tr('$tooBig קבצים גדולים מ-10MB ולא נוספו', '$tooBig files are larger than 10MB and were not added'));
+        setState(
+          () => _error = tr(
+            '$tooBig קבצים גדולים מ-10MB ולא נוספו',
+            '$tooBig files are larger than 10MB and were not added',
+          ),
+        );
       }
     } catch (_) {
-      if (mounted) setState(() => _error = tr('לא ניתן לפתוח את בוחר הקבצים', 'Could not open the file picker'));
+      if (mounted) {
+        setState(
+          () => _error = tr(
+            'לא ניתן לפתוח את בוחר הקבצים',
+            'Could not open the file picker',
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _picking = false);
     }
@@ -411,7 +445,10 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
                 const SizedBox(width: 8),
                 if (!_c.loading)
                   Text(
-                    tr('${_c.photos.length} תמונות', '${_c.photos.length} photos'),
+                    tr(
+                      '${_c.photos.length} תמונות',
+                      '${_c.photos.length} photos',
+                    ),
                     style: TextStyle(
                       fontFamily: AppFonts.rubik,
                       fontSize: 12,
@@ -440,8 +477,11 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
             ),
             const SizedBox(height: 6),
             Text(
-              tr('התמונות נשמרות יחד עם הטופס. הראשונה מוצגת ראשונה באתר; '
-              'החצים משנים את הסדר.', 'Photos are saved together with the form. The first is shown first on the site; the arrows change the order.'),
+              tr(
+                'התמונות נשמרות יחד עם הטופס. הראשונה מוצגת ראשונה באתר; '
+                    'החצים משנים את הסדר. תיאור התמונה (alt) עוזר לגוגל ולקוראי מסך.',
+                'Photos are saved together with the form. The first is shown first on the site; the arrows change the order. The description (alt text) helps Google and screen readers.',
+              ),
               style: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 12,
@@ -464,7 +504,10 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
               const LinearProgressIndicator()
             else if (_c.loadError != null)
               Text(
-                tr('לא ניתן לטעון את הגלריה: ${_c.loadError}', 'Could not load the gallery: ${_c.loadError}'),
+                tr(
+                  'לא ניתן לטעון את הגלריה: ${_c.loadError}',
+                  'Could not load the gallery: ${_c.loadError}',
+                ),
                 style: TextStyle(
                   fontFamily: AppFonts.rubik,
                   fontSize: 12,
@@ -505,6 +548,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
                       onEarlier: () => _c.move(i, i - 1),
                       onLater: () => _c.move(i, i + 1),
                       onRemove: () => _c.removeAt(i),
+                      onAlt: (text) => _c.setAlt(_c.photos[i], text),
                     ),
                 ],
               ),
@@ -515,7 +559,7 @@ class _AdminGalleryEditorState extends State<AdminGalleryEditor> {
   }
 }
 
-class _Thumb extends StatelessWidget {
+class _Thumb extends StatefulWidget {
   final AdminGalleryPhoto photo;
   final int index;
   final bool isFirst;
@@ -523,6 +567,7 @@ class _Thumb extends StatelessWidget {
   final VoidCallback onEarlier;
   final VoidCallback onLater;
   final VoidCallback onRemove;
+  final ValueChanged<String> onAlt;
 
   const _Thumb({
     super.key,
@@ -533,13 +578,40 @@ class _Thumb extends StatelessWidget {
     required this.onEarlier,
     required this.onLater,
     required this.onRemove,
+    required this.onAlt,
   });
 
+  @override
+  State<_Thumb> createState() => _ThumbState();
+}
+
+class _ThumbState extends State<_Thumb> {
   static const _w = 132.0;
   static const _h = 96.0;
 
+  late final TextEditingController _alt;
+
+  @override
+  void initState() {
+    super.initState();
+    _alt = TextEditingController(text: widget.photo.alt);
+  }
+
+  @override
+  void dispose() {
+    _alt.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final photo = widget.photo;
+    final index = widget.index;
+    final isFirst = widget.isFirst;
+    final isLast = widget.isLast;
+    final onEarlier = widget.onEarlier;
+    final onLater = widget.onLater;
+    final onRemove = widget.onRemove;
     final image = photo.bytes != null
         ? Image.memory(photo.bytes!, width: _w, height: _h, fit: BoxFit.cover)
         : NetworkPhoto(
@@ -569,7 +641,9 @@ class _Thumb extends StatelessWidget {
                 top: 4,
                 start: 4,
                 child: _Badge(
-                  photo.isNew ? tr('${index + 1} · חדשה', '${index + 1} · new') : '${index + 1}',
+                  photo.isNew
+                      ? tr('${index + 1} · חדשה', '${index + 1} · new')
+                      : '${index + 1}',
                   photo.isNew ? AppColors.midBlue : AppColors.navy,
                 ),
               ),
@@ -600,6 +674,37 @@ class _Thumb extends StatelessWidget {
                   onTap: onRemove,
                 ),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+            child: TextField(
+              controller: _alt,
+              onChanged: widget.onAlt,
+              minLines: 2,
+              maxLines: 3,
+              maxLength: 125,
+              buildCounter:
+                  (
+                    _, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null,
+              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 11),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: tr('תיאור התמונה (alt)', 'Alt text'),
+                hintStyle: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 11,
+                  color: AppColors.adminTextLight,
+                ),
+                contentPadding: const EdgeInsets.all(6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
             ),
           ),
         ],
