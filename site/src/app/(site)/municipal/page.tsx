@@ -8,6 +8,7 @@ import { municipalFormsUrl, parkingLots } from '@/lib/data/municipal';
 import { comingWeekendDates, shabbatDates, shabbatName, shabbatWeek } from '@/lib/data/shabbat';
 import { JsonLd } from '@/components/JsonLd';
 import { ShabbatTimeRow } from '@/components/municipal/Shabbat';
+import { UnofficialNotice } from '@/components/municipal/UnofficialNotice';
 import { DeskSearchBar, DeskServiceGrid, PhoneSearchBar, PhoneServiceGrid, ServiceSearchProvider, type Service } from '@/components/municipal/ServiceSearch';
 
 const PATH = '/municipal/';
@@ -120,6 +121,7 @@ export default async function MunicipalPage() {
         <div className="hidden desk:block">
           <p className="wrap mt-3.5 text-center text-base leading-[1.19] text-[#6D6D6D]">{intro(lang)}</p>
           <div className="mt-10 px-6"><DeskSearchBar lang={lang} /></div>
+          <div className="wrap mt-8"><UnofficialNotice lang={lang} /></div>
         </div>
       </div>
 
@@ -199,6 +201,7 @@ export default async function MunicipalPage() {
       {/* ── Phone ── */}
       <div className="mx-auto max-w-[430px] px-4 pb-10 desk:hidden">
         <div className="mt-5"><PhoneSearchBar lang={lang} /></div>
+        <UnofficialNotice lang={lang} className="mt-5" />
         <h2 className="mt-5 text-base font-semibold text-[#1F1F1F]">{t('מידע מהיר', 'Quick Info')}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Link href="/shabat-times-modiin/" className="rounded-xl border border-[#D68200]/20 bg-[#FEF8EF] p-3">

@@ -11,6 +11,7 @@ import '../../auth/widgets/m_account_widgets.dart';
 import '../models/municipal_place.dart';
 import '../providers/municipal_places_providers.dart';
 import '../widgets/municipal_place_widgets.dart';
+import '../widgets/unofficial_notice.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
 /// One of the Municipal page's service tiles, at /municipal/<section>:
@@ -127,6 +128,12 @@ class _MunicipalPlacesScreenState extends ConsumerState<MunicipalPlacesScreen>
               hebrew: hebrew,
               large: large,
             ),
+          // These pages are reached from the Municipal tab, or straight from a
+          // search or a link; each says it is not the municipality's too.
+          const Padding(
+            padding: EdgeInsets.only(top: 24),
+            child: UnofficialNotice(),
+          ),
           // OpenStreetMap's licence (ODbL) asks for this where its data shows.
           if (value.any((p) => p.fromOsm))
             Padding(

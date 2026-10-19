@@ -10,6 +10,7 @@ import '../../../l10n/month_names.dart';
 import '../providers/municipal_links.dart';
 import '../providers/shabbat_providers.dart';
 import '../widgets/shabbat_widgets.dart';
+import '../widgets/unofficial_notice.dart';
 import 'web_municipal_screen.dart';
 import '../providers/parking_providers.dart';
 
@@ -151,6 +152,11 @@ class _MobileMunicipalContentState extends State<_MobileMunicipalContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Not the municipality's app, and its sources: first,
+                      // where it is seen before anything else (Google Play).
+                      const UnofficialNotice(),
+                      const SizedBox(height: 24),
+
                       // ── Quick Info ──
                       Text(
                         l.quickInfo,

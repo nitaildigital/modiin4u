@@ -3436,6 +3436,26 @@ on the OnePlus. **iOS had lost its launch logo altogether:**
 was added on 8 Oct (4cceeb8) and deleted with the Next.js commit (4eb8ea9),
 so iPhone builds since showed an empty navy screen; it is back, to commit.
 
+**Google Play: "not an official app" on every municipal page — 19 Oct
+(branch `fix/municipal-disclaimer`).** Play rejected the Android app under
+its Misleading Claims policy (government information): the Municipal tab
+and the store description give city services with no source link for them
+and no clear statement that the app is not the municipality's. Now a notice
+(`UnofficialNotice`, lib/features/municipal/widgets/unofficial_notice.dart;
+the site's components/municipal/UnofficialNotice.tsx, the same words) says
+the app is private and independent, not the Modiin-Maccabim-Re'ut
+Municipality's and not representing it or any government body; names the
+sources the code really uses (the municipality's website, OpenStreetMap,
+Hebcal for Shabbat times); and links to www.modiin.muni.il. It stands at
+the top of the Municipal tab, above everything, and at the foot of each
+municipal list (education, health, …), on the app and the site. "ו־Hebcal"
+takes the maqaf: with a hyphen Flutter put the ו after the word. Version
+1.0.0+5. Still to do outside the code: the same sentence and link in the
+Play description (Harshit / the client), the reply in Play Console. The
+privacy policy is the lawyer's and was left as it is; a draft English
+rewrite offered for it was not used (it did not match the app: health
+data, age 16, deletion, the website's analytics).
+
 **Launch: www.modiin4u.co.il moved to the Next.js site — 14 Oct, ~18:25 IST.**
 Harshit set the time that afternoon (6:30 pm); LAUNCH_RUNBOOK.md has each
 step ticked with what happened, and its Rollback section the old DNS values.
@@ -5419,6 +5439,17 @@ further to do here; revisit only if a current device shows jank.
 - [ ] Measure properly with DevTools in profile mode before doing more. Frame
       timing through `dumpsys gfxinfo` and SurfaceFlinger returned nothing
       usable on this handset, because Flutter renders to its own surface.
+
+### Alt text for gallery photos — 19 October
+
+The Media library already had an alt-text field, and the business page reads
+it. The gallery editor in a business's or neighbourhood's form had none, so a
+photo added there could not be described without opening the library. Each
+thumbnail now has a small alt-text box (`media.alt_text`, one language, 125
+characters); it is saved with the form, and only for photos whose text changed.
+Not done: a neighbourhood page still uses its name as alt for every photo (the
+site reads only the addresses), and single pictures (event, article, offer,
+cover) have no alt field — the site uses their title or name.
 
 ## 9. How the data layer is built
 

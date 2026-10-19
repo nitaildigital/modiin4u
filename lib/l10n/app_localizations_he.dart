@@ -2225,4 +2225,14 @@ class LHe extends L {
 
   @override
   String get whatLocalsSay => 'מה חושבים תושבי העיר?';
+
+  @override
+  String get unofficialTitle => 'אפליקציה פרטית, לא אפליקציה עירונית רשמית';
+
+  @override
+  String get unofficialBody =>
+      'מודיעין בשבילך היא אפליקציה פרטית ועצמאית. היא אינה אפליקציה רשמית של עיריית מודיעין-מכבים-רעות ואינה מייצגת אותה או כל גוף ממשלתי. המידע העירוני כאן מבוסס על מקורות ציבוריים – אתר העירייה, OpenStreetMap ו־Hebcal (זמני שבת). למידע רשמי ומחייב יש לפנות לעירייה.';
+
+  @override
+  String get unofficialLink => 'לאתר הרשמי של העירייה: www.modiin.muni.il';
 }

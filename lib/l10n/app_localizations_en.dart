@@ -2253,4 +2253,15 @@ class LEn extends L {
 
   @override
   String get whatLocalsSay => 'What Locals Are Saying';
+
+  @override
+  String get unofficialTitle => 'A private app, not an official municipal app';
+
+  @override
+  String get unofficialBody =>
+      'Modiin4u is an independent, private app. It is not an official app of the Modiin-Maccabim-Re\'ut Municipality and does not represent it or any government body. The municipal information here comes from public sources – the municipality\'s website, OpenStreetMap and Hebcal (Shabbat times). For official, binding information, contact the municipality.';
+
+  @override
+  String get unofficialLink =>
+      'The municipality\'s official website: www.modiin.muni.il';
 }

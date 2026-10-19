@@ -1,4 +1,5 @@
 'use client';
+import { UnofficialNotice } from './UnofficialNotice';
 import { useState } from 'react';
 import { Call, Routing2, SearchNormal1 } from 'iconsax-react';
 import type { Lang } from '@/lib/i18n';
@@ -86,6 +87,7 @@ export function PlacesList({ places, lang }: { places: MunicipalPlace[]; lang: L
           </section>
         );
       })}
+      <UnofficialNotice lang={lang} className="mt-8" />
       {/* OpenStreetMap's licence (ODbL) asks for this where its data shows. */}
       {places.some((p) => p.source === 'osm') && (
         <p className="mt-5 text-xs text-[#6D6D6D]">{t('נתוני מפה © תורמי OpenStreetMap', 'Map data © OpenStreetMap contributors')}</p>

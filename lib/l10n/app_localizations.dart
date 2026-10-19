@@ -4188,6 +4188,24 @@ abstract class L {
   /// In he, this message translates to:
   /// **'מה חושבים תושבי העיר?'**
   String get whatLocalsSay;
+
+  /// No description provided for @unofficialTitle.
+  ///
+  /// In he, this message translates to:
+  /// **'אפליקציה פרטית, לא אפליקציה עירונית רשמית'**
+  String get unofficialTitle;
+
+  /// No description provided for @unofficialBody.
+  ///
+  /// In he, this message translates to:
+  /// **'מודיעין בשבילך היא אפליקציה פרטית ועצמאית. היא אינה אפליקציה רשמית של עיריית מודיעין-מכבים-רעות ואינה מייצגת אותה או כל גוף ממשלתי. המידע העירוני כאן מבוסס על מקורות ציבוריים – אתר העירייה, OpenStreetMap ו־Hebcal (זמני שבת). למידע רשמי ומחייב יש לפנות לעירייה.'**
+  String get unofficialBody;
+
+  /// No description provided for @unofficialLink.
+  ///
+  /// In he, this message translates to:
+  /// **'לאתר הרשמי של העירייה: www.modiin.muni.il'**
+  String get unofficialLink;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {
