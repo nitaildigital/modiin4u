@@ -120,7 +120,9 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
   if (v.tel) ld.telephone = v.phone;
   if (b.latitude && b.longitude) ld.geo = { '@type': 'GeoCoordinates', latitude: b.latitude, longitude: b.longitude };
   if (image) ld.image = image;
-  if ((b.review_count ?? 0) > 0 && b.rating) ld.aggregateRating = { '@type': 'AggregateRating', ratingValue: b.rating, reviewCount: b.review_count };
+  // Not for a park: Google's review snippets do not accept a Place, the same
+  // error Search Console flagged on a neighbourhood page (16 Oct).
+  if (!isPark && (b.review_count ?? 0) > 0 && b.rating) ld.aggregateRating = { '@type': 'AggregateRating', ratingValue: b.rating, reviewCount: b.review_count };
   // The hours the panel keeps (not Google's, which the page reads live), so
   // search can show them under the result; days with the same hours share
   // one entry.

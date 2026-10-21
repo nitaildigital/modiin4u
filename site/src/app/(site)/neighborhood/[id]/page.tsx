@@ -112,7 +112,9 @@ export default async function NeighborhoodPage({ params }: Props) {
           ...(n.description ? { description: plain(n.description, 300) } : {}),
           ...(photos.length ? { image: photos.slice(0, 6) } : {}),
           containedInPlace: { '@type': 'City', name: 'מודיעין' },
-          ...(rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(rating.average.toFixed(1)), ratingCount: rating.count, bestRating: 5, worstRating: 1 } } : {}),
+          // No aggregateRating: Google's review snippets do not accept a
+          // Place, and Search Console flagged this page (16 Oct). The stars
+          // stay on the page for visitors.
         },
         breadcrumb([[SITE_NAME, '/'], ['נדל״ן', '/search-apartments/'], [n.name, path]]),
       ]} />
