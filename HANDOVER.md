@@ -11,7 +11,7 @@
 | Admin panel (Flutter, `lib/features/admin/`) | https://panel.modiin4u.co.il — `/admin`, `/login`, `/panel` on www and the old sslip.io panel 301 there; noindex |
 | App links | https://app.modiin4u.co.il — the two app-link files only; every page 301s to www |
 | Server | 45.93.94.49 (Kamatera), nginx files in `deploy/`; TCP BBR since 14 Oct |
-| Deploy | site: `tool/deploy_site.sh --live`; nginx and certificates: `tool/enable_domain.sh <name>` |
+| Deploy | site: `tool/deploy_site.sh --live`; panel: `tool/deploy_web.sh` (no `AUTH_REDIRECT_URL`); nginx and certificates: `tool/enable_domain.sh <name>` |
 
 **Done around the launch (PLAN.md, 14–15 Oct entries):** WordPress
 checked against the new site item by item and fixed (992/992 old addresses
@@ -83,8 +83,15 @@ it is in git:
 
 ## How things run
 
-- **Deploy the web:** `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`
-  (`--build-only` to build without uploading). It compiles the Google Maps key
+- **Deploy the website:** `tool/deploy_site.sh --live` (the Next.js site).
+- **Deploy the panel:** `tool/deploy_web.sh`, with no `AUTH_REDIRECT_URL`
+  (since the launch; checked 21 Oct). The script's default,
+  `https://app.modiin4u.co.il/auth/callback`, is what the live panel uses;
+  the old `http://45.93.94.49/auth/callback` would send its sign-in and reset
+  links to the bare IP. Both scripts log in with `~/.ssh/modiin4u_deploy`;
+  without it, the server password (`KAMATERA_SERVER_PASSWORD` in `.env.local`)
+  works through `SSH_ASKPASS`, read from the file and never printed.
+  (`--build-only` to build without uploading.) It compiles the Google Maps key
   in from `.env.local`; without it the maps show pins but no map tiles
   (OpenStreetMap was removed on 1 Oct).
 - **Switch on the domain:** once `app` A → 45.93.94.49 exists at uPress, run

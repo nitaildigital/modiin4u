@@ -49,9 +49,14 @@ decision and why — when you make one, add it there in the same plain style.
 - Never run `certbot --nginx` on the server; use `tool/enable_domain.sh`.
 - Homebrew's `python3` has no Pillow — image scripts need
   `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3`.
-- Deploy (since 13 Oct, 45.93.94.49): the website is the Next.js site,
-  `tool/deploy_site.sh`; the panel is the Flutter build under `/panel/`,
-  `AUTH_REDIRECT_URL=http://45.93.94.49/auth/callback tool/deploy_web.sh`.
+- Deploy (since the launch, 14 Oct, server 45.93.94.49): the website is the
+  Next.js site, `tool/deploy_site.sh --live`; the panel is the Flutter build
+  at https://panel.modiin4u.co.il, plain `tool/deploy_web.sh`. Don't pass
+  `AUTH_REDIRECT_URL`: the script's default (`app.modiin4u.co.il`) is what
+  the live panel uses, and the old `http://45.93.94.49/...` breaks its
+  sign-in and reset links. Both scripts log in with `~/.ssh/modiin4u_deploy`;
+  without that key, the server password (`KAMATERA_SERVER_PASSWORD` in
+  `.env.local`) works through `SSH_ASKPASS` — never typed or printed.
 - Figma file `4mO5MlsuSDY2E0A7JFqqQx`: web page `0:1`, mobile page `412:6567`.
   Figma asset URLs expire after 7 days — download what you use.
 - With the Playwright MCP, open your own browser context for each check and
