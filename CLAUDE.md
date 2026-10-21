@@ -46,6 +46,11 @@ decision and why — when you make one, add it there in the same plain style.
   text measures as designed (`app_theme.dart`).
 - The web Maps key is referrer-restricted to the site's addresses; locally the
   maps show pins without map tiles. Never put it in a mobile build.
+- Since 30 Oct 2026 Supabase gives a new table in `public` no API access:
+  every migration that creates a table grants it to `anon` / `authenticated`
+  / `service_role` as the feature needs, or the app and the site get
+  "permission denied" whatever the RLS policies say. Migrations up to 00084
+  relied on the old automatic grants; those tables keep them.
 - Never run `certbot --nginx` on the server; use `tool/enable_domain.sh`.
 - Homebrew's `python3` has no Pillow — image scripts need
   `/Library/Frameworks/Python.framework/Versions/3.13/bin/python3`.
