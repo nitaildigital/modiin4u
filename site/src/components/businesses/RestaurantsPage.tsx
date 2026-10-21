@@ -268,8 +268,9 @@ export async function RestaurantsPage({ path }: { path: string }) {
           </section>
         )}
         {/* "View on Map", floating over the list above the bottom menu, as on
-            the events page. */}
-        <div className="pointer-events-none fixed inset-x-0 bottom-[92px] z-30 flex justify-center">
+            the events page — sticky, so it stops at the end of the list
+            instead of riding over the footer (21 Oct). */}
+        <div className="pointer-events-none sticky bottom-[92px] z-30 mt-4 mb-6 flex justify-center">
           <Link href="/restaurants-map/" className="pointer-events-auto flex h-10 items-center gap-1.5 rounded-[50px] bg-white px-4 text-sm font-medium text-navy shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
             <MapIcon size={16} color="currentColor" />{t('הצג במפה', 'View on Map')}
           </Link>

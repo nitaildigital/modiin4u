@@ -56,7 +56,10 @@ export function UrbanSteps({ lang, step }: { lang: Lang; step: Step }) {
   const go = (s: Step) => router.push(`/urban-profile/${s}/${q()}`);
 
   if (!ready || (session && me === undefined && !failed)) return <Card><p className="py-16 text-center text-sm text-[#6D6D6D]">{t('טוען…', 'Loading…')}</p></Card>;
-  if (!session) return <div className="wrap"><SignInFirst lang={lang} next={`/urban-profile/${step === 'start' ? '' : step + '/'}`} /></div>;
+  if (!session) return <div className="wrap"><SignInFirst lang={lang} next={`/urban-profile/${step === 'start' ? '' : step + '/'}`}
+    title={t('התחברו כדי למלא את הפרופיל העירוני', 'Sign in to fill in your Urban Profile')}
+    text={t('הפרופיל העירוני נשמר בחשבון שלכם.', 'Your Urban Profile is kept with your account.')}
+    icon={<User size={32} color="#123A72" />} /></div>;
   if (failed || !me) return <Card><p className="py-16 text-center text-sm text-[#6D6D6D]">{t('לא ניתן היה לטעון את הפרופיל.', 'Could not load your profile.')}</p></Card>;
   if (me.isBusiness) {
     return (

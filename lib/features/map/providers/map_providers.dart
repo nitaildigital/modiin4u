@@ -26,7 +26,9 @@ final parkingLotOfPoi = Expando<ParkingLot>('parkingLot');
 /// phone map's for now — see `parkingLayer`.
 final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
   final businesses = await ref.watch(businessesProvider.future);
-  final events = await ref.watch(eventsProvider.future);
+  // Only events still to come, as the events list shows them: every event
+  // put past ones on the map, as if they were on (found 21 Oct).
+  final events = await ref.watch(upcomingEventsProvider.future);
   // Empty today, because the client has not supplied property content yet.
   // The layer is wired anyway, so it fills the moment a listing exists rather
   // than needing this file changed again.

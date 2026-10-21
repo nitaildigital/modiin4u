@@ -29,14 +29,18 @@ export function listTime(iso: string, lang: Lang): string {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-/** What a signed-out visitor sees on the Messages pages. */
-export function SignInFirst({ lang, next }: { lang: Lang; next: string }) {
+/** What a signed-out visitor sees on the Messages pages. The Urban Profile
+ *  shares it with its own [title], [text] and [icon]: it showed the Messages
+ *  wording there (found 21 Oct). */
+export function SignInFirst({ lang, next, title, text, icon }: {
+  lang: Lang; next: string; title?: string; text?: string; icon?: React.ReactNode;
+}) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   return (
     <div className="flex flex-col items-center py-16 text-center">
-      <span className="flex size-[72px] items-center justify-center rounded-full bg-midblue/[0.08]"><Messages2 size={32} color="#123A72" /></span>
-      <p className="mt-5 text-lg font-semibold text-ink">{t('התחברו כדי לראות את ההודעות', 'Sign in to see your messages')}</p>
-      <p className="mt-2 max-w-sm text-sm text-[#6D6D6D]">{t('השיחות עם עסקים נשמרות בחשבון שלכם.', 'Conversations with businesses are kept with your account.')}</p>
+      <span className="flex size-[72px] items-center justify-center rounded-full bg-midblue/[0.08]">{icon ?? <Messages2 size={32} color="#123A72" />}</span>
+      <p className="mt-5 text-lg font-semibold text-ink">{title ?? t('התחברו כדי לראות את ההודעות', 'Sign in to see your messages')}</p>
+      <p className="mt-2 max-w-sm text-sm text-[#6D6D6D]">{text ?? t('השיחות עם עסקים נשמרות בחשבון שלכם.', 'Conversations with businesses are kept with your account.')}</p>
       <Link href={`/signin/?next=${encodeURIComponent(next)}`}
         className="mt-6 flex h-12 items-center rounded-full bg-midblue px-10 text-base font-medium text-white hover:bg-midblue/90">
         {t('התחברות', 'Sign in')}

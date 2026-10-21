@@ -4,6 +4,7 @@ import { href, plain } from '../seo';
 import { parkingLots, lotName } from './municipal';
 import { LAYER_LOOK, type CityPin } from './map-shared';
 import { searchFields } from '@/lib/search-text';
+import { upcomingEvents } from './events';
 
 export * from './map-shared';
 
@@ -63,7 +64,7 @@ async function businessKinds(lang: Lang): Promise<Record<string, string>> {
 
 export async function cityPins(lang: Lang): Promise<CityPin[]> {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
-  const [bizRes, longRes, evRes, lsRes, lots, kinds] = await Promise.all([
+  const [bizRes, longRes, evRes, lsRes, lots, kinds, soon] = await Promise.all([
     db.from('businesses')
       .select('id,slug,name,name_en,short_description,address,latitude,longitude,cover_url,og_image_url,rating,review_count,neighborhoods!businesses_neighborhood_id_fkey(name,name_en)')
       .eq('status', 'active').eq('kind', 'business').limit(5000),
@@ -78,7 +79,11 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
       .eq('status', 'active').order('is_featured', { ascending: false }).order('created_at', { ascending: false }).limit(100),
     parkingLots(),
     businessKinds(lang),
+    // Only events still to come, as the events page lists them: every
+    // published event put past ones on the map (found 21 Oct).
+    upcomingEvents(),
   ]);
+  const upcoming = new Set(soon.map((e) => e.id));
   const longText = new Map((longRes.data ?? []).map((r) => [r.id as string, plain(r.full_description as string | null)]));
   const pins: CityPin[] = [];
 
@@ -116,6 +121,7 @@ export async function cityPins(lang: Lang): Promise<CityPin[]> {
   }
 
   for (const e of (evRes.data ?? []) as Ev[]) {
+    if (!upcoming.has(e.id)) continue;
     const lat = Number(e.latitude ?? 0), lng = Number(e.longitude ?? 0);
     if (!lat || !lng) continue;
     const parts = (e.start_time ?? '').split(':');
