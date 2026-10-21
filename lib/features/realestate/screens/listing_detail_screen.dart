@@ -25,6 +25,7 @@ import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../core/supabase/supabase_config.dart';
 import '../../../shared/widgets/report_sheet.dart';
 import '../../../shared/share_text.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// One apartment listing.
 ///
@@ -78,13 +79,15 @@ class _MobileListingDetailContentState
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: async.when(
+      body: StatusBarScrim(
+        child: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => _notFound(l),
         data: (listing) {
           if (listing == null) return _notFound(l);
           return _content(l, listing);
         },
+      ),
       ),
     );
   }

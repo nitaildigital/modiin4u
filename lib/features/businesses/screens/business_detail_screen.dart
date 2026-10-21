@@ -40,6 +40,7 @@ import '../repositories/business_repository.dart' show BusinessNotFound;
 import '../../messages/open_conversation.dart';
 import '../../../shared/share_text.dart';
 import '../widgets/review_composer.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 class BusinessDetailScreen extends ConsumerWidget {
   final String businessId;
@@ -192,7 +193,8 @@ class _BusinessDetailContentState
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
+      body: StatusBarScrim(
+        child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -283,6 +285,7 @@ class _BusinessDetailContentState
             const SizedBox(height: 32),
           ],
         ),
+      ),
       ),
     );
   }

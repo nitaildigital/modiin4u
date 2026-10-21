@@ -17,6 +17,7 @@ import '../../businesses/repositories/business_stats.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/share_text.dart';
 import '../../../shared/widgets/report_sheet.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
@@ -101,7 +102,8 @@ class _MobileArticleContent extends ConsumerWidget {
             MArticleBottomBar(article: a, onShare: () => _share(context, a)),
         orElse: () => null,
       ),
-      body: article.when(
+      body: StatusBarScrim(
+        child: article.when(
         loading: () => const _ArticleSkeleton(),
         error: (error, _) => SafeArea(
           child: Column(
@@ -127,6 +129,7 @@ class _MobileArticleContent extends ConsumerWidget {
             child: _ArticleView(article: a, focusCommentId: focusCommentId),
           ),
         ),
+      ),
       ),
     );
   }

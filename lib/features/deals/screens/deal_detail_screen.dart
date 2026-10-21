@@ -26,6 +26,7 @@ import 'deal_voucher_screen.dart';
 import 'web_deal_detail_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/share_text.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// One deal.
 ///
@@ -71,12 +72,14 @@ class _MobileDealDetailContent extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: async.when(
+      body: StatusBarScrim(
+        child: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => _notFound(context, l),
         data: (offer) => offer == null
             ? _notFound(context, l)
             : _content(context, ref, l, offer),
+      ),
       ),
     );
   }

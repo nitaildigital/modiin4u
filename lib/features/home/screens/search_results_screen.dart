@@ -59,10 +59,13 @@ class SearchResultsScreen extends ConsumerWidget {
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, color: context.textPrimary),
                       ),
                     ),
-                    Text(
-                      L.of(context).resultsCount(results.valueOrNull?.length ?? 0),
-                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta),
-                    ),
+                    // The count once it is known: while the search ran it
+                    // read "0 results" over the loading rows (found 21 Oct).
+                    if (results.valueOrNull case final hits?)
+                      Text(
+                        L.of(context).resultsCount(hits.length),
+                        style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayMeta),
+                      ),
                   ],
                 ),
               ),

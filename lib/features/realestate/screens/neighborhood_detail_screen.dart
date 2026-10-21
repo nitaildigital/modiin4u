@@ -22,6 +22,7 @@ import '../providers/detail_providers.dart';
 import '../providers/neighborhood_providers.dart';
 import '../providers/neighborhood_rating_providers.dart';
 import 'web_neighborhood_detail_screen.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// The design's outline icons, kept with the website's copies.
 const _kAssets = 'assets/web/realestate';
@@ -52,7 +53,8 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
+      body: StatusBarScrim(
+        child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
           child: neighborhood.when(
@@ -69,6 +71,7 @@ class _MobileNeighborhoodDetailContent extends ConsumerWidget {
                 : _buildBody(context, ref, n),
           ),
         ),
+      ),
       ),
     );
   }
