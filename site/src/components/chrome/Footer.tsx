@@ -113,14 +113,13 @@ export async function Footer({ lang }: { lang: Lang }) {
       <a href={CONTACT.facebook} aria-label="Facebook" className="relative block size-[38px]"><img src="/icons/footer/ring38.svg" alt="" className="absolute inset-0" /><img src="/icons/footer/facebook_glyph.svg" alt="" className="absolute left-1/2 top-1/2 h-4 -translate-1/2" /></a>
       <a href={CONTACT.instagram} aria-label="Instagram"><img src="/icons/footer/instagram38.svg" alt="" width={38} height={38} /></a>
       <a href={CONTACT.tiktok} aria-label="TikTok" className="relative block size-[38px]"><img src="/icons/footer/ring38.svg" alt="" className="absolute inset-0" /><span className="absolute inset-0 flex items-center justify-center text-sm">♪</span></a>
-      <a href={`https://wa.me/${CONTACT.whatsapp}`} aria-label="WhatsApp"><img src="/icons/footer/whatsapp38.svg" alt="" width={38} height={38} /></a>
     </div>
   );
 
+  // The email only: the phone and WhatsApp rows (and the WhatsApp icon among
+  // the socials) carried a personal number, taken off on request (22 Oct).
   const contact: [string, string, string, string][] = [
-    ['/icons/footer/email40.svg', t('טלפון', 'Phone'), CONTACT.phone, `tel:${CONTACT.phone}`],
     ['/icons/footer/email40.svg', t('אימייל', 'Email'), CONTACT.email, `mailto:${CONTACT.email}`],
-    ['/icons/footer/whatsapp40.svg', t('וואטסאפ', 'WhatsApp'), CONTACT.phone, `https://wa.me/${CONTACT.whatsapp}`],
   ];
 
   return (
@@ -131,10 +130,10 @@ export async function Footer({ lang }: { lang: Lang }) {
         <div className="desk:hidden">
           <p className="text-2xl font-medium leading-[1.21]">{t('אנחנו כאן לכל שאלה.', 'We are here for any questions.')}</p>
           <ul className="mt-6 flex flex-col gap-4">
-            {contact.map(([icon, label, value, href], i) => (
+            {contact.map(([icon, label, value, href]) => (
               <li key={label}>
                 <a href={href} className="flex items-center gap-3">
-                  {i === 0 ? (
+                  {href.startsWith('tel:') ? (
                     <span className="relative block size-9 shrink-0">
                       <img src="/icons/footer/ring40.svg" alt="" className="absolute inset-0 size-full" />
                       <img src="/icons/footer/phone_glyph.svg" alt="" className="absolute left-1/2 top-1/2 size-[15px] -translate-1/2" />
@@ -172,10 +171,10 @@ export async function Footer({ lang }: { lang: Lang }) {
           <div className="w-[321px] max-w-full">
             <p className="text-[32px] font-medium leading-[1.21]">{t('אנחנו כאן לכל שאלה.', 'We are here for any questions.')}</p>
             <ul className="mt-10 flex flex-col gap-[34px]">
-              {contact.map(([icon, label, value, href], i) => (
+              {contact.map(([icon, label, value, href]) => (
                 <li key={label}>
                   <a href={href} className="flex items-center gap-4">
-                    {i === 0 ? (
+                    {href.startsWith('tel:') ? (
                       <span className="relative block size-10">
                         <img src="/icons/footer/ring40.svg" alt="" className="absolute inset-0" />
                         <img src="/icons/footer/phone_glyph.svg" alt="" className="absolute left-1/2 top-1/2 size-[17px] -translate-1/2" />
