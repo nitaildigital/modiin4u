@@ -46,6 +46,14 @@ if [ -z "$CERT" ]; then
     | sed -n 's/.*SHA1: //p' | head -1)
 fi
 
+# Where a sign-up or password e-mail sends the reader back: the website's
+# /auth/callback, which every mail app can open. The app's own default
+# (app.modiin4u.co.il) only redirects there since the launch, and is the
+# panel's web build's too, so the phone builds set it here. It is in
+# Supabase's redirect allow-list (LAUNCH_RUNBOOK.md).
+AUTH_REDIRECT="${AUTH_REDIRECT_URL:-https://www.modiin4u.co.il/auth/callback}"
+
 flutter build "$KIND" --"$MODE" \
   --dart-define=PLACES_ANDROID_KEY="$(get GOOGLE_PLACES_ANDROID_KEY)" \
-  --dart-define=PLACES_ANDROID_CERT="$CERT"
+  --dart-define=PLACES_ANDROID_CERT="$CERT" \
+  --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT"

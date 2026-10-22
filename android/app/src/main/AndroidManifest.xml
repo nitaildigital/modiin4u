@@ -86,18 +86,20 @@
 
             <!-- Step group invitations: https://<site>/join/<code> opens the
                  app straight on the join screen once Android has verified the
-                 site's /.well-known/assetlinks.json (served from
-                 web/.well-known). Two sites: the interim secure address the
-                 links use until app.modiin4u.co.il is live, and the domain.
-                 Where the app is not verified, the website's join page offers
-                 the scheme link below. -->
+                 site's /.well-known/assetlinks.json. Both hosts serve it with
+                 Play's signing key: www, the website since the launch (14 Oct),
+                 and app.modiin4u.co.il, which links shared before it still
+                 use. The interim sslip.io address is gone: it is being retired,
+                 and on older Android one host that fails verification stops
+                 every host here from opening the app. Where the app is not
+                 verified, the website's join page offers the scheme link below. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"/>
+                <data android:host="www.modiin4u.co.il"/>
                 <data android:host="app.modiin4u.co.il"/>
-                <data android:host="45-93-94-49.sslip.io"/>
                 <data android:pathPrefix="/join/"/>
             </intent-filter>
             <intent-filter>
@@ -110,12 +112,12 @@
             </intent-filter>
 
             <!-- Urban Profile links: https://www.modiin4u.co.il/u/<username>.
-                 Not auto-verified yet: www is the WordPress site until it
-                 moves to our server, and on older Android one host that
-                 fails verification would stop the /join/ links above from
-                 opening the app too. Until then Android asks which app
-                 opens it, or the website's /u/ page does. -->
-            <intent-filter>
+                 Verified since www moved to our server and serves
+                 assetlinks.json (the launch, 14 Oct): the link opens the
+                 profile in the app, as the invitation links do. Before that
+                 www was the WordPress site, and Android asked which app
+                 should open it. -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>

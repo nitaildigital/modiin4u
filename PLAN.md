@@ -5451,6 +5451,22 @@ Not done: a neighbourhood page still uses its name as alt for every photo (the
 site reads only the addresses), and single pictures (event, article, offer,
 cover) have no alt field — the site uses their title or name.
 
+### App links and sign-up links on www — 22 Oct (for build 7)
+
+Build 6 was already on Play, so these wait for build 7. Android's verified
+links now claim www as well as app.modiin4u.co.il for `/join/`, and `/u/`
+(Urban Profile) is verified too — it was left unverified on 9 Oct, when www
+was still WordPress and could not serve assetlinks.json. The interim sslip.io
+host is dropped: it is being retired, and on older Android one host that
+fails verification stops them all. Both hosts serve assetlinks.json with
+Play's key and the debug key. The phone build scripts now pass
+`AUTH_REDIRECT_URL=https://www.modiin4u.co.il/auth/callback` (in Supabase's
+allow-list); the code's default (app.modiin4u.co.il, which only redirects to
+www) stays, as the panel's web build shares it. Tested on an emulator: both
+hosts `verified`; a www `/u/` and a www `/join/` link opened the app with no
+chooser; `/news/` still opened the browser. iOS already lists www in its
+entitlements; its sslip.io entry is still there.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

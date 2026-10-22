@@ -119,9 +119,11 @@ computer only: `185.108.148.183  www.modiin4u.co.il modiin4u.co.il` in
       — done 14 Oct.
 - [ ] **App sign-up links:** `AUTH_REDIRECT_URL` for app builds →
       `https://www.modiin4u.co.il/auth/callback` (in the allow-list above).
+      — 22 Oct: `tool/build_android.sh` and `tool/build_ios.sh` pass it; in build 7.
 - [ ] **App links:** add www to `ios/Runner/Runner.entitlements` and
       `android/app/src/main/AndroidManifest.xml`; `apple-app-site-association`
       and `assetlinks.json` (with Play's signing certificate) served from www.
+      — 22 Oct: Android manifest ready for build 7 (www on `/join/` and a verified `/u/`, sslip.io dropped), tested on an emulator; iOS already lists www. Ticked when build 7 is live.
 - [x] **The panel** on its own https address. Since 13 Oct it is
       https://panel.45-93-94-49.sslip.io (`/panel`, `/admin`, `/login` on the
       main addresses 301 there); for panel.modiin4u.co.il copy its conf and

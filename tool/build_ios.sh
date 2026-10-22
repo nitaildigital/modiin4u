@@ -36,8 +36,12 @@ if [ -z "$KEY" ]; then
   exit 1
 fi
 
+# Sign-up and password e-mails send the reader to the website's
+# /auth/callback (see build_android.sh).
+AUTH_REDIRECT="${AUTH_REDIRECT_URL:-https://www.modiin4u.co.il/auth/callback}"
+
 if [ "${1:-}" = "--debug" ]; then
-  flutter build ios --debug --dart-define=PLACES_IOS_KEY="$KEY"
+  flutter build ios --debug --dart-define=PLACES_IOS_KEY="$KEY" --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT"
 else
-  flutter build ipa --release --dart-define=PLACES_IOS_KEY="$KEY"
+  flutter build ipa --release --dart-define=PLACES_IOS_KEY="$KEY" --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT"
 fi
