@@ -100,6 +100,10 @@ flutter_launcher_icons:
   # Adaptive icon (Android 8+) — foreground with padding on navy background
   adaptive_icon_foreground: "assets/images/app_icon.png"
   adaptive_icon_background: "#0A1230"
+  # The monochrome layer (themed icons, and Samsung's notification icon) is
+  # android/app/src/main/res/mipmap-*/ic_launcher_monochrome.png: the logo's
+  # white letters only. It was the whole foreground, an opaque square, which
+  # Android draws as a blank white square (23 Oct). Keep it when regenerating.
   # Remove alpha channel for iOS (App Store requirement)
   remove_alpha_ios: true
   # Web favicon
