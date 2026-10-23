@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/internal.dart' show ClipboardServiceProvider;
 import 'package:flutter_quill_delta_from_html/flutter_quill_delta_from_html.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
@@ -11,6 +12,7 @@ import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
+import 'pasted_html.dart';
 
 /// The panel's text editor for an article's (or page's) body: bold, italic,
 /// headings, lists, quotes, links and pictures placed inside the text.
@@ -68,6 +70,9 @@ class _AdminRichEditorState extends State<AdminRichEditor> {
     _controller = QuillController(
       document: _documentFrom(widget.initialHtml),
       selection: const TextSelection.collapsed(offset: 0),
+      config: QuillControllerConfig(
+        clipboardConfig: QuillClipboardConfig(onClipboardPaste: _pasteHtml),
+      ),
     );
     _source = TextEditingController(text: widget.initialHtml);
     _controller.addListener(_onEdit);
@@ -104,6 +109,30 @@ class _AdminRichEditorState extends State<AdminRichEditor> {
       return Document.fromDelta(delta);
     } catch (_) {
       return Document()..insert(0, text);
+    }
+  }
+
+  /// A paste that carries formatting (Google Docs, Word, a web page): its
+  /// HTML tidied first (cleanPastedHtml), so its headings, bold and italic
+  /// arrive as they were instead of one bold paragraph. Plain text, or a
+  /// browser that will not hand over the HTML, falls to the editor's own
+  /// paste (false).
+  Future<bool> _pasteHtml() async {
+    final html = await ClipboardServiceProvider.instance.getHtmlText();
+    if (html == null || html.trim().isEmpty) return false;
+    try {
+      final delta = HtmlToDelta().convert(cleanPastedHtml(html));
+      if (delta.isEmpty) return false;
+      final sel = _controller.selection;
+      _controller.replaceText(
+        sel.start,
+        sel.end - sel.start,
+        delta,
+        TextSelection.collapsed(offset: sel.start + delta.length),
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

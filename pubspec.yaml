@@ -73,6 +73,8 @@ dependencies:
   lottie: ^3.3.3
   flutter_quill: ^11.5.0
   flutter_quill_delta_from_html: ^1.5.3
+  # Pasted HTML is tidied before the editor reads it (pasted_html.dart).
+  html: ^0.15.7
   vsc_quill_delta_to_html: ^1.0.5
   # Picks a CV (PDF, DOC, DOCX) for job applications; image_picker takes
   # pictures only.
