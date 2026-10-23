@@ -98,11 +98,14 @@ export async function Footer({ lang }: { lang: Lang }) {
     'We are not just a news site – we are the beating heart of Modiin! A local media and public relations organization that lives and breathes our city. With a wide range of digital platforms, connected directly to residents, we bring you everything that really matters.');
   const badges = (
     <>
-      <a href={ios ?? undefined} className="flex h-10 w-[120px] items-center gap-2 rounded-md bg-white px-2 text-black">
+      {/* At least the badge's width, never a fixed one: in 120px "App Store"
+          wrapped onto two lines and, in Safari on an iPhone, out of the
+          white box (the client, 23 Oct). */}
+      <a href={ios ?? undefined} className="flex h-10 min-w-[120px] items-center gap-2 whitespace-nowrap rounded-md bg-white px-2.5 text-black">
         <img src="/icons/footer/apple.svg" alt="" width={20} height={24} />
         <span className="leading-none"><span className="block text-[9px] font-medium">Download on the</span><span className="block text-[17px] font-semibold tracking-tight">App Store</span></span>
       </a>
-      <a href={android ?? undefined} className="flex h-10 w-[120px] items-center gap-2 rounded-md bg-white px-2 text-black">
+      <a href={android ?? undefined} className="flex h-10 min-w-[120px] items-center gap-2 whitespace-nowrap rounded-md bg-white px-2.5 text-black">
         <img src="/icons/footer/playstore.svg" alt="" width={21} height={24} />
         <span className="leading-none"><span className="block text-[9px]">GET IT ON</span><img src="/icons/footer/google_play_word.svg" alt="Google Play" width={74} height={15} className="mt-1 -scale-y-100" /></span>
       </a>
