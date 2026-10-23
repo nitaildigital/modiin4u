@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Calendar, Eye } from 'iconsax-react';
+import { Calendar } from 'iconsax-react';
 import { getLang, tr } from '@/lib/i18n';
-import { slugParam, formatDate, formatTime } from '@/lib/params';
+import { slugParam, formatDate } from '@/lib/params';
 import { pageMetadata, h1For, plain, organization, breadcrumb, href, SITE_NAME, SUFFIX } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
 import { articleBySlug, articleComments, categoriesOf, categoryName, relatedArticles } from '@/lib/data/articles';
@@ -69,50 +69,30 @@ export default async function ArticlePage({ params }: Props) {
         breadcrumb([[SITE_NAME, '/'], ['חדשות', '/news/'], [a.title, path]]),
       ]} />
 
-      {/* The picture and the headline card. On a phone it is drawn as the
-          app's article page (article_screen.dart), as the client asked (23
-          Oct): the photo across the screen with the back button on it, the
-          category and the views on one line, the headline, the date and a
-          rule. The desktop keeps the card. One heading serves both, so the
-          page still has a single H1. */}
-      <div className="grid desk:grid-cols-2 desk:items-center desk:overflow-hidden desk:rounded-2xl">
+      {/* The picture and the headline card. */}
+      <div className="grid overflow-hidden rounded-2xl desk:grid-cols-2 desk:items-center">
         {/* What a phone paints first, so asked for at once and at the size it
             is drawn: the original here was up to a megabyte. A phone takes
             the 800 px copy — the 1200 one, all it was offered before, took
             PageSpeed's phone 6.8 s to show (15 Oct). The share tags and the
             structured data keep the original, which Google wants large. */}
-        {image && (
-          <div className="relative -mx-[clamp(16px,4.5vw,80px)] -mt-8 desk:m-0">
-            <img src={ownPhoto(image, 1200) ?? image} srcSet={ownPhotoSet(image, [800, 1200, 1600])}
-              sizes="(min-width: 1100px) 50vw, 100vw" alt={a.title} fetchPriority="high"
-              className="h-[260px] w-full object-cover desk:h-auto desk:max-h-[440px]" />
-            <Link href={href('/news/')} aria-label={t('חזרה לחדשות', 'Back to news')}
-              className="absolute start-4 top-4 flex size-11 items-center justify-center rounded-full bg-white text-ink shadow-[0_2px_8px_rgba(0,0,0,0.15)] desk:hidden">
-              <ArrowLeft size={22} color="currentColor" className="rtl:-scale-x-100" />
+        {image && <img src={ownPhoto(image, 1200) ?? image} srcSet={ownPhotoSet(image, [800, 1200, 1600])}
+          sizes="(min-width: 1100px) 50vw, 100vw" alt={a.title} fetchPriority="high"
+          className="aspect-[16/10] w-full object-cover desk:aspect-auto desk:max-h-[440px]" />}
+        <div className="bg-section p-5 desk:flex desk:min-h-[436px] desk:flex-col desk:justify-center desk:rounded-2xl desk:p-10">
+          {cat && (
+            <Link href={href(`/new/${cat.slug}/`)} className="mb-5 inline-block w-fit rounded-md bg-turquoise px-3 py-2 text-sm font-semibold text-white">
+              {categoryName(cat, lang)}
             </Link>
-          </div>
-        )}
-        <div className="pt-5 desk:flex desk:min-h-[436px] desk:flex-col desk:justify-center desk:rounded-2xl desk:bg-section desk:p-10">
-          <div className="mb-5 flex items-center gap-3">
-            {cat && (
-              <Link href={href(`/new/${cat.slug}/`)} className="inline-block w-fit rounded-md bg-turquoise px-3 py-2 text-sm font-semibold text-white">
-                {categoryName(cat, lang)}
-              </Link>
-            )}
-            <span className="ms-auto flex items-center gap-1.5 text-base text-ink desk:hidden" aria-label={t('צפיות', 'Views')}>
-              <Eye size={22} color="currentColor" />{(a.view_count ?? 0).toLocaleString()}
-            </span>
-          </div>
-          <h1 className="text-[26px] font-bold leading-snug text-ink desk:text-[34px] desk:font-medium">{h1For(path, a.title)}</h1>
+          )}
+          <h1 className="text-2xl font-medium leading-snug text-ink desk:text-[34px]">{h1For(path, a.title)}</h1>
           {a.subtitle && <p className="mt-3 text-base text-gray-text">{a.subtitle}</p>}
           {(a.published_at || a.credit?.trim()) && (
-            <p className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-2 text-base text-gray-meta desk:mt-6">
+            <p className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 text-base text-gray-meta">
               {a.published_at && (
                 <span className="flex items-center gap-2">
                   <Calendar size={18} color="currentColor" />
-                  {/* The app's "22 באוקטובר 2026 | 16:53" on a phone. */}
-                  <time dateTime={a.published_at} className="desk:hidden">{formatDate(a.published_at, lang)} | {formatTime(a.published_at, lang)}</time>
-                  <time dateTime={a.published_at} className="hidden desk:inline">{formatDate(a.published_at, lang, true)}</time>
+                  <time dateTime={a.published_at}>{formatDate(a.published_at, lang, true)}</time>
                 </span>
               )}
               {a.credit?.trim() && (
@@ -120,18 +100,15 @@ export default async function ArticlePage({ params }: Props) {
               )}
             </p>
           )}
-          <hr className="mt-5 border-line desk:hidden" />
         </div>
       </div>
 
-      <div className="mt-6 grid gap-12 desk:mt-8 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
+      <div className="mt-8 grid gap-12 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
         <div className="min-w-0">
-          <div className="hidden desk:block"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
+          <ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} />
           {/* The page's one H1 is the headline above: a heading the story's own
               text opens with an h1 is set as an h2. */}
-          <div className="prose-site desk:mt-8" dangerouslySetInnerHTML={{ __html: storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2')) }} />
-          {/* On a phone the share comes after the story, where the app has it. */}
-          <div className="mt-8 desk:hidden"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
+          <div className="prose-site mt-8" dangerouslySetInnerHTML={{ __html: storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2')) }} />
           {/* The campaign booked under the story; nothing when none is. */}
           {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} /></div>}
 

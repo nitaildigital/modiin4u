@@ -8,14 +8,6 @@ export function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 }
 
-/** The time on the clock in Modi'in, "16:53". */
-export function formatTime(iso: string | null | undefined, lang: 'he' | 'en'): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString(lang === 'he' ? 'he-IL' : 'en-GB', {
-    timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false,
-  });
-}
-
 /** "8 October 2026" / "8 באוקטובר 2026" in Israel's time. */
 export function formatDate(iso: string | null | undefined, lang: 'he' | 'en', withTime = false): string {
   if (!iso) return '';

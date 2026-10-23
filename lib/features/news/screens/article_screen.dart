@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/error_retry.dart';
@@ -17,7 +18,6 @@ import '../../businesses/repositories/business_stats.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/share_text.dart';
 import '../../../shared/widgets/report_sheet.dart';
-import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// News article detail – responsive wrapper.
 /// Desktop (> 1100px) renders the Modiin News Detail web layout;
@@ -102,34 +102,57 @@ class _MobileArticleContent extends ConsumerWidget {
             MArticleBottomBar(article: a, onShare: () => _share(context, a)),
         orElse: () => null,
       ),
-      body: StatusBarScrim(
-        child: article.when(
-        loading: () => const _ArticleSkeleton(),
-        error: (error, _) => SafeArea(
-          child: Column(
-            children: [
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: _CircleButton(onTap: () => context.back('/news')),
-                ),
+      // The back and report buttons sit in a bar of their own at the top, as
+      // the website's header does: the article starts with its card, not a
+      // photo under the status bar (the client, 23 Oct: the app's article
+      // should look like the website's).
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _CircleButton(onTap: () => context.back('/news')),
+                  if (article.valueOrNull case final a?)
+                    _CircleButton(
+                      icon: IconsaxPlusLinear.flag,
+                      onTap: () => showReportSheet(
+                        context,
+                        entityType: 'article',
+                        entityId: a.id,
+                        onHidden: () {
+                          if (context.mounted && context.canPop()) {
+                            context.pop();
+                          }
+                        },
+                      ),
+                    ),
+                ],
               ),
-              Expanded(
-                child: ErrorRetry(
+            ),
+            Expanded(
+              child: article.when(
+                loading: () => const _ArticleSkeleton(),
+                error: (error, _) => ErrorRetry(
                   onRetry: () => ref.invalidate(articleByIdProvider(articleId)),
                 ),
+                data: (a) => Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: _ArticleView(
+                      article: a,
+                      focusCommentId: focusCommentId,
+                      onShare: () => _share(context, a),
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        data: (a) => Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 430),
-            child: _ArticleView(article: a, focusCommentId: focusCommentId),
-          ),
-        ),
-      ),
       ),
     );
   }
@@ -159,8 +182,13 @@ class _MobileArticleContent extends ConsumerWidget {
 class _ArticleView extends ConsumerWidget {
   final Article article;
   final String? focusCommentId;
+  final VoidCallback onShare;
 
-  const _ArticleView({required this.article, this.focusCommentId});
+  const _ArticleView({
+    required this.article,
+    this.focusCommentId,
+    required this.onShare,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,10 +200,14 @@ class _ArticleView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Hero(article: article),
-          const SizedBox(height: 16),
-          _Header(article: article),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
+          _HeaderCard(article: article),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _ShareBox(article: article, onShare: onShare),
+          ),
+          const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: MArticleBody(article: article),
@@ -201,52 +233,193 @@ class _ArticleView extends ConsumerWidget {
 }
 
 // ═══════════════════════════════════════════════
-// Photo, 260 tall, with the white back button 12 in
+// The website's headline card (site/src/app/(site)/news/[slug]/page.tsx):
+// the photo at 16:10 with the grey block under it — category, headline,
+// date — rounded 16 together, 16 in from the sides.
 // ═══════════════════════════════════════════════
-class _Hero extends StatelessWidget {
+class _HeaderCard extends ConsumerWidget {
   final Article article;
 
-  const _Hero({required this.article});
+  const _HeaderCard({required this.article});
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 260,
-      width: double.infinity,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          NetworkPhoto(
-            url: article.imageUrl,
-            fit: BoxFit.cover,
-            icon: IconsaxPlusBold.note,
-            iconSize: 56,
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 7, 12, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final category =
+        (ref.watch(articleFilingProvider).valueOrNull ?? const {})[article.id];
+    final hasPhoto = (article.imageUrl ?? '').trim().isNotEmpty;
+    final he = mIsHebrew(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (hasPhoto)
+              AspectRatio(
+                aspectRatio: 16 / 10,
+                child: NetworkPhoto(
+                  url: article.imageUrl,
+                  fit: BoxFit.cover,
+                  icon: IconsaxPlusBold.note,
+                  iconSize: 56,
+                ),
+              ),
+            Container(
+              color: _kSection,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _CircleButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => context.back('/news'),
-                  ),
-                  _CircleButton(
-                    icon: IconsaxPlusLinear.flag,
-                    onTap: () => showReportSheet(
-                      context,
-                      entityType: 'article',
-                      entityId: article.id,
-                      onHidden: () {
-                        if (context.mounted && context.canPop()) {
-                          context.pop();
-                        }
-                      },
+                  if (category != null) ...[
+                    MNewsCategoryChip(
+                      label: category.name,
+                      onTap: () => context.go('/news/category/${category.id}'),
                     ),
+                    const SizedBox(height: 20),
+                  ],
+                  Text(
+                    article.title,
+                    textDirection: mArticleDirection(article.title),
+                    style: TextStyle(
+                      fontFamily: AppFonts.inter,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      height: 1.375,
+                      color: _kInk,
+                    ),
+                  ),
+                  if (article.subtitle != null &&
+                      article.subtitle!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      article.subtitle!,
+                      textDirection: mArticleDirection(article.subtitle!),
+                      style: TextStyle(
+                        fontFamily: AppFonts.inter,
+                        fontSize: 16,
+                        height: 1.5,
+                        color: kMNewsGrey500,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/web/news/meta_date.svg',
+                        width: 18,
+                        height: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          // "22 באוקטובר 2026 בשעה 16:53", as the website
+                          // prints it.
+                          mArticleDate(article.publishedAt, he)
+                              .replaceFirst(' | ', he ? ' בשעה ' : ' at '),
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 16,
+                            height: 1.2,
+                            color: _kGrayMeta,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════
+// The website's share box (site/src/components/ui/ShareBar.tsx): the views
+// and Share on one line, the four ways to pass the story on under them.
+// ═══════════════════════════════════════════════
+class _ShareBox extends StatelessWidget {
+  final Article article;
+  final VoidCallback onShare;
+
+  const _ShareBox({required this.article, required this.onShare});
+
+  @override
+  Widget build(BuildContext context) {
+    final he = mIsHebrew(context);
+    // The story's page on the site, as the website shares it.
+    final link =
+        mShareLink(article) ??
+        'https://www.modiin4u.co.il/news/${article.slug}/';
+    final u = Uri.encodeComponent(link);
+    final ti = Uri.encodeComponent(article.title);
+    final links = [
+      ('assets/web/news/share_facebook.svg', 'https://www.facebook.com/sharer/sharer.php?u=$u'),
+      ('assets/web/news/share_whatsapp.svg', 'https://wa.me/?text=$ti%20$u'),
+      ('assets/web/news/share_x.svg', 'https://twitter.com/intent/tweet?url=$u&text=$ti'),
+      ('assets/web/news/share_mail.svg', 'mailto:?subject=$ti&body=$u'),
+    ];
+    final label = TextStyle(fontFamily: AppFonts.inter, fontSize: 14, color: _kInk);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: _kCardBorder),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // A count only where the row has one, never "0", as on the site.
+              if (article.viewCount > 0) ...[
+                SvgPicture.asset('assets/web/news/stat_views.svg', width: 24, height: 24),
+                const SizedBox(width: 8),
+                Text('${article.viewCount}', style: label.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 6),
+                Text(he ? 'צפיות' : 'Views', style: label.copyWith(color: _kGrayMeta)),
+                const SizedBox(width: 24),
+              ],
+              GestureDetector(
+                onTap: onShare,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset('assets/web/news/stat_share.svg', width: 24, height: 24),
+                    const SizedBox(width: 8),
+                    Text(he ? 'שיתוף' : 'Share', style: label.copyWith(fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsetsDirectional.only(start: 24),
+            decoration: const BoxDecoration(
+              border: BorderDirectional(start: BorderSide(color: kMNewsBorder)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < links.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                      Uri.parse(links[i].$2),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: SvgPicture.asset(links[i].$1, width: 28, height: 28),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -254,6 +427,12 @@ class _Hero extends StatelessWidget {
     );
   }
 }
+
+// The website's colours for this page (site/src/app/globals.css).
+const _kSection = Color(0xFFF5F5F5);
+const _kInk = Color(0xFF0F161E);
+const _kGrayMeta = Color(0xFF6B7280);
+const _kCardBorder = Color(0xFFEAEAEA);
 
 class _CircleButton extends StatelessWidget {
   final IconData icon;
@@ -268,9 +447,12 @@ class _CircleButton extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
+          // On the white bar now, not over a photo: a rim, as the website's
+          // round header buttons have.
+          border: Border.all(color: kMNewsBorder),
         ),
         child: Center(
           child: Icon(icon, size: 20, color: Colors.black),
@@ -280,94 +462,7 @@ class _CircleButton extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════
-// Category and views, headline, date — 16 apart, a rule 20 under
-// ═══════════════════════════════════════════════
-class _Header extends ConsumerWidget {
-  final Article article;
-
-  const _Header({required this.article});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final category =
-        (ref.watch(articleFilingProvider).valueOrNull ?? const {})[article.id];
-    final hasTopRow = category != null || article.viewCount > 0;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.only(bottom: 20),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: kMNewsBorder)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (hasTopRow) ...[
-            Row(
-              children: [
-                if (category != null)
-                  MNewsCategoryChip(
-                    label: category.name,
-                    onTap: () => context.go('/news/category/${category.id}'),
-                  ),
-                const Spacer(),
-                // Only a counted row shows its views, as on the website.
-                if (article.viewCount > 0) ...[
-                  SvgPicture.asset(
-                    'assets/web/news/stat_views.svg',
-                    width: 20,
-                    height: 20,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${article.viewCount}',
-                    style: TextStyle(
-                      fontFamily: AppFonts.inter,
-                      fontSize: 14,
-                      height: 17 / 14,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
-          Text(
-            article.title,
-            textDirection: mArticleDirection(article.title),
-            style: TextStyle(
-              fontFamily: AppFonts.nunito,
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-              color: Colors.black,
-            ),
-          ),
-          if (article.subtitle != null &&
-              article.subtitle!.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              article.subtitle!,
-              textDirection: mArticleDirection(article.subtitle!),
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 16,
-                height: 1.5,
-                color: kMNewsGrey500,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          MNewsDateLine(date: article.publishedAt),
-        ],
-      ),
-    );
-  }
-}
-
-/// Placeholder for the article page: the 260px hero, then the header block
+/// Placeholder for the article page: the card's photo, then the header block
 /// and the first paragraphs, laid out where the real ones go.
 class _ArticleSkeleton extends StatelessWidget {
   const _ArticleSkeleton();
@@ -379,7 +474,11 @@ class _ArticleSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         children: [
-          const SkeletonBox(height: 260, radius: 0),
+          // The card's photo: 16:10 on a phone's width, 16 in, rounded.
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: SkeletonBox(height: 224, radius: 16),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
             child: Column(
