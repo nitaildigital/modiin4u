@@ -3,6 +3,7 @@ import { CONTACT } from '@/lib/config';
 import { tr, type Lang } from '@/lib/i18n';
 import { db } from '@/lib/supabase';
 import { getMenus } from '@/lib/menu';
+import { CookieSettingsLink } from './CookieConsent';
 
 /** A store link, only when the panel has given an https address. */
 function store(settings: Record<string, unknown>, k: string): string | null {
@@ -219,10 +220,12 @@ export async function Footer({ lang }: { lang: Lang }) {
 
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-white/15 py-4 text-center text-xs text-line desk:mt-16 desk:flex-row desk:flex-wrap desk:justify-between desk:border-0 desk:text-start desk:text-sm">
           <span>{t('כל הזכויות שמורות ל-modiin4u.co.il, 2026', 'All Rights Reserved to modiin4u.co.il, 2026')}</span>
-          <span className="flex gap-3">
+          <span className="flex flex-wrap justify-center gap-x-3 gap-y-1 whitespace-nowrap">
             <Link href="/terms/" className="hover:underline">{t('תנאי שימוש', 'Terms of Use')}</Link>|
             <Link href="/privacy/" className="hover:underline">{t('מדיניות פרטיות', 'Privacy Policy')}</Link>|
-            <Link href="/delete-account/" className="hover:underline">{t('מחיקת חשבון', 'Delete account')}</Link>
+            <Link href="/delete-account/" className="hover:underline">{t('מחיקת חשבון', 'Delete account')}</Link>|
+            {/* Where the cookie choice is opened again (CookieConsent). */}
+            <CookieSettingsLink label={t('הגדרות עוגיות', 'Cookie settings')} className="hover:underline" />
           </span>
         </div>
         <a href="https://personaai.me/" dir="ltr" className="flex justify-center gap-1 pb-4 text-xs text-white/60">

@@ -1,4 +1,5 @@
 import { browserDb } from '@/lib/supabase';
+import { currentConsent } from '@/lib/consent';
 
 /** What can be counted on a business page (00048, business_stats.dart). */
 export type BusinessStat = 'view' | 'call' | 'website' | 'whatsapp' | 'directions' | 'share' | 'instagram';
@@ -18,9 +19,15 @@ let visitor: string | null = null;
 let client: ReturnType<typeof browserDb> | null = null;
 
 /** A random id this browser made for itself, so the panel can tell ten
- *  visits from ten visitors. Nothing about the person. */
+ *  visits from ten visitors. Nothing about the person.
+ *
+ *  Kept in the browser only with the visitor's consent to analytics (the
+ *  cookie notice, lib/consent.ts). Without it the id lives in memory for
+ *  this visit only: the views and taps still count for the business, but
+ *  this browser is not recognised the next time it comes. */
 function visitorId(): string {
   if (visitor) return visitor;
+  if (!currentConsent()?.analytics) return (visitor = randomId());
   try {
     const raw = localStorage.getItem(KEY);
     const saved = raw ? (JSON.parse(raw) as unknown) : null;

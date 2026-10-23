@@ -4,12 +4,13 @@ import Script from 'next/script';
 import { Suspense } from 'react';
 import './globals.css';
 import { getLang } from '@/lib/i18n';
-import { SITE_URL } from '@/lib/config';
+import { SEO_LIVE, SITE_URL } from '@/lib/config';
 import { SITE_NAME } from '@/lib/seo';
 import { Footer } from '@/components/chrome/Footer';
 import { MobileTabBar } from '@/components/chrome/MobileTabBar';
 import { NavProgress } from '@/components/chrome/NavProgress';
 import { Analytics } from '@/components/chrome/Analytics';
+import { CookieConsent } from '@/components/chrome/CookieConsent';
 import { PushBoot } from '@/components/push/PushBoot';
 import { PushBanner } from '@/components/push/PushBanner';
 
@@ -39,16 +40,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <MobileTabBar lang={lang} />
         {/* It reads the query string, which needs a boundary of its own. */}
         <Suspense fallback={null}><NavProgress /></Suspense>
-        <Analytics />
+        <Analytics live={SEO_LIVE} />
+        <CookieConsent lang={lang} />
         <PushBoot lang={lang} />
         <PushBanner lang={lang} />
-        {/* The client's PersonaAI chat; the "Ask" buttons open it. */}
+        {/* The client's PersonaAI chat; the "Ask" buttons open it. Its script
+            is loaded by the first "Ask" (AskButton.tsx), not on every page: it
+            keeps visit details in the browser, which waits for the visitor to
+            ask (the cookie notice, 23 Oct). */}
         <Script id="personaai-config" strategy="afterInteractive">{`
           window.PersonaAI = { businessId: "25ea67c7-94cd-4771-8f71-1d530bc7b2a1", position: "bottom-right",
             primaryColor: "#5B21E6", showWelcomeBubble: false,
             offsetBottom: window.innerWidth < 1100 ? 92 : 20, offsetSide: 20 };
         `}</Script>
-        <Script src="https://personaai.me/widget.js" strategy="lazyOnload" />
       </body>
     </html>
   );
