@@ -36,6 +36,7 @@ import '../../favorites/widgets/favorite_button.dart';
 import '../../messages/data/messages.dart' show unreadMessagesProvider;
 import '../../auth/widgets/m_account_widgets.dart' show mTr;
 import '../../favorites/repositories/favorite_repository.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -124,7 +125,12 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
     // A ListView rather than a Column in a SingleChildScrollView, so sections
     // below the fold are built as they are reached instead of all at once.
-    return ListView(
+    // The white strip comes behind the status bar once the blue header has
+    // scrolled away: the sections ran under the clock (found 23 Oct). The
+    // header is the status bar and about 176 more.
+    return StatusBarScrim(
+      hero: topPadding + 176,
+      child: ListView(
       padding: EdgeInsets.zero,
       children: [
         // ── Gradient header ──
@@ -228,6 +234,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         const SizedBox(height: 32),
       ],
+      ),
     );
   }
 

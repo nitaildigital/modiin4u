@@ -16,6 +16,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/m_account_widgets.dart';
 import 'web_profile_screen.dart';
 import '../../urban_profile/widgets/urban_profile_section.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// Profile screen – blurred-photo header with avatar, name & badge, the
 /// person's details, the "Edit Profile" CTA and the ACCOUNT menu card.
@@ -257,7 +258,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           // The whole page scrolls as one — header, photo and name with the
           // rest. The header stood still while the content slid under it,
           // which the client found clunky (TestFlight, 9 Oct).
-          child: SingleChildScrollView(
+          // The white strip behind the status bar once the header has gone
+          // up past it: the account rows ran under the clock (found 23 Oct).
+          child: StatusBarScrim(
+            hero: 128 + topInset,
+            child: SingleChildScrollView(
             child: Stack(
               children: [
                 // ── Header: blurred photo under a 50% black veil ──
@@ -425,6 +430,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

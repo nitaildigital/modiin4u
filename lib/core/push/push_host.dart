@@ -124,7 +124,7 @@ class _PushHostState extends ConsumerState<PushHost> {
     // A win found while the splash was up waits for the first page.
     if (!kIsWeb) _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull);
     // Asked on the app's own pages — the tabs — not over sign-in or a form.
-    if (shellDestinations.contains(path)) _askOnHome();
+    if (_onTab) _askOnHome();
   }
 
   /// Once per launch, over onboarding: the app's own invitation, while the
@@ -154,9 +154,16 @@ class _PushHostState extends ConsumerState<PushHost> {
 
   /// On the home screen: the phone's question if it was never asked; if it
   /// was refused, once ever, a note on how to turn notifications back on.
+  ///
+  /// Asked again just before anything is shown: after sign-in the app passes
+  /// through home on its way to the Urban Profile's first step, and the note
+  /// came up over that form once the permission check had answered (found
+  /// 23 Oct). Not shown there, it is not counted as shown either, so it comes
+  /// on the next visit to a tab.
   Future<void> _askOnHome() async {
     if (kIsWeb || _sheetOpen) return;
     final status = await _push.permissionStatus();
+    if (!_onTab) return;
     if (status == AuthorizationStatus.notDetermined) {
       await _push.askOnce();
       return;
@@ -164,14 +171,23 @@ class _PushHostState extends ConsumerState<PushHost> {
     if (status != AuthorizationStatus.denied) return;
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_blockedNoteKey) == true) return;
-    await prefs.setBool(_blockedNoteKey, true);
     final context = appRouter.routerDelegate.navigatorKey.currentContext;
-    if (context == null || !context.mounted) return;
+    if (context == null || !context.mounted || !_onTab) return;
+    await prefs.setBool(_blockedNoteKey, true);
+    if (!context.mounted) return;
     _sheetOpen = true;
     final open = await showPushBlockedNote(context);
     _sheetOpen = false;
     if (open == true) await _push.openPhoneSettings();
   }
+
+  /// Whether the page on top is one of the app's tabs, not a page pushed
+  /// over them. The configuration's own address stays the tab's ("/") while a
+  /// page is pushed on top on a phone — the Urban Profile's steps reported
+  /// "/" — so the top page's own location is read instead.
+  bool get _onTab => shellDestinations.contains(
+    appRouter.routerDelegate.currentConfiguration.lastOrNull?.matchedLocation,
+  );
 
   void _openPending() {
     final link = _push.pendingLink.value;

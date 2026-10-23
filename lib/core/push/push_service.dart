@@ -251,9 +251,24 @@ class PushService {
   /// For a device that allowed notifications but has no token yet: Apple's
   /// part can arrive after the first attempt gave up, so coming back to the
   /// app tries again.
+  ///
+  /// The phone's answer is read again too: someone who turns notifications
+  /// on in the phone's settings comes back to the app allowed, and is
+  /// registered then — before, the device had been registered on its first
+  /// launch whatever the answer, so this was never needed.
   Future<void> retryIfMissing() async {
-    if (!_ready || _token != null || allowed.value != true) return;
-    await _fetchToken();
+    if (!_ready) return;
+    final wasAllowed = allowed.value == true;
+    try {
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      allowed.value = _granted(settings.authorizationStatus);
+    } catch (_) {}
+    if (allowed.value != true) return;
+    if (_token == null) {
+      await _fetchToken();
+    } else if (!wasAllowed) {
+      await _sync();
+    }
   }
 
   bool _fetching = false;
@@ -318,9 +333,15 @@ class PushService {
     _syncTimer = Timer(const Duration(milliseconds: 600), _sync);
   }
 
+  /// Registers this device, only once notifications are allowed. Firebase
+  /// hands out a token on a first launch, before anything has been asked;
+  /// registering it then (on the token, on sign-in, on a language change) put
+  /// every new phone on the list as "on" — counted in each send, though
+  /// nothing could be shown (found 23 Oct). Allowing registers it
+  /// (requestPermission → _fetchToken).
   Future<void> _sync() async {
     final token = _token;
-    if (token == null) return;
+    if (token == null || allowed.value != true) return;
     final s = _ref.read(pushSettingsProvider);
     final params = <String, dynamic>{
       'p_token': token,

@@ -66,7 +66,10 @@ final savedJobsProvider = FutureProvider.autoDispose<List<Job>>((ref) async {
     for (final k in keys)
       if (k.startsWith('${FavoriteKind.job.value}:')) k.split(':').last,
   ];
-  final jobs = await ref.watch(jobRepositoryProvider).fetchByIds(ids);
+  // A list of its own to sort: with nothing saved the repository answers with
+  // a const empty list, and sorting that in place threw — "Something went
+  // wrong" for everyone who had saved no job (found 23 Oct).
+  final jobs = List<Job>.of(await ref.watch(jobRepositoryProvider).fetchByIds(ids));
   // Still open first; a closed one stays until it is unsaved.
   jobs.sort((a, b) => (b.isLive ? 1 : 0).compareTo(a.isLive ? 1 : 0));
   return jobs;
