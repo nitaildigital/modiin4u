@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import io.flutter.embedding.android.FlutterFragmentActivity
 
 // A FlutterFragmentActivity because Health Connect's permission screen is
@@ -28,6 +29,12 @@ class MainActivity : FlutterFragmentActivity() {
         // engine keeps pacing at whatever it saw first.
         requestFastestRefreshRate()
         openPrivacyForHealthConnect(intent)
+        // Edge to edge on every Android version, not only 15 and later where
+        // the system enforces it for apps targeting SDK 35+ (Play Console,
+        // 26 Oct): the app draws under the status and navigation bars and
+        // keeps its content clear of them with Flutter's safe-area padding,
+        // so older phones now look the same as new ones.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         createNotificationChannel()
     }

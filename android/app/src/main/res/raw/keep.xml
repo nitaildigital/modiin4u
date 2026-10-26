@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resources named only at run time, kept from the resource shrinker:
+     the notification icon and colour, which push-dispatch names in each
+     message ("ic_stat_notification") and Firebase looks up by name. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_notification,@color/notification_tint,@mipmap/ic_launcher,@mipmap/ic_launcher_monochrome" />

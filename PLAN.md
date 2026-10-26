@@ -5467,6 +5467,24 @@ hosts `verified`; a www `/u/` and a www `/join/` link opened the app with no
 chooser; `/news/` still opened the browser. iOS already lists www in its
 entitlements; its sslip.io entry is still there.
 
+### Play Console's recommendations for build 6 — 26 Oct (in build 7)
+
+- **Edge-to-edge:** `enableEdgeToEdge()` in MainActivity, so Android 8–14
+  draw like 15+ (where targeting SDK 35+ enforces it). Checked on Android 14
+  and 16: headers under the status bar, tabs clear of the navigation bar.
+- **Deprecated window-colour APIs** (`setStatusBarColor` and the like): all
+  in the Flutter engine (FlutterActivity, PlatformPlugin) and Google Play
+  services, none in our code. They go when Flutter and Play services move
+  off them; nothing to change here.
+- **Bitmap downsampling:** from the file_picker plugin (`FileUtils`) and the
+  Chromium WebView support library, decoded with build 7's mapping file.
+  Third-party; left.
+- **R8:** `android.r8.optimizedResourceShrinking=true` (gradle.properties).
+  Resources named only at run time — the notification icon and colour that
+  push-dispatch names — are kept in `res/raw/keep.xml`. A release build
+  worked on a device (map, pins, businesses, articles). Android Gradle
+  Plugin 9 is not supported by Flutter 3.35; stays at 8.11.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
