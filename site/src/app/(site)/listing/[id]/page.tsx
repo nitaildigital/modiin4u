@@ -262,7 +262,7 @@ export default async function ListingPage({ params }: Props) {
                 {brokerSite && (
                   <a href={brokerSite} target="_blank" rel="noopener nofollow ugc"
                     className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[60px] border border-midblue text-sm font-medium text-midblue">
-                    <Global size={18} />
+                    <Global size={18} color="currentColor" />
                     {t('לאתר המתווך', "Visit broker's website")}
                   </a>
                 )}
