@@ -877,6 +877,20 @@ class LEn extends L {
   String get viaBroker => 'Via Broker';
 
   @override
+  String get brokerLink => 'Broker website link';
+
+  @override
+  String get brokerLinkNote =>
+      'Shown as a “Visit broker\'s website” button on every listing you publish';
+
+  @override
+  String get brokerLinkInvalid =>
+      'Enter a full web address, starting with https://';
+
+  @override
+  String get visitBrokerSite => 'Visit broker\'s website';
+
+  @override
   String get newBadge => 'New';
 
   @override

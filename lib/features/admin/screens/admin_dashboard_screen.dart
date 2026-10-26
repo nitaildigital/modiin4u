@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/models/user_model.dart' show normalizeBrokerUrl;
 import '../../auth/providers/auth_provider.dart';
 import '../providers/admin_businesses_provider.dart';
 import '../providers/admin_data_provider.dart';
@@ -1742,6 +1743,13 @@ void _showProfileDialog(
   final phoneC = TextEditingController(text: profile['phone'] as String? ?? '');
   var neighborhoodId = profile['neighborhood_id'] as String?;
   var isVerified = profile['is_verified'] == true;
+  // A broker's link (00085), which they enter in the app and which shows on
+  // every listing they publish; here so a wrong or unsuitable one can be
+  // corrected or cleared.
+  final isBroker = profile['is_broker'] == true;
+  final brokerUrlC = TextEditingController(
+    text: profile['broker_url'] as String? ?? '',
+  );
 
   showDialog(
     context: context,
@@ -1826,6 +1834,23 @@ void _showProfileDialog(
                       ),
                     ),
                   ),
+                  if (isBroker) ...[
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: brokerUrlC,
+                      keyboardType: TextInputType.url,
+                      textDirection: TextDirection.ltr,
+                      decoration: InputDecoration(
+                        labelText: tr('קישור לאתר המתווך', 'Broker website link'),
+                        helperText: tr(
+                          'מופיע ככפתור „לאתר המתווך” בכל מודעה שהמתווך מפרסם. ריק — אין כפתור.',
+                          'Shown as "Visit broker\'s website" on every listing they publish. Empty — no button.',
+                        ),
+                        helperMaxLines: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   _UrbanProfileFacts(profile: profile),
                 ],
               ),
@@ -1846,6 +1871,19 @@ void _showProfileDialog(
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(ctx);
                 final navigator = Navigator.of(ctx);
+                final brokerUrl = isBroker ? normalizeBrokerUrl(brokerUrlC.text) : null;
+                if (isBroker && brokerUrl == null) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.error,
+                      content: Text(tr(
+                        'קישור המתווך צריך להיות כתובת אתר מלאה, שמתחילה ב-https://',
+                        'The broker link must be a full web address, starting with https://',
+                      )),
+                    ),
+                  );
+                  return;
+                }
                 try {
                   await ref
                       .read(adminProfilesProvider.notifier)
@@ -1855,6 +1893,7 @@ void _showProfileDialog(
                         'phone': phoneC.text.trim(),
                         'neighborhood_id': neighborhoodId,
                         'is_verified': isVerified,
+                        if (isBroker) 'broker_url': brokerUrl!.isEmpty ? null : brokerUrl,
                       });
                   navigator.pop();
                   messenger.showSnackBar(

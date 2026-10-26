@@ -686,6 +686,10 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
     final phone = l.contactDisplayPhone;
     if (name == null && phone == null) return null;
     final isAgent = l.agentName != null;
+    // The broker's own link (00085), on every listing they publish.
+    final brokerLink = l.isBroker
+        ? ref.watch(listingBrokerLinkProvider(l.id)).valueOrNull
+        : null;
 
     return Container(
       width: 374,
@@ -753,6 +757,31 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
                   child: Text(
                     _t('Contact', 'צרו קשר'),
                     style: detailInter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (brokerLink != null) ...[
+            const SizedBox(height: 12),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  final uri = Uri.tryParse(brokerLink);
+                  if (uri != null) launchUrl(uri, webOnlyWindowName: '_blank');
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.midBlue),
+                    borderRadius: BorderRadius.circular(60),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    _t("Visit broker's website", 'לאתר המתווך'),
+                    style: detailInter(16, weight: FontWeight.w500, color: AppColors.midBlue, height: 1.5),
                   ),
                 ),
               ),

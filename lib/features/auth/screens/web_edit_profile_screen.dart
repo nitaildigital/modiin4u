@@ -13,6 +13,7 @@ import '../../../shared/providers/neighborhood_names_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
+import '../models/user_model.dart' show normalizeBrokerUrl;
 import '../providers/auth_provider.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 
@@ -57,6 +58,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  late TextEditingController _brokerUrlController;
 
   String? _selectedNeighborhood;
 
@@ -80,6 +82,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
+    _brokerUrlController = TextEditingController(text: user?.brokerUrl ?? '');
     _selectedNeighborhood = user?.neighborhood;
     _familyStatus = user?.familyStatus;
     _hasPet = user?.hasPet;
@@ -91,6 +94,7 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _brokerUrlController.dispose();
     super.dispose();
   }
 
@@ -194,6 +198,20 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
   /// lands rather than leaving on an unsaved change.
   Future<void> _save() async {
     if (_saving) return;
+    // Only a broker has the field; anyone else leaves their row as it is.
+    final isBroker = ref.read(authProvider)?.isBroker ?? false;
+    final brokerUrl = isBroker
+        ? normalizeBrokerUrl(_brokerUrlController.text)
+        : null;
+    if (isBroker && brokerUrl == null) {
+      _showError(
+        _t(
+          'Enter a full web address, starting with https://',
+          'יש להזין כתובת אתר מלאה, שמתחילה ב-https://',
+        ),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       final avatarUrl = await _uploadAvatar();
@@ -208,25 +226,25 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
             familyStatus: _familyStatus,
             hasPet: _hasPet,
             dateOfBirth: _dateOfBirth,
+            brokerUrl: brokerUrl,
           );
       if (mounted) _leave();
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _t('Could not save. Try again.', 'לא ניתן היה לשמור. נסו שוב.'),
-            style: TextStyle(fontFamily: AppFonts.inter),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      _showError(_t('Could not save. Try again.', 'לא ניתן היה לשמור. נסו שוב.'));
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.inter)),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   /// A browser tab opened straight on /edit-profile has nothing to pop back
@@ -489,6 +507,29 @@ class _WebEditProfileContentState extends ConsumerState<WebEditProfileContent>
               Expanded(child: _buildDateField()),
             ],
           ),
+          // The broker's link, shown on every listing they publish (00085).
+          // Brokers only.
+          if (ref.watch(authProvider)?.isBroker ?? false) ...[
+            const SizedBox(height: 20),
+            _buildTextField(
+              _t('Broker website link', 'קישור לאתר המתווך'),
+              _brokerUrlController,
+              placeholder: 'https://',
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _t(
+                'Shown as a “Visit broker\'s website” button on every listing you publish',
+                'יופיע ככפתור „לאתר המתווך” בכל מודעה שתפרסמו',
+              ),
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 12,
+                color: _kGreyText,
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
           Row(
             children: [

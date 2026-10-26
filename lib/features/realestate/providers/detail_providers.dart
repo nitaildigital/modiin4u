@@ -122,3 +122,16 @@ final listingAgentContactProvider =
         email: clean(row['email']),
       );
     });
+
+/// The link of the broker who published a listing — their office's website or
+/// page, entered in their Edit Profile — or null. Read through a database
+/// function (00085) because the profile itself is private: it hands out that
+/// one field, and only for a published listing a broker posted.
+final listingBrokerLinkProvider =
+    FutureProvider.family<String?, String>((ref, listingId) async {
+      final url = await SupabaseConfig.client.rpc(
+        'listing_broker_link',
+        params: {'p_listing': listingId},
+      );
+      return url is String && url.trim().isNotEmpty ? url.trim() : null;
+    });

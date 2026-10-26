@@ -355,6 +355,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       isVerifiedResident: row['is_verified'] as bool? ?? false,
       isBanned: row['is_banned'] as bool? ?? false,
       isBroker: row['is_broker'] as bool? ?? false,
+      brokerUrl: row['broker_url'] as String?,
       healthEnabled: row['health_enabled'] as bool? ?? false,
       familyStatus: row['family_status'] as String?,
       hasPet: row['has_pet'] as bool?,
@@ -386,6 +387,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     String? familyStatus,
     bool? hasPet,
     DateTime? dateOfBirth,
+    String? brokerUrl,
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
@@ -398,6 +400,8 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       'has_pet': ?hasPet,
       // A date column, so the time half of the timestamp is dropped.
       'date_of_birth': ?dateOfBirth?.toIso8601String().split('T').first,
+      // Empty clears the link; the database accepts only a web address.
+      if (brokerUrl != null) 'broker_url': brokerUrl.isEmpty ? null : brokerUrl,
     };
     if (patch.isNotEmpty) {
       await _client.from('profiles').update(patch).eq('id', user.id);
@@ -414,6 +418,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       familyStatus: familyStatus,
       hasPet: hasPet,
       dateOfBirth: dateOfBirth,
+      brokerUrl: brokerUrl,
     );
   }
 

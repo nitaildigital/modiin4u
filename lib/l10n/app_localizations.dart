@@ -1747,6 +1747,30 @@ abstract class L {
   /// **'באמצעות מתווך'**
   String get viaBroker;
 
+  /// No description provided for @brokerLink.
+  ///
+  /// In he, this message translates to:
+  /// **'קישור לאתר המתווך'**
+  String get brokerLink;
+
+  /// No description provided for @brokerLinkNote.
+  ///
+  /// In he, this message translates to:
+  /// **'יופיע ככפתור „לאתר המתווך” בכל מודעה שתפרסמו'**
+  String get brokerLinkNote;
+
+  /// No description provided for @brokerLinkInvalid.
+  ///
+  /// In he, this message translates to:
+  /// **'יש להזין כתובת אתר מלאה, שמתחילה ב-https://'**
+  String get brokerLinkInvalid;
+
+  /// No description provided for @visitBrokerSite.
+  ///
+  /// In he, this message translates to:
+  /// **'לאתר המתווך'**
+  String get visitBrokerSite;
+
   /// No description provided for @newBadge.
   ///
   /// In he, this message translates to:

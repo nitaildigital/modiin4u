@@ -37,6 +37,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  late TextEditingController _brokerUrlController;
   String? _selectedNeighborhood;
 
   /// Stored as the database key, not the label, so switching language does
@@ -57,6 +58,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
+    _brokerUrlController = TextEditingController(text: user?.brokerUrl ?? '');
     _selectedNeighborhood = user?.neighborhood;
     _familyStatus = user?.familyStatus;
     _hasPet = user?.hasPet;
@@ -77,6 +79,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _brokerUrlController.dispose();
     super.dispose();
   }
 
@@ -144,6 +147,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   /// write lands rather than closing on an unsaved change.
   Future<void> _save() async {
     if (_saving) return;
+    // Only a broker has the field; anyone else leaves their row as it is.
+    final isBroker = ref.read(authProvider)?.isBroker ?? false;
+    final brokerUrl = isBroker
+        ? normalizeBrokerUrl(_brokerUrlController.text)
+        : null;
+    if (isBroker && brokerUrl == null) {
+      _showError(L.of(context).brokerLinkInvalid);
+      return;
+    }
     setState(() => _saving = true);
     try {
       final avatarUrl = await _uploadAvatar();
@@ -158,25 +170,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             familyStatus: _familyStatus,
             hasPet: _hasPet,
             dateOfBirth: _dateOfBirth,
+            brokerUrl: brokerUrl,
           );
       if (mounted) context.back('/');
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            L.of(context).errCouldNotSave,
-            style: TextStyle(fontFamily: AppFonts.rubik),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      _showError(L.of(context).errCouldNotSave);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontFamily: AppFonts.rubik)),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 
   @override
@@ -394,7 +406,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     '${l.monthShort(_dateOfBirth!.month)} '
                                     '${_dateOfBirth!.year}',
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
+
+                        // The broker's link, shown on every listing they
+                        // publish (00085). Brokers only.
+                        if (user.isBroker) ...[
+                          _buildTextField(
+                            l.brokerLink,
+                            _brokerUrlController,
+                            placeholder: 'https://',
+                            keyboardType: TextInputType.url,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            l.brokerLinkNote,
+                            style: TextStyle(
+                              fontFamily: AppFonts.inter,
+                              fontSize: 12,
+                              color: const Color(0xFF6D6D6D),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        const SizedBox(height: 12),
 
                         // ═══════════════════════════════════
                         // Save button

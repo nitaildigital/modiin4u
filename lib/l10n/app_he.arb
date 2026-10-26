@@ -345,6 +345,10 @@
   "whereYoullBe": "איפה זה נמצא",
   "propertyLabel": "נדל״ן",
   "viaBroker": "באמצעות מתווך",
+  "brokerLink": "קישור לאתר המתווך",
+  "brokerLinkNote": "יופיע ככפתור „לאתר המתווך” בכל מודעה שתפרסמו",
+  "brokerLinkInvalid": "יש להזין כתובת אתר מלאה, שמתחילה ב-https://",
+  "visitBrokerSite": "לאתר המתווך",
   "newBadge": "חדש",
   "floorLabel": "{n, select, 0{קומת קרקע} other{קומה {n}}}",
   "@floorLabel": {

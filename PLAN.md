@@ -5485,6 +5485,25 @@ entitlements; its sslip.io entry is still there.
   worked on a device (map, pins, businesses, articles). Android Gradle
   Plugin 9 is not supported by Flutter 3.35; stays at 8.11.
 
+### A broker's link on every listing they publish — 26 Oct (00085)
+
+The client: a broker adds a link once, and it appears on every property page
+they publish. Harshit's answers: the broker enters it, and it reads "Visit
+broker's website" (לאתר המתווך). It is kept on the broker's profile
+(`profiles.broker_url`), not on each listing, so changing it changes every
+listing at once. Brokers are app accounts (`profiles.is_broker`), so the
+field is in the app's Edit Profile, for brokers only; a bare `www.…` gets
+`https://`, anything that is not a web address is refused there and by the
+column's check (http/https, 300 characters). Profiles are private, so the app
+and the site read the link through `listing_broker_link()`, which returns
+only that field, and only for an active listing marked as a broker's whose
+owner is still a broker and not blocked. The panel's Edit user shows the link
+for a broker and can correct or clear it. The button sits under Contact on
+the app's and the site's listing pages; on the site it opens in a new tab,
+`rel="nofollow ugc"`, since the address is the broker's, not ours. A listing
+the panel enters for an agent (`real_estate_agents`) has no link: those
+agents have no account.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

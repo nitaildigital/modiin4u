@@ -865,6 +865,18 @@ class LHe extends L {
   String get viaBroker => 'באמצעות מתווך';
 
   @override
+  String get brokerLink => 'קישור לאתר המתווך';
+
+  @override
+  String get brokerLinkNote => 'יופיע ככפתור „לאתר המתווך” בכל מודעה שתפרסמו';
+
+  @override
+  String get brokerLinkInvalid => 'יש להזין כתובת אתר מלאה, שמתחילה ב-https://';
+
+  @override
+  String get visitBrokerSite => 'לאתר המתווך';
+
+  @override
   String get newBadge => 'חדש';
 
   @override

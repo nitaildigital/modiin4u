@@ -18,6 +18,11 @@ class UserModel {
   /// apartment listings; a resident sees neither.
   final bool isBroker;
 
+  /// A broker's own link — the office's website or page — which shows as
+  /// "Visit broker's website" on every listing they publish. Null when they
+  /// have not given one.
+  final String? brokerUrl;
+
   /// The health-data switch in Settings. It decides whether this person's
   /// steps are counted into the public leaderboards, so the Steps screen
   /// reads it to explain why they are not listed.
@@ -47,6 +52,7 @@ class UserModel {
     this.isVerifiedResident = false,
     this.isBanned = false,
     this.isBroker = false,
+    this.brokerUrl,
     this.healthEnabled = false,
     this.familyStatus,
     this.hasPet,
@@ -70,6 +76,7 @@ class UserModel {
     bool? isVerifiedResident,
     bool? isBanned,
     bool? isBroker,
+    String? brokerUrl,
     bool? healthEnabled,
     String? familyStatus,
     bool? hasPet,
@@ -92,6 +99,8 @@ class UserModel {
       isVerifiedResident: isVerifiedResident ?? this.isVerifiedResident,
       isBanned: isBanned ?? this.isBanned,
       isBroker: isBroker ?? this.isBroker,
+      // An empty link is the broker removing theirs.
+      brokerUrl: brokerUrl == null ? this.brokerUrl : (brokerUrl.isEmpty ? null : brokerUrl),
       healthEnabled: healthEnabled ?? this.healthEnabled,
       familyStatus: familyStatus ?? this.familyStatus,
       hasPet: hasPet ?? this.hasPet,
@@ -117,4 +126,22 @@ class UserModel {
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}';
     return name.isNotEmpty ? name[0] : '?';
   }
+}
+
+/// The broker's link as typed, made into what is saved: '' for none, the
+/// address with `https://` added when they typed only `www.…`, or null when
+/// it is not a web address. The database refuses anything but http(s), up
+/// to 300 characters (migration 00085), so the screen says so first.
+String? normalizeBrokerUrl(String input) {
+  final text = input.trim();
+  if (text.isEmpty) return '';
+  final withScheme = RegExp(r'^https?://', caseSensitive: false).hasMatch(text) ? text : 'https://$text';
+  final uri = Uri.tryParse(withScheme);
+  final ok = uri != null &&
+      withScheme.length <= 300 &&
+      !RegExp(r'\s').hasMatch(withScheme) &&
+      uri.host.contains('.') &&
+      !uri.host.startsWith('.') &&
+      !uri.host.endsWith('.');
+  return ok ? withScheme : null;
 }

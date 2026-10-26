@@ -96,6 +96,21 @@ export async function agentContact(agentId: string | null): Promise<AgentContact
   return { phone: clean(data.phone), whatsapp: clean(data.whatsapp), email: clean(data.email) };
 }
 
+/** The link of the broker who published the listing — their office's site or
+ *  page, entered in the app's Edit Profile — or null (listingBrokerLinkProvider).
+ *  A database function hands out that one field of the private profile, only
+ *  for a published listing a broker posted (00085). Without it the page only
+ *  loses a button, so a failed read is not the page's failure. */
+export async function brokerLink(l: { id: string; is_broker: boolean | null }): Promise<string | null> {
+  if (!l.is_broker) return null;
+  try {
+    const { data } = await db.rpc('listing_broker_link', { p_listing: l.id });
+    return typeof data === 'string' && /^https?:\/\/\S+$/i.test(data.trim()) ? data.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Neighbourhoods ───
 
 export type Neighborhood = { id: string; name: string; name_en: string | null; slug: string | null; description: string | null; image_url: string | null };

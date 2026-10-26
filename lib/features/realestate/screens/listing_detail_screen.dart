@@ -506,7 +506,18 @@ class _MobileListingDetailContentState
   Widget _buildAgentSection(L l, Listing listing) {
     final name = listing.contactDisplayName;
     final phone = listing.contactDisplayPhone;
-    if (name == null && phone == null) return const SizedBox.shrink();
+    // The broker's own link (00085), on every listing they publish.
+    final brokerLink = listing.isBroker
+        ? ref.watch(listingBrokerLinkProvider(listing.id)).valueOrNull
+        : null;
+    if (name == null && phone == null) {
+      return brokerLink == null
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+              child: _brokerLinkButton(l, brokerLink),
+            );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
@@ -593,7 +604,49 @@ class _MobileListingDetailContentState
               ],
             ),
           ),
+          if (brokerLink != null) ...[
+            const SizedBox(height: 12),
+            _brokerLinkButton(l, brokerLink),
+          ],
         ],
+      ),
+    );
+  }
+
+  /// "Visit broker's website", opened in the browser.
+  Widget _brokerLinkButton(L l, String link) {
+    return GestureDetector(
+      onTap: () {
+        final uri = Uri.tryParse(link);
+        if (uri != null) launchUrl(uri, mode: LaunchMode.externalApplication);
+      },
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFF123A72)),
+          borderRadius: BorderRadius.circular(60),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              IconsaxPlusLinear.global,
+              size: 18,
+              color: Color(0xFF123A72),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l.visitBrokerSite,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF123A72),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

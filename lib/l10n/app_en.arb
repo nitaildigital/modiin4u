@@ -345,6 +345,10 @@
   "whereYoullBe": "Where You'll Be",
   "propertyLabel": "Property",
   "viaBroker": "Via Broker",
+  "brokerLink": "Broker website link",
+  "brokerLinkNote": "Shown as a “Visit broker's website” button on every listing you publish",
+  "brokerLinkInvalid": "Enter a full web address, starting with https://",
+  "visitBrokerSite": "Visit broker's website",
   "newBadge": "New",
   "floorLabel": "{n, select, 0{Ground Floor} other{Floor {n}}}",
   "@floorLabel": {

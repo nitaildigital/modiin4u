@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft2, Box1, Brush2, Export, HomeHashtag, Location, Map1, Profile2User, User } from 'iconsax-react';
+import { ArrowLeft2, Box1, Brush2, Export, Global, HomeHashtag, Location, Map1, Profile2User, User } from 'iconsax-react';
 import { getLang, tr } from '@/lib/i18n';
 import { breadcrumb, href, organization, pageMetadata, plain, SITE_NAME, SUFFIX, h1For } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
-import { agentContact, hoodBusinesses, listingById, nearbyListings } from '@/lib/data/realestate';
+import { agentContact, brokerLink, hoodBusinesses, listingById, nearbyListings } from '@/lib/data/realestate';
 import { JsonLd } from '@/components/JsonLd';
 import { MapView } from '@/components/map/MapView';
 import { ListingCard } from '@/components/realestate/ListingCard';
@@ -49,9 +49,10 @@ export default async function ListingPage({ params }: Props) {
   const t = tr(lang);
   const path = `/listing/${l.id}/`;
   const hood = hoodName(l, lang);
-  const [nearby, agent, businesses] = await Promise.all([
+  const [nearby, agent, brokerSite, businesses] = await Promise.all([
     nearbyListings(l),
     agentContact(l.agent_id),
+    brokerLink(l),
     l.neighborhood_id && hood ? hoodBusinesses(l.neighborhood_id, lang) : Promise.resolve([]),
   ]);
 
@@ -229,6 +230,12 @@ export default async function ListingPage({ params }: Props) {
                       className="flex h-11 w-full items-center justify-center rounded-[60px] bg-midblue text-base font-medium text-white hover:bg-midblue/90" />
                   </div>
                 )}
+                {brokerSite && (
+                  <a href={brokerSite} target="_blank" rel="noopener nofollow ugc"
+                    className="mt-3 flex h-11 w-full items-center justify-center rounded-[60px] border border-midblue text-base font-medium text-midblue hover:bg-midblue/5">
+                    {t('לאתר המתווך', "Visit broker's website")}
+                  </a>
+                )}
                 <div className="mt-3">
                   <ShareMenu url={url} title={l.title} lang={lang} label={t('שיתוף', 'Share')} place="match"
                     className="flex h-11 w-full items-center justify-center rounded-[60px] border border-midblue text-base font-medium text-midblue hover:bg-midblue/5" />
@@ -251,6 +258,14 @@ export default async function ListingPage({ params }: Props) {
                       className="flex h-[37px] shrink-0 items-center rounded-[60px] bg-midblue px-[18px] text-sm font-medium text-white" />
                   )}
                 </div>
+                {/* The broker's own link (00085), on every listing they publish. */}
+                {brokerSite && (
+                  <a href={brokerSite} target="_blank" rel="noopener nofollow ugc"
+                    className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[60px] border border-midblue text-sm font-medium text-midblue">
+                    <Global size={18} />
+                    {t('לאתר המתווך', "Visit broker's website")}
+                  </a>
+                )}
               </section>
             )}
 
