@@ -41,11 +41,11 @@ function yesterday(): string {
 }
 
 /** Every page search engines should know: each article, business, park,
- *  coming event, open job, neighbourhood and category from the database, the
- *  sections, and every address the WordPress site had. One entry per
- *  address. */
+ *  coming event, open job, listing, neighbourhood and category from the
+ *  database, the sections, and every address the WordPress site had. One
+ *  entry per address. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [arts, biz, evs, hoods, cats, used, moved, jobs] = await Promise.all([
+  const [arts, biz, evs, hoods, cats, used, moved, jobs, listings] = await Promise.all([
     allRows((a, b) => db.from('articles').select('slug, updated_at, published_at, noindex').eq('status', 'published').order('id').range(a, b)),
     allRows((a, b) => db.from('businesses').select('slug, updated_at, noindex').eq('status', 'active').order('id').range(a, b)),
     // Events still to come (or undated), from yesterday in Israel so one
@@ -59,6 +59,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Open jobs (13 Oct): Google lists jobs from their JobPosting data.
     db.from('jobs').select('id, updated_at').eq('status', 'active')
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
+    // Published apartments (28 Oct): Google otherwise reaches them only
+    // through links. One that sells or expires leaves 'active' and the list.
+    allRows((a, b) => db.from('listings').select('id, updated_at').eq('status', 'active').order('id').range(a, b)),
   ]);
   const out = new Map<string, string | undefined>();
   // The sections, but not one WordPress kept out of Google (the apartment
@@ -72,6 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const e of evs) if (!e.noindex) out.set(`/event/${e.id}/`, e.updated_at);
   for (const n of hoods.data ?? []) out.set(`/neighborhood/${n.id}/`, n.updated_at);
   for (const j of jobs.data ?? []) out.set(`/jobs/${j.id}/`, j.updated_at);
+  for (const l of listings) out.set(`/listing/${l.id}/`, l.updated_at);
   for (const c of cats.data ?? []) if (c.slug && used.has(c.id)) out.set(c.scope === 'business' ? categoryPath(c.slug) : `/new/${c.slug}/`, c.updated_at);
   for (const p of wpPaths()) if (!out.has(p)) out.set(p, undefined);
   // An address WordPress redirects is redirected here too: not listed.
