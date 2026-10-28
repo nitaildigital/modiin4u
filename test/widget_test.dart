@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:modiin4u/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'offline_supabase.dart';
+
 void main() {
+  setUpAll(setUpOfflineSupabase);
+
   testWidgets('App launches and leaves the splash screen', (tester) async {
     SharedPreferences.setMockInitialValues({'has_seen_onboarding': false});
 

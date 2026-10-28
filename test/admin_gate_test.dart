@@ -5,9 +5,13 @@ import 'package:modiin4u/features/admin/widgets/admin_gate.dart';
 import 'package:modiin4u/features/auth/models/user_model.dart';
 import 'package:modiin4u/features/auth/providers/auth_provider.dart';
 
+import 'offline_supabase.dart';
+
 /// The admin area is a security boundary that cannot be exercised on a device
 /// until sign-in works end to end, so it is pinned here instead.
 void main() {
+  setUpAll(setUpOfflineSupabase);
+
   const marker = Text('CONTROL CENTER', textDirection: TextDirection.ltr);
 
   UserModel person({required bool isAdmin}) => UserModel(
