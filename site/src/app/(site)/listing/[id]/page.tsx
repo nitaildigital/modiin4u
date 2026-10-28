@@ -212,27 +212,32 @@ export default async function ListingPage({ params }: Props) {
               </div>
             )}
 
-            {/* Whom to call (desktop card) */}
-            {(name || phone) && (
+            {/* Whom to call (desktop card). The broker's link (00085) shows
+                even on a listing with no contact, as the app shows it. */}
+            {(name || phone || brokerSite) && (
               <aside className="hidden rounded-xl border border-line bg-white p-4 desk:col-start-3 desk:row-span-6 desk:row-start-1 desk:mt-1.5 desk:block">
-                <p className="text-lg font-semibold leading-[22px] text-navy">{t('צרו קשר לגבי הנכס', 'Contact This Property')}</p>
-                {isAgent && <p className="mt-2 text-sm text-[#3D3D3D]">{t('דברו עם מומחה הנדל״ן שלנו', 'Get in touch with our real estate expert')}</p>}
-                <div className="mt-[25px] flex items-center gap-3">
-                  <AgentPhoto url={l.real_estate_agents?.photo_url ?? null} size={56} />
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-semibold">{name ?? phone}</p>
-                    {l.real_estate_agents?.agency && <p className="mt-2 truncate text-xs text-[#6D6D6D]">{l.real_estate_agents.agency}</p>}
-                  </div>
-                </div>
-                {(phone || l.agent_id) && reach.length > 0 && (
-                  <div className="mt-[26px]">
-                    <ContactMenu options={reach} label={t('צרו קשר', 'Contact')} place="match"
-                      className="flex h-11 w-full items-center justify-center rounded-[60px] bg-midblue text-base font-medium text-white hover:bg-midblue/90" />
-                  </div>
+                {(name || phone) && (
+                  <>
+                    <p className="text-lg font-semibold leading-[22px] text-navy">{t('צרו קשר לגבי הנכס', 'Contact This Property')}</p>
+                    {isAgent && <p className="mt-2 text-sm text-[#3D3D3D]">{t('דברו עם מומחה הנדל״ן שלנו', 'Get in touch with our real estate expert')}</p>}
+                    <div className="mt-[25px] flex items-center gap-3">
+                      <AgentPhoto url={l.real_estate_agents?.photo_url ?? null} size={56} />
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold">{name ?? phone}</p>
+                        {l.real_estate_agents?.agency && <p className="mt-2 truncate text-xs text-[#6D6D6D]">{l.real_estate_agents.agency}</p>}
+                      </div>
+                    </div>
+                    {(phone || l.agent_id) && reach.length > 0 && (
+                      <div className="mt-[26px]">
+                        <ContactMenu options={reach} label={t('צרו קשר', 'Contact')} place="match"
+                          className="flex h-11 w-full items-center justify-center rounded-[60px] bg-midblue text-base font-medium text-white hover:bg-midblue/90" />
+                      </div>
+                    )}
+                  </>
                 )}
                 {brokerSite && (
                   <a href={brokerSite} target="_blank" rel="noopener nofollow ugc"
-                    className="mt-3 flex h-11 w-full items-center justify-center rounded-[60px] border border-midblue text-base font-medium text-midblue hover:bg-midblue/5">
+                    className={`${name || phone ? 'mt-3 ' : ''}flex h-11 w-full items-center justify-center rounded-[60px] border border-midblue text-base font-medium text-midblue hover:bg-midblue/5`}>
                     {t('לאתר המתווך', "Visit broker's website")}
                   </a>
                 )}
@@ -244,21 +249,26 @@ export default async function ListingPage({ params }: Props) {
             )}
 
             {/* Whom to call (phone) */}
-            {(name || phone) && (
+            {(name || phone || brokerSite) && (
               <section className="mt-6 desk:hidden">
-                <h2 className={heading}>{t('איש קשר', 'Contact person')}</h2>
-                <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#F6F6F6] p-3">
-                  <AgentPhoto url={l.real_estate_agents?.photo_url ?? null} size={40} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-black">{name ?? phone}</p>
-                    {l.real_estate_agents?.agency && <p className="mt-1 truncate text-xs text-[#6D6D6D]">{l.real_estate_agents.agency}</p>}
-                  </div>
-                  {(phone || l.agent_id) && reach.length > 0 && (
-                    <ContactMenu options={reach} direct label={t('צור קשר', 'Contact')}
-                      className="flex h-[37px] shrink-0 items-center rounded-[60px] bg-midblue px-[18px] text-sm font-medium text-white" />
-                  )}
-                </div>
-                {/* The broker's own link (00085), on every listing they publish. */}
+                {(name || phone) && (
+                  <>
+                    <h2 className={heading}>{t('איש קשר', 'Contact person')}</h2>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#F6F6F6] p-3">
+                      <AgentPhoto url={l.real_estate_agents?.photo_url ?? null} size={40} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-black">{name ?? phone}</p>
+                        {l.real_estate_agents?.agency && <p className="mt-1 truncate text-xs text-[#6D6D6D]">{l.real_estate_agents.agency}</p>}
+                      </div>
+                      {(phone || l.agent_id) && reach.length > 0 && (
+                        <ContactMenu options={reach} direct label={t('צור קשר', 'Contact')}
+                          className="flex h-[37px] shrink-0 items-center rounded-[60px] bg-midblue px-[18px] text-sm font-medium text-white" />
+                      )}
+                    </div>
+                  </>
+                )}
+                {/* The broker's own link (00085), on every listing they
+                    publish — alone when the listing names no contact. */}
                 {brokerSite && (
                   <a href={brokerSite} target="_blank" rel="noopener nofollow ugc"
                     className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-[60px] border border-midblue text-sm font-medium text-midblue">

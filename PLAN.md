@@ -5504,6 +5504,12 @@ the app's and the site's listing pages; on the site it opens in a new tab,
 the panel enters for an agent (`real_estate_agents`) has no link: those
 agents have no account.
 
+28 Oct, from a bug check: the site and the wide-tablet screen dropped the
+link on a listing that names no contact (the card was skipped whole), while
+the phone app showed it alone; now every layout shows it alone there. The
+app reads the link again each time a listing opens (`autoDispose`), so a
+broker who changes theirs is not shown with the old one until a restart.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

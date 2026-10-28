@@ -684,12 +684,14 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
   Widget? _buildContactCard(Listing l) {
     final name = l.contactDisplayName;
     final phone = l.contactDisplayPhone;
-    if (name == null && phone == null) return null;
-    final isAgent = l.agentName != null;
-    // The broker's own link (00085), on every listing they publish.
+    // The broker's own link (00085), on every listing they publish — so the
+    // card stays, with the link and Share, on one that names no contact.
     final brokerLink = l.isBroker
         ? ref.watch(listingBrokerLinkProvider(l.id)).valueOrNull
         : null;
+    final hasContact = name != null || phone != null;
+    if (!hasContact && brokerLink == null) return null;
+    final isAgent = l.agentName != null;
 
     return Container(
       width: 374,
@@ -702,68 +704,70 @@ class _WebListingDetailContentState extends ConsumerState<WebListingDetailConten
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _t('Contact This Property', 'צרו קשר לגבי הנכס'),
-            style: detailInter(18, weight: FontWeight.w600, color: AppColors.navy),
-          ),
-          if (isAgent) ...[
-            const SizedBox(height: 8),
+          if (hasContact) ...[
             Text(
-              _t('Get in touch with our real estate expert', 'דברו עם מומחה הנדל״ן שלנו'),
-              style: detailInter(14, color: kDetailBody),
+              _t('Contact This Property', 'צרו קשר לגבי הנכס'),
+              style: detailInter(18, weight: FontWeight.w600, color: AppColors.navy),
             ),
-          ],
-          const SizedBox(height: 25),
-          Row(
-            children: [
-              NetworkPhoto(
-                url: l.agentPhotoUrl,
-                width: 56,
-                height: 56,
-                radius: BorderRadius.circular(28),
-                icon: IconsaxPlusBold.user,
-                iconSize: 24,
+            if (isAgent) ...[
+              const SizedBox(height: 8),
+              Text(
+                _t('Get in touch with our real estate expert', 'דברו עם מומחה הנדל״ן שלנו'),
+                style: detailInter(14, color: kDetailBody),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DetailText(name ?? phone!, style: detailInter(16, weight: FontWeight.w600)),
-                    if (l.agentAgency != null) ...[
-                      const SizedBox(height: 8),
-                      DetailText(l.agentAgency!, style: detailInter(12, color: kDetailMuted)),
+            ],
+            const SizedBox(height: 25),
+            Row(
+              children: [
+                NetworkPhoto(
+                  url: l.agentPhotoUrl,
+                  width: 56,
+                  height: 56,
+                  radius: BorderRadius.circular(28),
+                  icon: IconsaxPlusBold.user,
+                  iconSize: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DetailText(name ?? phone!, style: detailInter(16, weight: FontWeight.w600)),
+                      if (l.agentAgency != null) ...[
+                        const SizedBox(height: 8),
+                        DetailText(l.agentAgency!, style: detailInter(12, color: kDetailMuted)),
+                      ],
                     ],
-                  ],
+                  ),
+                ),
+              ],
+            ),
+            if (phone != null || l.agentId != null) ...[
+              const SizedBox(height: 26),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  key: _contactKey,
+                  onTap: () => _openContact(l),
+                  child: Container(
+                    width: double.infinity,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.midBlue,
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _t('Contact', 'צרו קשר'),
+                      style: detailInter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5),
+                    ),
+                  ),
                 ),
               ),
             ],
-          ),
-          if (phone != null || l.agentId != null) ...[
-            const SizedBox(height: 26),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                key: _contactKey,
-                onTap: () => _openContact(l),
-                child: Container(
-                  width: double.infinity,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.midBlue,
-                    borderRadius: BorderRadius.circular(60),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _t('Contact', 'צרו קשר'),
-                    style: detailInter(16, weight: FontWeight.w500, color: Colors.white, height: 1.5),
-                  ),
-                ),
-              ),
-            ),
           ],
           if (brokerLink != null) ...[
-            const SizedBox(height: 12),
+            if (hasContact) const SizedBox(height: 12),
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(

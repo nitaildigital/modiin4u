@@ -127,8 +127,12 @@ final listingAgentContactProvider =
 /// page, entered in their Edit Profile — or null. Read through a database
 /// function (00085) because the profile itself is private: it hands out that
 /// one field, and only for a published listing a broker posted.
+///
+/// Read again each time the listing is opened: a broker who changes or
+/// clears their link would otherwise go on being shown with the old one
+/// until the app restarts.
 final listingBrokerLinkProvider =
-    FutureProvider.family<String?, String>((ref, listingId) async {
+    FutureProvider.autoDispose.family<String?, String>((ref, listingId) async {
       final url = await SupabaseConfig.client.rpc(
         'listing_broker_link',
         params: {'p_listing': listingId},
