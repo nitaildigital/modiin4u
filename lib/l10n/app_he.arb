@@ -420,6 +420,8 @@
   "validUntil": "בתוקף עד",
   "terms": "תנאים",
   "getDirections": "ניווט",
+  "businessCall": "התקשרו",
+  "businessWebsite": "לאתר",
   "callBusiness": "התקשרו לעסק",
   "moreDealsFrom": "עוד מבצעים מ{name}",
   "@moreDealsFrom": {

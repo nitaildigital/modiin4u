@@ -1945,6 +1945,18 @@ abstract class L {
   /// **'ניווט'**
   String get getDirections;
 
+  /// No description provided for @businessCall.
+  ///
+  /// In he, this message translates to:
+  /// **'התקשרו'**
+  String get businessCall;
+
+  /// No description provided for @businessWebsite.
+  ///
+  /// In he, this message translates to:
+  /// **'לאתר'**
+  String get businessWebsite;
+
   /// No description provided for @callBusiness.
   ///
   /// In he, this message translates to:

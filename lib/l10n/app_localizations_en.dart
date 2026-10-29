@@ -1001,6 +1001,12 @@ class LEn extends L {
   String get getDirections => 'Get Directions';
 
   @override
+  String get businessCall => 'Call';
+
+  @override
+  String get businessWebsite => 'Website';
+
+  @override
   String get callBusiness => 'Call Business';
 
   @override

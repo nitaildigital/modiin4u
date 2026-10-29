@@ -986,6 +986,12 @@ class LHe extends L {
   String get getDirections => 'ניווט';
 
   @override
+  String get businessCall => 'התקשרו';
+
+  @override
+  String get businessWebsite => 'לאתר';
+
+  @override
   String get callBusiness => 'התקשרו לעסק';
 
   @override

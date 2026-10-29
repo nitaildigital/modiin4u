@@ -673,139 +673,162 @@ class _BusinessDetailContentState
   }
 
   // ─────────────────────────────────────────────
-  // Action buttons: Direction, then Call and Website
+  // Action buttons: Call and Website, then the circles
   // ─────────────────────────────────────────────
-  /// The frame's row: a "Direction" pill at the start, the phone and web
-  /// circles at the end. Share lives on the photograph (as in the frame);
-  /// Instagram is not in the frame and is kept only for a business that has
-  /// one, so its link is not lost.
+  /// The phone and the website lead, as labelled buttons, the phone the solid
+  /// one; directions, Messages, WhatsApp and Instagram are circles at the end
+  /// (the client, 29 Oct: directions had stood out more than calling, and it
+  /// should be the other way round). With neither a phone nor a website — a
+  /// park, by the client's rule — directions is the button. Each is drawn only
+  /// where the business has one. Share lives on the photograph.
   Widget _buildActionButtons() {
     final l = L.of(context);
+    final hasPhone =
+        !business.isPark && (business.phone?.trim().isNotEmpty ?? false);
+    final hasWebsite =
+        !business.isPark && (business.website?.trim().isNotEmpty ?? false);
 
-    final direction = GestureDetector(
-      onTap: () {
-        BusinessStats.record(business.id, BusinessStat.directions);
-        // A business with no location on record has 0,0 for one: Waze went
-        // to the Gulf of Guinea. Then it searches the address instead.
-        final hasPlace = business.latitude != 0 || business.longitude != 0;
-        final address = business.address.trim();
-        launchUrl(
-          Uri.parse(
-            hasPlace
-                ? 'https://waze.com/ul?ll=${business.latitude},'
-                      '${business.longitude}&navigate=yes'
-                : 'https://waze.com/ul?q=${Uri.encodeComponent('$address, מודיעין')}&navigate=yes',
-          ),
-        );
-      },
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        decoration: BoxDecoration(
-          color: AppColors.midBlue,
-          borderRadius: BorderRadius.circular(50),
+    void openDirections() {
+      BusinessStats.record(business.id, BusinessStat.directions);
+      // A business with no location on record has 0,0 for one: Waze went
+      // to the Gulf of Guinea. Then it searches the address instead.
+      final hasPlace = business.latitude != 0 || business.longitude != 0;
+      final address = business.address.trim();
+      launchUrl(
+        Uri.parse(
+          hasPlace
+              ? 'https://waze.com/ul?ll=${business.latitude},'
+                    '${business.longitude}&navigate=yes'
+              : 'https://waze.com/ul?q=${Uri.encodeComponent('$address, מודיעין')}&navigate=yes',
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/m_food_direction.svg',
-              width: 16,
-              height: 16,
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              l.getDirections,
-              maxLines: 1,
-              style: TextStyle(
-                fontFamily: AppFonts.inter,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+      );
+    }
+
+    final directionMark = SvgPicture.asset(
+      'assets/icons/m_food_direction.svg',
+      width: 16,
+      height: 16,
+      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
     );
 
+    final leading = <Widget>[
+      if (hasPhone)
+        _ActionPill(
+          icon: const Icon(IconsaxPlusLinear.call, size: 16, color: Colors.white),
+          label: l.businessCall,
+          solid: true,
+          onTap: () {
+            BusinessStats.record(business.id, BusinessStat.call);
+            launchUrl(Uri.parse('tel:${business.phone}'));
+          },
+        ),
+      if (hasWebsite)
+        _ActionPill(
+          icon: Icon(
+            IconsaxPlusLinear.global,
+            size: 16,
+            color: hasPhone ? AppColors.midBlue : Colors.white,
+          ),
+          label: l.businessWebsite,
+          solid: !hasPhone,
+          onTap: () {
+            BusinessStats.record(business.id, BusinessStat.website);
+            launchUrl(Uri.parse(business.website!));
+          },
+        ),
+      if (!hasPhone && !hasWebsite)
+        _ActionPill(
+          icon: directionMark,
+          label: l.getDirections,
+          solid: true,
+          onTap: openDirections,
+        ),
+    ];
+
+    final trailing = <Widget>[
+      if (hasPhone || hasWebsite)
+        GestureDetector(
+          onTap: openDirections,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFE7E7E7)),
+            ),
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/icons/m_food_direction.svg',
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.turquoise,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        ),
+      // Write to the business in the app (Messages) — only one that has an
+      // owner to read it, and never to one's own.
+      if (!kIsWeb &&
+          !business.isPark &&
+          business.ownerId != null &&
+          business.ownerId != ref.watch(authProvider)?.id)
+        _OutlineCircleButton(
+          icon: IconsaxPlusLinear.message_text,
+          color: AppColors.turquoise,
+          onTap: () => messageBusiness(context, ref, businessId: business.id),
+        ),
+      // WhatsApp, which the website showed and the phone did not.
+      if ((business.whatsapp?.trim().isNotEmpty ?? false) && !business.isPark)
+        _OutlineCircleButton(
+          icon: IconsaxPlusLinear.messages_2,
+          color: AppColors.turquoise,
+          onTap: () {
+            BusinessStats.record(business.id, BusinessStat.whatsapp);
+            var digits = business.whatsapp!.replaceAll(RegExp(r'\D'), '');
+            if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
+            launchUrl(
+              Uri.parse('https://wa.me/$digits'),
+              mode: LaunchMode.externalApplication,
+            );
+          },
+        ),
+      if (business.instagram != null && !business.isPark)
+        _OutlineCircleButton(
+          icon: IconsaxPlusLinear.instagram,
+          color: AppColors.turquoise,
+          onTap: () {
+            BusinessStats.record(business.id, BusinessStat.instagram);
+            launchUrl(Uri.parse(business.instagram!));
+          },
+        ),
+    ];
+
+    Widget spaced(List<Widget> items) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          items[i],
+        ],
+      ],
+    );
+
+    // The circles go to the next line on a narrow phone rather than run off
+    // the edge, when a business has every one of them.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          direction,
-          const Spacer(),
-          // Write to the business in the app (Messages) — only one that has
-          // an owner to read it, and never to one's own.
-          if (!kIsWeb &&
-              !business.isPark &&
-              business.ownerId != null &&
-              business.ownerId != ref.watch(authProvider)?.id) ...[
-            _OutlineCircleButton(
-              icon: IconsaxPlusLinear.message_text,
-              color: AppColors.turquoise,
-              onTap: () => messageBusiness(context, ref, businessId: business.id),
-            ),
-            const SizedBox(width: 12),
-          ],
-          // A park has no phone, website or social page (the client's
-          // rule for parks), so it keeps only the directions button.
-          // Call and Website are drawn only when the business has them, as
-          // WhatsApp and Instagram are; a greyed circle offered nothing.
-          if (!business.isPark && (business.phone?.trim().isNotEmpty ?? false))
-            _OutlineCircleButton(
-              icon: IconsaxPlusLinear.call,
-              color: AppColors.turquoise,
-              onTap: () {
-                BusinessStats.record(business.id, BusinessStat.call);
-                launchUrl(Uri.parse('tel:${business.phone}'));
-              },
-            ),
-          if (!business.isPark && (business.website?.trim().isNotEmpty ?? false)) ...[
-            if (business.phone?.trim().isNotEmpty ?? false)
-              const SizedBox(width: 12),
-            _OutlineCircleButton(
-              icon: IconsaxPlusLinear.global,
-              color: AppColors.turquoise,
-              onTap: () {
-                BusinessStats.record(business.id, BusinessStat.website);
-                launchUrl(Uri.parse(business.website!));
-              },
-            ),
-          ],
-          // WhatsApp, which the website showed and the phone did not.
-          if ((business.whatsapp?.trim().isNotEmpty ?? false) && !business.isPark) ...[
-            const SizedBox(width: 12),
-            _OutlineCircleButton(
-              icon: IconsaxPlusLinear.messages_2,
-              color: AppColors.turquoise,
-              onTap: () {
-                BusinessStats.record(business.id, BusinessStat.whatsapp);
-                var digits = business.whatsapp!.replaceAll(RegExp(r'\D'), '');
-                if (digits.startsWith('0')) digits = '972${digits.substring(1)}';
-                launchUrl(
-                  Uri.parse('https://wa.me/$digits'),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
-            ),
-          ],
-          if (business.instagram != null && !business.isPark) ...[
-            const SizedBox(width: 12),
-            _OutlineCircleButton(
-              icon: IconsaxPlusLinear.instagram,
-              color: AppColors.turquoise,
-              onTap: () {
-                BusinessStats.record(business.id, BusinessStat.instagram);
-                launchUrl(Uri.parse(business.instagram!));
-              },
-            ),
-          ],
-        ],
+      child: SizedBox(
+        width: double.infinity,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 8,
+          children: [spaced(leading), if (trailing.isNotEmpty) spaced(trailing)],
+        ),
       ),
     );
   }
@@ -1958,6 +1981,55 @@ class _CircleButton extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Outlined circle button (action row)
 // ═══════════════════════════════════════════════
+/// A labelled button in the business page's action row: solid for the one
+/// action to lead with, outlined for the next.
+class _ActionPill extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final bool solid;
+  final VoidCallback onTap;
+
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.solid,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: solid ? AppColors.midBlue : Colors.white,
+          border: solid ? null : Border.all(color: AppColors.midBlue),
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 6),
+            Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                fontFamily: AppFonts.inter,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: solid ? Colors.white : AppColors.midBlue,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _OutlineCircleButton extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -2543,14 +2615,15 @@ class _BusinessLogo extends StatelessWidget {
         ],
       ),
       child: has
-          // The logo fills its circle, with no white ring or margin round it
-          // (the client, 11 Oct).
+          // The logo whole in its circle: a square one fills it with no white
+          // ring (the client, 11 Oct), a wide one is shown across it rather
+          // than cropped to its middle letters (29 Oct).
           ? ClipOval(
               child: NetworkPhoto(
                 url: url,
                 width: size,
                 height: size,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 gradient: const [Colors.white, Colors.white],
                 icon: IconsaxPlusLinear.shop,
                 iconColor: const Color(0xFFB0B0B0),

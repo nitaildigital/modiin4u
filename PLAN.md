@@ -5510,6 +5510,22 @@ the phone app showed it alone; now every layout shows it alone there. The
 app reads the link again each time a listing opens (`autoDispose`), so a
 broker who changes theirs is not shown with the old one until a restart.
 
+### A business page's logo and its buttons — 29 Oct
+
+The client, from his phone: the logo was enlarged instead of fitting its
+circle, and "ניווט" invited more than the phone and the website, which
+should be the other way round.
+- **The logo is shown whole** (`contain`, not `cover`) on the site's phone
+  and desktop pages and the app's phone screen (the wide-tablet screen
+  already did). A square logo still fills the circle with no white ring,
+  as he asked on 11 Oct; a wide one (Eyal Levi's is 1280×289) is no longer
+  cut down to its middle letters.
+- **The phone leads:** "התקשרו" is the solid button, "לאתר" an outlined one
+  beside it (solid when there is no phone), and directions a circle at the
+  end with Messages, WhatsApp and Instagram. With neither a phone nor a
+  website — a park — directions stays the button. The circles wrap to a
+  second line on a narrow phone rather than run off it.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

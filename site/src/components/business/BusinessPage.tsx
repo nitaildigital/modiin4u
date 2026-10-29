@@ -276,13 +276,14 @@ function Hero({ v }: { v: View }) {
   );
 }
 
-/** The logo filling a circle 140 across, with no white ring or margin round
- *  it (the client, TestFlight 11 Oct); a park's badge, or the shop mark,
- *  where there is none. */
+/** The logo in a circle 140 across, whole: a square one fills it with no
+ *  white ring (the client, TestFlight 11 Oct), a wide one is shown across it
+ *  rather than cropped to its middle letters (the client, 29 Oct); a park's
+ *  badge, or the shop mark, where there is none. */
 function HeroLogo({ url, isPark }: { url: string | null; isPark: boolean }) {
   return (
     <span className="flex size-[140px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-      {url ? <img src={sized(url, 140)} alt="" className="size-full object-cover" />
+      {url ? <img src={sized(url, 140)} alt="" className="size-full object-contain" />
         : isPark ? <img src="/icons/m_municipal_parks.svg" alt="" width={56} height={56} />
           : <Shop size={48} color="#123A72" />}
     </span>
@@ -511,6 +512,8 @@ function Phone({ v }: { v: View }) {
   // for a place with neither a point nor a street address.
   const directions = directionsUrl(b);
   const circle = 'flex size-10 items-center justify-center rounded-full border border-line bg-white';
+  const pill = 'flex h-10 items-center gap-1.5 rounded-full bg-midblue px-5 text-sm font-medium text-white';
+  const outlinePill = 'flex h-10 items-center gap-1.5 rounded-full border border-midblue bg-white px-5 text-sm font-medium text-midblue';
 
   const tabs = [
     { label: t('סקירה', 'Overview'), index: 0, content: <PhoneOverview v={v} /> },
@@ -535,10 +538,11 @@ function Phone({ v }: { v: View }) {
           </ShareMenu>
           {v.photos.length > 0 && <div className="absolute bottom-3.5 end-[13px]"><ShowAllPhotos phone label={t('הצג את כל התמונות', 'Show all photos')} /></div>}
         </div>
-        {/* The logo fills its circle, with no white ring or margin (the
-            client, TestFlight 11 Oct); a soft shadow parts it from the photo. */}
+        {/* The logo whole in its circle: a square one fills it with no white
+            ring (the client, TestFlight 11 Oct), a wide one is not cropped to
+            its middle letters (29 Oct); a soft shadow parts it from the photo. */}
         <span className={`absolute start-4 top-[210px] flex size-[100px] items-center justify-center overflow-hidden rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.18)] ${b.logo_url ? 'bg-white' : 'bg-gradient-to-br from-[#0058B5] to-[#010A36]'}`}>
-          {b.logo_url ? <img src={sized(b.logo_url, 100)} alt="" className="size-full object-cover" /> : <Shop size={36} color="rgba(255,255,255,0.6)" />}
+          {b.logo_url ? <img src={sized(b.logo_url, 100)} alt="" className="size-full object-contain" /> : <Shop size={36} color="rgba(255,255,255,0.6)" />}
         </span>
         {kosher && (
           <span className="absolute end-[15px] top-[276px] flex items-center gap-1.5 rounded-md border border-line bg-white px-2 py-1.5 text-sm font-medium text-midblue">
@@ -573,18 +577,34 @@ function Phone({ v }: { v: View }) {
         </Link>
       )}
 
-      {/* Directions at the start; the phone, the website and the rest at the
-          end, each only where the business has one (none for a park). */}
-      <div className="mt-7 flex items-center gap-3 px-4">
-        {directions && (
-          <TrackedLink stat="directions" href={directions} className="flex h-10 items-center gap-1.5 rounded-full bg-midblue px-6 text-sm font-medium text-white">
+      {/* The phone and the website lead, as labelled buttons, the phone the
+          solid one; directions and the rest are circles at the end (the
+          client, 29 Oct: directions had stood out more than calling). With
+          neither a phone nor a website (a park), directions is the button.
+          Each only where the business has one. */}
+      <div className="mt-7 flex flex-wrap items-center gap-2 px-4">
+        {v.tel && (
+          <TrackedLink stat="call" href={`tel:${v.tel}`} newTab={false} className={pill}>
+            <Call size={16} color="currentColor" />{t('התקשרו', 'Call')}
+          </TrackedLink>
+        )}
+        {v.website && (
+          <TrackedLink stat="website" href={webLink(v.website)} className={v.tel ? outlinePill : pill}>
+            <Global size={16} color="currentColor" />{t('לאתר', 'Website')}
+          </TrackedLink>
+        )}
+        {directions && !v.tel && !v.website && (
+          <TrackedLink stat="directions" href={directions} className={pill}>
             <DirectionMark size={16} className="text-white" />{t('ניווט', 'Get Directions')}
           </TrackedLink>
         )}
         <span className="flex-1" />
+        {directions && (v.tel || v.website) && (
+          <TrackedLink stat="directions" href={directions} className={circle} label={t('ניווט', 'Get Directions')}>
+            <DirectionMark size={20} className="text-turquoise" />
+          </TrackedLink>
+        )}
         {v.owner && <MessageBusiness lang={v.lang} businessId={v.b.id} ownerId={v.owner} className={circle}><MessageText size={20} color="#17A9D0" /></MessageBusiness>}
-        {v.tel && <TrackedLink stat="call" href={`tel:${v.tel}`} newTab={false} className={circle} label={t('התקשרו', 'Call')}><Call size={20} color="#17A9D0" /></TrackedLink>}
-        {v.website && <TrackedLink stat="website" href={webLink(v.website)} className={circle} label={t('אתר', 'Website')}><Global size={20} color="#17A9D0" /></TrackedLink>}
         {v.wa && <TrackedLink stat="whatsapp" href={`https://wa.me/${v.wa}`} className={circle} label="WhatsApp"><Messages2 size={20} color="#17A9D0" /></TrackedLink>}
         {v.instagram && <TrackedLink stat="instagram" href={webLink(v.instagram)} className={circle} label="Instagram"><Instagram size={20} color="#17A9D0" /></TrackedLink>}
       </div>
