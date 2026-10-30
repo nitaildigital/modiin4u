@@ -331,6 +331,27 @@ separate build flag — not done, and not guessed at.
 
 SMTP is a separate matter and deliberately untouched here.
 
+### The server's size — 30 Oct
+
+The server was bought far larger than recommended above: 4 cores (type B,
+General Purpose), 8 GB of memory, 100 GB of disk, daily backups, 5 TB of
+traffic — $99 a month. The free first month (promo `1MONTH300`, 16 Sep)
+hid it until Kamatera warned that the prepaid balance was running out. In
+35 days the site used about 1.1 GB of memory, 12 GB of disk and some 22 GB
+of traffic, and the CPU sat idle: it is built on our side and only runs the
+Next.js server and nginx, with the data in Supabase.
+
+With the client's approval it is now 2 cores and 4 GB, still type B — $54 a
+month. Type A was $31, but its CPU is shared and guarantees nothing, and
+this serves the public site and the panel. The backups stay: the
+certificates, nginx settings and the site's service live only on the
+server. The disk cannot be shrunk in place and is left at 100 GB. The
+restart took about 20 seconds of downtime; going back up is the same change
+under Configure.
+
+The account is prepaid: the client deposits, and Kamatera warns before it
+runs dry. He was advised to ask for monthly card billing.
+
 ---
 
 ## 1b. How the app is meant to work
@@ -5525,6 +5546,26 @@ should be the other way round.
   end with Messages, WhatsApp and Instagram. With neither a phone nor a
   website — a park — directions stays the button. The circles wrap to a
   second line on a narrow phone rather than run off it.
+
+### Three app fixes from end-to-end testing — 30 Oct
+
+Found testing the app on Android and the iPhone simulator.
+- **A way back from Real estate.** It is a page of the tab shell opened with
+  `go`, so there is nothing behind it to pop: Android's Back closed the app
+  (the shell let Back exit from any page it counts as Home), and on an
+  iPhone the arrow, shown only when there was something to pop, never
+  appeared. Back now exits only from `/` itself, and the arrow is always
+  there and goes home. Its header row had no width, so the arrow would have
+  sat on the title.
+- **English names in a list's search.** The search in a category or the
+  restaurant list, and the restaurants map's, matched only the name shown —
+  the Hebrew one in Hebrew — so "pizza" or "teddy" found nothing there
+  though the home search found them. They now match both names, as the
+  map's own search already did.
+- **A deleted listing's photos.** Deleting a listing from My Apartments
+  removed the row and left its uploaded photos in storage for good. The
+  owner's own `listings/<id>/…` files are now removed with it; one that
+  cannot be does not fail the delete.
 
 ## 9. How the data layer is built
 
