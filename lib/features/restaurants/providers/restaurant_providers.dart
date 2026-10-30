@@ -254,7 +254,9 @@ final filteredFoodMapPlacesProvider = FutureProvider<List<FoodPlace>>((
   return places
       .where(
         (p) =>
-            searchKey(p.business.name).contains(searchKey(query)) ||
+            // Both names, as the map's own search does.
+            searchKey(p.business.nameHe).contains(searchKey(query)) ||
+            searchKey(p.business.nameEn ?? '').contains(searchKey(query)) ||
             searchKey(p.business.address).contains(searchKey(query)) ||
             searchKey(p.categoryName).contains(searchKey(query)),
       )

@@ -130,7 +130,7 @@ class MyListingMenu extends ConsumerWidget {
         case 'closed':
           await repo.setOwnStatus(listing.id, rent ? ListingStatus.rented : ListingStatus.sold);
         default:
-          await repo.deleteById(listing.id);
+          await repo.deleteById(listing);
       }
     } catch (_) {
       if (context.mounted) {

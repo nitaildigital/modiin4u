@@ -25,9 +25,12 @@ class ShellScaffold extends StatelessWidget {
     final isWide = MediaQuery.of(context).size.width > 1100;
 
     // Back from a tab other than Home returns to Home rather than leaving the
-    // app; back from Home itself exits, which is what Android expects.
+    // app; back from Home itself exits, which is what Android expects. Home
+    // means the page at `/`: Real estate has no tab of its own and counts as
+    // Home for the bar, and Back there closed the app (30 Oct).
+    final atHome = GoRouterState.of(context).uri.path == '/';
     return PopScope(
-      canPop: currentIndex == 0,
+      canPop: atHome,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) context.go('/');
       },

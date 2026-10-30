@@ -201,8 +201,29 @@ class ListingRepository {
     return Listing.fromJson(row);
   }
 
-  Future<void> deleteById(String id) =>
-      _client.from('listings').delete().eq('id', id);
+  /// Deletes the listing, and then the photos its owner uploaded for it.
+  ///
+  /// The row went and its files stayed in storage for good (30 Oct). Only
+  /// the owner's own `listings/<id>/…` files are removed — the only ones the
+  /// storage policy lets them delete (00021). Once the row is gone the delete
+  /// has worked, so a photo that cannot be removed does not fail it.
+  Future<void> deleteById(Listing listing) async {
+    await _client.from('listings').delete().eq('id', listing.id);
+
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) return;
+    const marker = '/object/public/media/';
+    final paths = {listing.coverUrl, ...listing.gallery}
+        .whereType<String>()
+        .map((url) => url.contains(marker) ? url.split(marker).last : null)
+        .whereType<String>()
+        .where((path) => path.startsWith('listings/$uid/'))
+        .toList();
+    if (paths.isEmpty) return;
+    try {
+      await _client.storage.from('media').remove(paths);
+    } catch (_) {}
+  }
 
   /// The owner's own status changes from My Apartments: back to a draft (to
   /// take it down, or to change it and send it again), or sold / rented once

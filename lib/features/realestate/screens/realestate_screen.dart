@@ -175,9 +175,15 @@ class _MobileRealEstateContentState
                     child: Column(
                       children: [
                         const SizedBox(height: 10),
-                        // Back arrow and centred title, as in the design. The
-                        // arrow only when there is somewhere to go back to.
+                        // Back arrow and centred title, as in the design.
+                        // Always there: the page is opened with `go` from
+                        // the home page, so there is no page behind it to
+                        // pop, and with the arrow shown only then there was
+                        // no way back on an iPhone but the Home tab (30 Oct).
+                        // Full width, or the row is only as wide as the title
+                        // and the arrow lands on top of it.
                         SizedBox(
+                          width: double.infinity,
                           height: 24,
                           child: Stack(
                             alignment: Alignment.center,
@@ -192,18 +198,17 @@ class _MobileRealEstateContentState
                                   color: Colors.black,
                                 ),
                               ),
-                              if (context.canPop())
-                                PositionedDirectional(
-                                  start: 15,
-                                  child: GestureDetector(
-                                    onTap: () => context.back('/realestate'),
-                                    child: const Icon(
-                                      Icons.arrow_back,
-                                      size: 24,
-                                      color: Colors.black,
-                                    ),
+                              PositionedDirectional(
+                                start: 15,
+                                child: GestureDetector(
+                                  onTap: () => context.back(),
+                                  child: const Icon(
+                                    Icons.arrow_back,
+                                    size: 24,
+                                    color: Colors.black,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),

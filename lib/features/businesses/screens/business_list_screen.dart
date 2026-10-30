@@ -140,7 +140,10 @@ class _MobileBusinessListState extends ConsumerState<_MobileBusinessList> {
       }
       if (q.isEmpty) return true;
       final key = searchKey(q);
-      return searchKey(b.name).contains(key) ||
+      // Both names, whichever language the app is in: in Hebrew "pizza" or
+      // "teddy" found nothing, though the home search found them (30 Oct).
+      return searchKey(b.nameHe).contains(key) ||
+          searchKey(b.nameEn ?? '').contains(key) ||
           searchKey(b.address).contains(key);
     }).toList();
 
