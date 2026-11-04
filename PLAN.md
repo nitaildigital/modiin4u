@@ -5720,6 +5720,14 @@ before. The shape is only known once the photo is in, so it fills until
 then. Checked locally at 1440 and 390 px on his page and on a wide cover.
 The app's business page has the same 260-tall header and is not changed.
 
+The business cards in the lists (`BusinessCard`) cropped him the same way
+(Harshit, the category page). The shared `Photo` takes the same rule as an
+option (`whole`), on for that card only; the restaurant, home and deal cards
+that share it are unchanged. On the desktop's 1.9-wide card 10 of the first
+30 businesses in the directory are photos narrow enough to switch: portraits
+taken on a phone (the technician, a shawarma cook, a lawyer), now shown
+whole. The phone's list has square thumbnails, where none switch.
+
 ### Unstyled pages after a deploy — 4 Nov
 
 After the deploy of the cover fix, live pages came up without their styles

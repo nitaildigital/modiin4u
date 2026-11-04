@@ -98,7 +98,7 @@ export function BusinessCard({ b, lang, variant = 'place' }: { b: BizCard; lang:
       <div className={tile ? 'relative w-[110px] shrink-0 desk:h-[200px] desk:w-full' : 'relative h-[200px] w-full shrink-0'}>
         {/* The phone's row has a pale tint behind its thumbnail, the cards
             the brand gradient. */}
-        <Photo src={b.photo} alt={b.name} icon={tile ? 34 : 40}
+        <Photo src={b.photo} alt={b.name} icon={tile ? 34 : 40} whole
           bg={tile ? 'bg-midblue/8 desk:bg-[linear-gradient(to_bottom_right,#0058B5,#010A36)]' : BRAND_BG} iconClass={tile ? 'text-midblue/30 desk:text-white/30' : 'text-white/30'}
           className={tile ? 'size-full' : 'size-full rounded-xl desk:rounded-none'} />
         {b.category && (

@@ -20,25 +20,39 @@ export function ShopMarkStyle() {
  *  there is none — 90 of the businesses have no cover — and where it fails.
  *  [bg] (classes) or [style] replace the gradient, [glyph] the mark.
  *  [priority]: the largest thing on the screen as the page opens — fetched
- *  at once and first, not when the browser gets round to it. */
-export function Photo({ src, alt, className = '', bg = BRAND_BG, style, icon = 40, glyph = 'shop', iconClass = 'text-white/30', priority = false }: {
+ *  at once and first, not when the browser gets round to it.
+ *  [whole]: a photo much narrower than its frame — a portrait in a wide
+ *  card, where filling it cut off heads (Harshit, 4 Nov) — is shown whole
+ *  over a blurred copy of itself, as a business page's cover is
+ *  (CoverPhoto). Past 1.6 times wider, filling it would keep less than about
+ *  60% of the photo's height. */
+export function Photo({ src, alt, className = '', bg = BRAND_BG, style, icon = 40, glyph = 'shop', iconClass = 'text-white/30', priority = false, whole = false }: {
   src: string | null; alt: string; className?: string; bg?: string; style?: React.CSSProperties;
-  icon?: number; glyph?: 'shop' | 'image' | null; iconClass?: string; priority?: boolean;
+  icon?: number; glyph?: 'shop' | 'image' | null; iconClass?: string; priority?: boolean; whole?: boolean;
 }) {
   // Once the photo is in, the stand-in goes: a logo with a transparent
   // ground sits on white, as the app draws it, not on the gradient.
   const img = useRef<HTMLImageElement>(null);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { if (img.current?.complete && img.current.naturalWidth > 0) setLoaded(true); }, [src]);
+  const [narrow, setNarrow] = useState(false);
+  const onIn = () => {
+    setLoaded(true);
+    const i = img.current, frame = i?.parentElement;
+    if (!whole || !i || !frame || !i.naturalHeight || !frame.clientHeight) return;
+    setNarrow((frame.clientWidth / frame.clientHeight) / (i.naturalWidth / i.naturalHeight) > 1.6);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (img.current?.complete && img.current.naturalWidth > 0) onIn(); }, [src]);
   return (
     <div className={`relative overflow-hidden ${loaded ? 'bg-white' : style ? '' : bg} ${className}`} style={loaded ? undefined : style}>
       {!loaded && glyph === 'shop' && <><ShopMarkStyle /><span className={`biz-shop absolute inset-0 m-auto ${iconClass}`} style={{ width: icon, height: icon }} /></>}
       {!loaded && glyph === 'image' && <ImageIcon size={icon} color="currentColor" className={`absolute inset-0 m-auto ${iconClass}`} />}
+      {src && narrow && <img src={src} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover blur-xl" />}
       {src && (
         <img ref={img} src={src} alt={alt} loading={priority ? 'eager' : 'lazy'} decoding="async"
           fetchPriority={priority ? 'high' : undefined}
-          className="absolute inset-0 size-full object-cover"
-          onLoad={() => setLoaded(true)}
+          className={`absolute inset-0 size-full ${narrow ? 'object-contain' : 'object-cover'}`}
+          onLoad={onIn}
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
       )}
     </div>
