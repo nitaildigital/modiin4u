@@ -7,7 +7,7 @@ import { slugParam, formatDate, formatTime } from '@/lib/params';
 import { pageMetadata, h1For, plain, organization, breadcrumb, href, SITE_NAME, SUFFIX } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
 import { articleBySlug, articleComments, categoriesOf, categoryName, relatedArticles } from '@/lib/data/articles';
-import { banners } from '@/lib/data/banners';
+import { articleBanner, articleBannerDefaults, banners } from '@/lib/data/banners';
 import { JsonLd } from '@/components/JsonLd';
 import { BannerImage } from '@/components/ui/Banner';
 import { ShareBar } from '@/components/ui/ShareBar';
@@ -46,18 +46,21 @@ export default async function ArticlePage({ params }: Props) {
   const lang = await getLang();
   const t = tr(lang);
   const path = `/news/${slug}/`;
-  // The story's three banners — its start, middle and end (the client, 4 Nov);
-  // ARTICLE_INLINE is the end.
-  const [cats, comments, side, top, middle, inline] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'),
-    banners('ARTICLE_TOP'), banners('ARTICLE_MIDDLE'), banners('ARTICLE_INLINE')]);
+  const [cats, comments, side, defaults] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), articleBannerDefaults()]);
   const related = await relatedArticles(a.id, cats.map((c) => c.id), 4);
   const cat = cats[0];
   const image = a.featured_image || a.og_image;
+  // The story's three banners — its start, middle and end (the client, 4 Nov):
+  // the article's own from its editor, or else the defaults set in Articles.
+  const ad = t('פרסומת', 'Advertisement');
+  const top = articleBanner(a.banners, defaults, 'top', ad);
+  const middle = articleBanner(a.banners, defaults, 'middle', ad);
+  const end = articleBanner(a.banners, defaults, 'end', ad);
   // The page's one H1 is the headline: a heading the story's own text opens
   // with an h1 is set as an h2.
   const story = storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2'));
   // Cut only when a middle banner is booked; otherwise the story is one piece.
-  const halves = middle[0] ? splitStory(story) : null;
+  const halves = middle ? splitStory(story) : null;
 
   return (
     <article className="wrap py-8 desk:py-15">
@@ -135,11 +138,11 @@ export default async function ArticlePage({ params }: Props) {
       <div className="mt-6 grid gap-12 desk:mt-8 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
         <div className="min-w-0">
           <div className="hidden desk:block"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
-          {top[0] && <div className="mb-8 max-w-[796px] desk:mb-0 desk:mt-8"><BannerImage banner={top[0]} phone /></div>}
+          {top && <div className="mb-8 max-w-[796px] desk:mb-0 desk:mt-8"><BannerImage banner={top} phone /></div>}
           {halves ? (
             <>
               <div className="prose-site desk:mt-8" dangerouslySetInnerHTML={{ __html: halves[0] }} />
-              <div className="my-8 max-w-[796px]"><BannerImage banner={middle[0]} phone /></div>
+              <div className="my-8 max-w-[796px]"><BannerImage banner={middle!} phone /></div>
               <div className="prose-site" dangerouslySetInnerHTML={{ __html: halves[1] }} />
             </>
           ) : (
@@ -147,8 +150,8 @@ export default async function ArticlePage({ params }: Props) {
           )}
           {/* On a phone the share comes after the story, where the app has it. */}
           <div className="mt-8 desk:hidden"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
-          {/* The campaign booked under the story; nothing when none is. */}
-          {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} phone /></div>}
+          {/* The banner under the story; nothing when there is none. */}
+          {end && <div className="mt-14 max-w-[796px]"><BannerImage banner={end} phone /></div>}
 
           {comments.length > 0 && (
             <section className="mt-12 border-t border-line pt-8">

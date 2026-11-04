@@ -5623,25 +5623,35 @@ Found testing the app on Android and the iPhone simulator.
 ### Three banners on the article page — 4 Nov
 
 The client: banners at the beginning, the middle and the end of the article
-page, replaceable from the panel, and right on a phone. Migration 00086.
-- **Slots, not a field on each article.** `ARTICLE_TOP` (new, above the
-  story), `ARTICLE_MIDDLE` (new) and `ARTICLE_INLINE` (the one the page
-  already drew under the story, relabelled "סוף הכתבה"). He books a campaign
-  in each under Campaigns, and replaces or ends it there; the same three
-  show on every article. A slot with nothing booked draws nothing, as
-  everywhere on the site — no grey boxes, no invented ads.
+page, replaceable from the panel, and right on a phone. Migrations 00086 and
+00087.
+- **From Articles, article by article, with defaults.** First built as
+  three campaign slots under Campaigns (00086); he manages them from
+  Articles. Each article's editor has a "באנרים בכתבה" card — top, middle,
+  end, each a desktop image, an optional phone image and an optional link —
+  kept in `articles.banners`. "באנרים לכל הכתבות" on the Articles screen
+  sets the defaults (`article_banners` in app_settings), shown in any place
+  an article leaves empty. Empty in both, a place draws nothing — no grey
+  boxes, no invented ads. The three campaign slots are switched off, not
+  removed (00087).
+- **Only web addresses** count, for the pictures and the links, on the site
+  as in the panel's check: nothing else saved there becomes a link.
+- **Saving** sends only what changed, so a banner-only edit writes only
+  `banners`, which the publish trigger does not watch — no notification.
+  The editor compares the banners by their contents: `==` on two maps is
+  never true, and every save would have rewritten them.
 - **The middle** is the end of the top-level paragraph nearest half the
   story's text — never inside a list, table, quote or figure. A story needs
   four paragraphs or more, and the break must fall between a quarter and
   three quarters of the way, or it gets no middle banner (it would sit on
   the end one). Of the 692 published stories, 577 get one.
-- **Phones.** A campaign has had a mobile image since 00008, but the site
-  was never given it. `active_banners()` now returns it, and in these three
-  slots a phone (under 1100 px, the site's phone layout) shows it in place
-  of the wide desktop one, which on a phone is a thin strip. Other slots
-  keep drawing the desktop image: their shapes are fixed by their layouts.
-  The panel's field and its size notes say so (desktop 796×228, mobile for
-  example 800×500).
+- **Phones.** Below 1100 px (the site's phone layout) the phone image is
+  shown in place of the desktop one, which on a phone is a thin strip;
+  without one, the desktop image fills the width. Sizes in the panel:
+  desktop 796×228, phone for example 800×500. `active_banners()` also
+  returns a campaign's mobile image now, for later use.
+- **Media check.** The panel's unused-file check (00034) searches json
+  columns, so a banner's file is never cleared away as unused.
 - **The app** shows no banners on its article screen; not done here.
 
 ## 9. How the data layer is built

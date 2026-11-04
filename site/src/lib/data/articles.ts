@@ -10,9 +10,11 @@ export type Article = {
   /** The byline the newsroom types in the panel; empty on the imported rows. */
   credit: string | null;
   og_title: string | null; og_description: string | null; meta_keywords: string | null;
+  /** Its own banners — top, middle, end — from the panel's editor (00087). */
+  banners: unknown;
 };
 
-const FIELDS = 'id,slug,title,subtitle,excerpt,body,featured_image,og_image,seo_title,meta_description,published_at,updated_at,noindex,view_count,share_count,credit,og_title,og_description,meta_keywords,canonical_url';
+const FIELDS = 'id,slug,title,subtitle,excerpt,body,featured_image,og_image,seo_title,meta_description,published_at,updated_at,noindex,view_count,share_count,credit,og_title,og_description,meta_keywords,canonical_url,banners';
 const LIST_FIELDS = 'id,slug,title,excerpt,featured_image,published_at';
 
 /** One published article by its slug — or by its old address's slug. */

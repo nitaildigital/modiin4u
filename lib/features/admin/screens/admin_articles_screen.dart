@@ -1,12 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/supabase/supabase_config.dart';
 import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
 import '../ui/admin_kit.dart';
 import '../widgets/admin_rich_editor.dart';
+import '../widgets/article_banner_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
 import '../widgets/seo_preview.dart';
@@ -88,6 +92,13 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
             null => null,
           },
           actions: [
+            AdminToolbarButton(
+              label: tr('באנרים לכל הכתבות', 'Banners for all articles'),
+              icon: Icons.view_agenda_outlined,
+              primary: false,
+              onPressed: () => AdminEditorPage.open<void>(context, const _ArticleBannerDefaultsPage()),
+            ),
+            const SizedBox(width: 8),
             AdminToolbarButton(
               label: tr('כתבה חדשה', 'New article'),
               onPressed: () => _showArticleEditor(context, ref),
@@ -623,6 +634,9 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
   /// was overwritten by a person who only fixed a typo in the title.
   late final Map<String, dynamic> _baseline;
 
+  /// The article's own banners — top, middle, end (00087).
+  late final ArticleBannerControllers _banners;
+
   bool get _isEditing => widget.article != null;
 
   @override
@@ -668,6 +682,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     _nofollow = a?['nofollow'] as bool? ?? false;
 
     _publishedAt = israelFromStored(a?['published_at'] as String? ?? '');
+    _banners = ArticleBannerControllers(a?['banners']);
 
     _baseline = _collect();
 
@@ -715,6 +730,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     _ogTitle.dispose();
     _ogDesc.dispose();
     _canonical.dispose();
+    _banners.dispose();
     super.dispose();
   }
 
@@ -898,6 +914,17 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
               label: tr('תמונת כריכה', 'Cover image'),
               controller: _coverImageUrl,
               folder: 'articles/cover',
+            ),
+          ),
+          AdminCard(
+            title: tr('באנרים בכתבה', 'Banners in the article'),
+            subtitle: tr('ראש, אמצע וסוף הכתבה באתר', 'Top, middle and end of the article on the site'),
+            collapsible: true,
+            initiallyOpen: false,
+            child: ArticleBannerFields(
+              controllers: _banners,
+              hint: tr('מקום שנשאר ריק מציג את באנר ברירת המחדל (כתבות ← באנרים לכל הכתבות).',
+                  'An empty slot shows the default banner (Articles → Banners for all articles).'),
             ),
           ),
           AdminCard(
@@ -1339,8 +1366,14 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
       'canonical_url': _canonical.text.trim().isEmpty ? null : _canonical.text.trim(),
       'noindex': _noindex,
       'nofollow': _nofollow,
+      'banners': _banners.toJson(),
     };
   }
+
+  /// Equal as saved: two maps (the banners) by their contents, which `==`
+  /// does not compare — every save would otherwise rewrite them.
+  static bool _same(Object? a, Object? b) =>
+      a is Map || b is Map ? jsonEncode(a) == jsonEncode(b) : a == b;
 
   Future<void> _save({bool asDraft = false}) async {
     if (!_formKey.currentState!.validate()) return;
@@ -1362,7 +1395,7 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     final changed = _isEditing
         ? {
             for (final e in fields.entries)
-              if (!_baseline.containsKey(e.key) || _baseline[e.key] != e.value)
+              if (!_baseline.containsKey(e.key) || !_same(_baseline[e.key], e.value))
                 e.key: e.value,
           }
         : fields;
@@ -1398,6 +1431,110 @@ class _ArticleEditorDialogState extends ConsumerState<_ArticleEditorDialog> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+// ─── Default banners ───
+
+/// The banners every article shows in a slot it leaves empty — its top,
+/// middle and end (00087) — kept as `article_banners` in app_settings.
+class _ArticleBannerDefaultsPage extends StatefulWidget {
+  const _ArticleBannerDefaultsPage();
+
+  @override
+  State<_ArticleBannerDefaultsPage> createState() => _ArticleBannerDefaultsPageState();
+}
+
+class _ArticleBannerDefaultsPageState extends State<_ArticleBannerDefaultsPage> {
+  static const _key = 'article_banners';
+  final _formKey = GlobalKey<FormState>();
+  ArticleBannerControllers? _banners;
+  Object? _loadError;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final row = await SupabaseConfig.client.from('app_settings').select('value').eq('key', _key).maybeSingle();
+      if (mounted) setState(() => _banners = ArticleBannerControllers(row?['value']));
+    } catch (e) {
+      if (mounted) setState(() => _loadError = e);
+    }
+  }
+
+  @override
+  void dispose() {
+    _banners?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final banners = _banners;
+    if (banners == null || !_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      // An empty object rather than no row: "no defaults" is a choice made.
+      await SupabaseConfig.client.from('app_settings').upsert(
+        {'key': _key, 'value': banners.toJson() ?? <String, dynamic>{}},
+        onConflict: 'key',
+      );
+      messenger.showSnackBar(SnackBar(content: Text(tr('נשמר', 'Saved'))));
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(tr('השמירה נכשלה: $e', 'Could not save: $e')), backgroundColor: AppColors.error));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final banners = _banners;
+    return Form(
+      key: _formKey,
+      child: AdminEditorPage(
+        title: tr('באנרים לכל הכתבות', 'Banners for all articles'),
+        onClose: () => Navigator.pop(context),
+        actions: [
+          AdminButton(
+            label: tr('שמירה', 'Save'),
+            icon: Icons.check,
+            busy: _saving,
+            onPressed: banners == null ? null : _save,
+          ),
+        ],
+        main: [
+          AdminCard(
+            title: tr('ראש, אמצע וסוף הכתבה', 'Top, middle and end of the article'),
+            child: banners != null
+                ? ArticleBannerFields(
+                    controllers: banners,
+                    hint: tr('אלה מוצגים בכל כתבה שאין לה באנר משלה באותו מקום. מקום שנשאר ריק כאן לא מציג כלום.',
+                        'These show on every article without its own banner in that place. A place left empty here shows nothing.'),
+                  )
+                : _loadError != null
+                    ? Text(tr('הטעינה נכשלה: $_loadError', 'Could not load: $_loadError'))
+                    : const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
+          ),
+        ],
+        side: [
+          AdminCard(
+            title: tr('איך זה עובד', 'How it works'),
+            child: Text(
+              tr('לכל כתבה אפשר לתת באנרים משלה (בעריכת הכתבה ← "באנרים בכתבה"). כתבה בלי באנר משלה מציגה את הבאנר מכאן. השינוי מופיע באתר תוך כ-2 דקות.',
+                  'Each article can have its own banners (edit the article → "Banners in the article"). An article without its own shows the banner set here. Changes appear on the site within about 2 minutes.'),
+              style: AdminKit.of(context).body,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

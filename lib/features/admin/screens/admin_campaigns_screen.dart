@@ -645,10 +645,8 @@ class _CampaignEditorDialogState extends ConsumerState<_CampaignEditorDialog> {
                 ),
                 const SizedBox(height: 16),
                 ImageUploadField(
-                  // Shown on phones in the article page's slots (00086);
-                  // every other slot draws the desktop image everywhere.
-                  label: tr('תמונה למובייל (לא חובה) — מוצגת בטלפון בבאנרים של עמוד הכתבה; בשאר המקומות מוצגת התמונה שלמעלה',
-                      'Mobile image (optional) — shown on phones in the article page banners; elsewhere the image above is shown'),
+                  label:
+                      tr('תמונה למובייל (לא חובה — האתר מציג את התמונה שלמעלה)', 'Mobile image (optional — the site shows the image above)'),
                   controller: _mobileImage,
                   folder: 'campaigns/mobile',
                 ),
