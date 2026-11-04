@@ -262,6 +262,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           // up past it: the account rows ran under the clock (found 23 Oct).
           child: StatusBarScrim(
             hero: 128 + topInset,
+            shade: false,
             child: SingleChildScrollView(
             child: Stack(
               children: [

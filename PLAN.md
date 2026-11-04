@@ -5680,6 +5680,28 @@ no article edited since the launch was found merged.
   line above it). For those articles the editor's HTML view is the safe way
   to edit.
 
+### The clock over a detail page's photo — 4 Nov
+
+Harshit, on an iPhone: the article page "goes under the Dynamic Island".
+Only the pages that open on a photo do — a business or restaurant, an
+event, a listing, a neighbourhood, a deal, an article — and they do it on
+purpose: the Figma frames run the photo up to the top edge, and the buttons
+already sit below the island. What was wrong was the clock and the battery,
+drawn black by the light theme, which could hardly be read on a dark photo.
+He chose to keep the photo to the top and make them readable (not to start
+the photo below the status bar).
+
+`StatusBarScrim` (21 Oct: the white strip once the photo has scrolled away)
+now also turns the clock white while the photo is under it, over a soft
+black shade at the top that ends just past the status bar, so the round
+buttons keep their white; it turns dark again with the strip. Home (the
+blue header) and Profile (the veiled photo) keep white icons without the
+shade. The event page, which had no strip, now has one. Under every page,
+`main.dart` sets a dark clock: the phone keeps the last style it was given,
+so a white page with no bar of its own would otherwise keep the white clock
+of the photo page before it. Checked in the iPhone simulator: event,
+article, business, listing at rest and scrolled, then News and Municipal.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

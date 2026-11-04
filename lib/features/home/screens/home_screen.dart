@@ -130,6 +130,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     // header is the status bar and about 176 more.
     return StatusBarScrim(
       hero: topPadding + 176,
+      shade: false,
       child: ListView(
       padding: EdgeInsets.zero,
       children: [

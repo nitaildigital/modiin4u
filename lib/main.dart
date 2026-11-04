@@ -2,6 +2,7 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ import 'core/providers/resume_refresh.dart';
 import 'core/update/force_update.dart';
 import 'features/urban_profile/urban_profile_gate.dart';
 import 'shared/widgets/web_chrome.dart' show restoreWebLanguage, webIsHebrew;
+import 'shared/widgets/status_bar_scrim.dart' show statusBarIconsDark;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -163,9 +165,16 @@ class Modiin4uApp extends ConsumerWidget {
         // Push notifications: taps open their page, and one that arrives
         // while the app is open shows as a banner over it. Outermost, the
         // update the panel can require: a build too old shows nothing else.
-        builder: (context, child) => ForceUpdateGate(
-          child: ResumeRefresh(
-            child: PushHost(child: UrbanProfileGate(child: child ?? const SizedBox.shrink())),
+        // Under them all, a dark clock and battery for the white pages: the
+        // phone keeps the last style it was given, so without this a page
+        // with no bar of its own kept the white one of the photo page before
+        // it (`StatusBarScrim`).
+        builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+          value: statusBarIconsDark,
+          child: ForceUpdateGate(
+            child: ResumeRefresh(
+              child: PushHost(child: UrbanProfileGate(child: child ?? const SizedBox.shrink())),
+            ),
           ),
         ),
 

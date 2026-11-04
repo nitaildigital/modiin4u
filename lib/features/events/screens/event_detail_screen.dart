@@ -27,6 +27,7 @@ import '../models/event_labels.dart';
 import '../widgets/m_event_card.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../shared/share_text.dart';
+import '../../../shared/widgets/status_bar_scrim.dart';
 
 /// Event detail screen — responsive wrapper.
 /// Desktop (> 1100px) renders the web detail layout; mobile keeps the app UI.
@@ -100,9 +101,12 @@ class _MobileEventDetailContentState
     );
     final hasMap = event.latitude != 0 && event.longitude != 0;
 
+    // The photo runs up under the status bar, as on the other detail pages:
+    // a white clock over it, a white strip once it has scrolled away.
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: StatusBarScrim(
+        child: SafeArea(
         top: false,
         child: Center(
           child: ConstrainedBox(
@@ -145,6 +149,7 @@ class _MobileEventDetailContentState
             ),
           ),
         ),
+      ),
       ),
     );
   }
