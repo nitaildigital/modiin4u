@@ -18,10 +18,12 @@ class AdminKit {
   static AdminKit of(BuildContext context) => _k;
 
   // Colours: the CRM's neutrals, the brand's blue for anything that acts.
-  Color get page => const Color(0xFFF7F8FA);
+  Color get page => const Color(0xFFF8F9FB);
   Color get surface => Colors.white;
   Color get subtle => const Color(0xFFF9FAFB);
-  Color get border => const Color(0xFFE6E8EC);
+  Color get border => const Color(0xFFE5E7EB);
+  /// Under the pointer: a row, a menu entry, a sidebar item.
+  Color get hover => const Color(0xFFF3F4F6);
   Color get ink => const Color(0xFF111827);
   Color get inkSoft => const Color(0xFF4B5563);
   Color get muted => const Color(0xFF9CA3AF);
@@ -32,6 +34,11 @@ class AdminKit {
   Color get warning => const Color(0xFFD97706);
 
   double get radius => 12;
+
+  /// How long the panel's own movements take — a section coming in, the
+  /// sidebar folding — short enough never to keep anyone waiting.
+  Duration get motion => const Duration(milliseconds: 220);
+  Curve get curve => Curves.easeOutCubic;
 
   TextStyle get title => TextStyle(fontFamily: AppFonts.rubik, fontSize: 22, fontWeight: FontWeight.w700, color: ink, height: 1.25);
   TextStyle get heading => TextStyle(fontFamily: AppFonts.rubik, fontSize: 15, fontWeight: FontWeight.w600, color: ink);
@@ -50,6 +57,8 @@ class AdminKit {
     isDense: true,
     filled: true,
     fillColor: surface,
+    // A field under the pointer was filled with the rows' hover grey.
+    hoverColor: subtle,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: border)),
@@ -60,14 +69,216 @@ class AdminKit {
   /// The app's theme with the panel's fields, switches and choices — for the
   /// screens' own widgets that do not use the kit yet. The app's are grey
   /// pills and a black switch when off, made for the phone.
+  ///
+  /// Since 16 Oct it also dresses the dialogs, messages, menus, buttons,
+  /// tabs and chips the 35 sections draw themselves (137 dialogs, 92
+  /// messages), the way the PersonaAI CRM's are: white, a thin border, no
+  /// Material ripple or pink tint, a soft grey under the pointer.
   ThemeData theme(ThemeData base) {
     OutlineInputBorder line(Color c, [double w = 1]) =>
         OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: c, width: w));
+    final rounded = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    final buttonText = WidgetStatePropertyAll(
+      TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600),
+    );
+    final buttonSize = const WidgetStatePropertyAll(Size(0, 40));
+    final buttonShape = WidgetStatePropertyAll<OutlinedBorder>(rounded);
+    final menuShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+      side: BorderSide(color: border),
+    );
     return base.copyWith(
-      colorScheme: base.colorScheme.copyWith(primary: accent),
+      // A web tool: a grey under the pointer, no ink spreading on a click.
+      splashFactory: NoSplash.splashFactory,
+      hoverColor: hover,
+      highlightColor: Colors.transparent,
+      focusColor: accentSoft,
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: accent,
+        selectionColor: accent.withValues(alpha: 0.18),
+        selectionHandleColor: accent,
+      ),
+      dividerTheme: DividerThemeData(color: border, thickness: 1, space: 1),
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shadowColor: const Color(0x33000000),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titleTextStyle: heading.copyWith(fontSize: 18),
+        contentTextStyle: body,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: ink,
+        contentTextStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, color: Colors.white, height: 1.4),
+        actionTextColor: const Color(0xFF93C5FD),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 6,
+      ),
+      cardTheme: CardThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: border),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          elevation: const WidgetStatePropertyAll(0),
+          overlayColor: WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.08)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          elevation: const WidgetStatePropertyAll(0),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: buttonSize,
+          shape: buttonShape,
+          foregroundColor: WidgetStatePropertyAll(ink),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.hovered) ? hover : surface,
+          ),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          textStyle: buttonText,
+          minimumSize: const WidgetStatePropertyAll(Size(0, 36)),
+          shape: buttonShape,
+          foregroundColor: WidgetStatePropertyAll(accent),
+          overlayColor: WidgetStatePropertyAll(accent.withValues(alpha: 0.06)),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          shape: buttonShape,
+          overlayColor: WidgetStatePropertyAll(ink.withValues(alpha: 0.05)),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shadowColor: const Color(0x26000000),
+        shape: menuShape,
+        textStyle: body,
+        labelTextStyle: WidgetStatePropertyAll(body),
+      ),
+      menuTheme: MenuThemeData(
+        style: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(surface),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(menuShape),
+          elevation: const WidgetStatePropertyAll(8),
+          shadowColor: const WidgetStatePropertyAll(Color(0x26000000)),
+        ),
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(color: ink, borderRadius: BorderRadius.circular(6)),
+        textStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: Colors.white),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        waitDuration: const Duration(milliseconds: 400),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accent,
+        linearTrackColor: border,
+        circularTrackColor: Colors.transparent,
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: accent,
+        unselectedLabelColor: inkSoft,
+        indicatorColor: accent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: border,
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14, fontWeight: FontWeight.w500),
+        overlayColor: WidgetStatePropertyAll(accent.withValues(alpha: 0.04)),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          shape: buttonShape,
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? accentSoft : surface,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? accent : inkSoft,
+          ),
+          textStyle: WidgetStatePropertyAll(
+            TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: surface,
+        selectedColor: accentSoft,
+        checkmarkColor: accent,
+        side: BorderSide(color: border),
+        shape: rounded,
+        labelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: inkSoft),
+        secondaryLabelStyle: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: accent, fontWeight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: rounded,
+        iconColor: inkSoft,
+        selectedColor: accent,
+        selectedTileColor: accentSoft,
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thickness: const WidgetStatePropertyAll(6),
+        radius: const Radius.circular(6),
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.hovered) || s.contains(WidgetState.dragged)
+              ? const Color(0x55000000)
+              : const Color(0x2A000000),
+        ),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? accent : muted),
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      colorScheme: base.colorScheme.copyWith(
+        primary: accent,
+        // Material 3 tints white surfaces with the primary colour (menus and
+        // dialogs came out lilac); the CRM's are plain white.
+        surfaceTint: Colors.transparent,
+        surface: surface,
+        surfaceContainerLowest: surface,
+        surfaceContainerLow: surface,
+        surfaceContainer: surface,
+        surfaceContainerHigh: surface,
+        surfaceContainerHighest: subtle,
+        outline: border,
+        outlineVariant: border,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        hoverColor: subtle,
         isDense: true,
         hintStyle: hint,
         labelStyle: label,
@@ -327,16 +538,43 @@ class AdminPill extends StatelessWidget {
   final Color color;
   const AdminPill(this.text, this.color, {super.key});
 
+  // At its own size even in a table column it is given whole: there it
+  // stretched into a green bar the width of the column.
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(40)),
-    child: Text(text, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.centerStart,
+    widthFactor: 1,
+    heightFactor: 1,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(40)),
+      child: Text(text, style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+    ),
   );
 }
 
-/// A full-page editor: a bar with the title and the actions, the main column
-/// (what is written) and a side column (how it is filed and shown).
+/// The panel's frame — sidebar and top bar — for a page opened over it.
+/// The shell puts this around its sections; [AdminEditorPage.open] wraps
+/// the editor in it, so an editor keeps the sidebar as the CRM's detail
+/// pages do, while still being a page of its own on the navigator (the
+/// screens close their dialogs and editors with `Navigator.pop(context)`,
+/// which a navigator nested in the shell would have sent elsewhere).
+class AdminShellScope extends InheritedWidget {
+  final Widget Function(Widget page) frame;
+
+  const AdminShellScope({super.key, required this.frame, required super.child});
+
+  static AdminShellScope? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<AdminShellScope>();
+
+  @override
+  bool updateShouldNotify(AdminShellScope old) => false;
+}
+
+/// A full-page editor, as the CRM's detail page: a way back to the list,
+/// the title large with its status and the actions beside it, then the
+/// main column (what is written) and a side column (how it is filed and
+/// shown).
 ///
 /// The editors were dialogs of 850 by 750 with four tabs, so writing an
 /// article meant a small box and switching tabs to set its category. A page
@@ -359,84 +597,214 @@ class AdminEditorPage extends StatelessWidget {
     required this.onClose,
   });
 
-  static Future<T?> open<T>(BuildContext context, Widget page) => Navigator.of(context).push<T>(
-    PageRouteBuilder<T>(
-      pageBuilder: (_, _, _) => page,
-      transitionsBuilder: (_, a, _, child) => FadeTransition(opacity: a, child: child),
-      transitionDuration: const Duration(milliseconds: 180),
-    ),
-  );
+  /// Opens [page] in the panel's frame, under the section it came from.
+  static Future<T?> open<T>(BuildContext context, Widget page) {
+    final section = AdminSectionScope.maybeOf(context);
+    final shell = AdminShellScope.maybeOf(context);
+    Widget framed = section == null
+        ? page
+        : AdminSectionScope(title: section.title, group: section.group, child: page);
+    if (shell != null) framed = shell.frame(framed);
+    return Navigator.of(context).push<T>(
+      PageRouteBuilder<T>(
+        pageBuilder: (_, _, _) => framed,
+        // The frame is drawn the same over the list as under it, so only
+        // the content is seen to change.
+        transitionsBuilder: (_, a, _, child) => FadeTransition(opacity: a, child: child),
+        transitionDuration: const Duration(milliseconds: 180),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final k = AdminKit.of(context);
+    final section = AdminSectionScope.maybeOf(context);
+    final rtl = adminDir == TextDirection.rtl;
     return Theme(
       data: k.theme(Theme.of(context)),
       child: Directionality(
-      textDirection: adminDir,
-      child: Scaffold(
-        backgroundColor: k.page,
-        body: Column(
-          children: [
-            Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: tr('סגירה', 'Close'),
-                    onPressed: onClose,
-                    icon: Icon(adminDir == TextDirection.rtl ? Icons.arrow_forward : Icons.arrow_back, color: k.inkSoft),
-                  ),
-                  const SizedBox(width: 8),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: Text(title, style: k.heading.copyWith(fontSize: 17), overflow: TextOverflow.ellipsis),
-                  ),
-                  if (status != null) ...[const SizedBox(width: 12), status!],
-                  // Takes the room left, so the actions sit at the far end.
-                  const Expanded(child: SizedBox()),
-                  for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 10), child: a),
-                ],
-              ),
-            ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, box) {
-                  final wide = box.maxWidth > 1080;
-                  final mainCol = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: main);
-                  final sideCol = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: side);
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1240),
-                        child: wide
-                            ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: mainCol),
-                                  const SizedBox(width: 24),
-                                  SizedBox(width: 340, child: sideCol),
-                                ],
-                              )
-                            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [mainCol, sideCol]),
+        textDirection: adminDir,
+        child: Scaffold(
+          backgroundColor: k.page,
+          body: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+                decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // "← Back to Articles", as the CRM's "Back to Projects".
+                    InkWell(
+                      onTap: onClose,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(rtl ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded, size: 17, color: k.inkSoft),
+                            const SizedBox(width: 6),
+                            Text(
+                              section == null ? tr('חזרה', 'Back') : tr('חזרה ל${section.title}', 'Back to ${section.title}'),
+                              style: k.label.copyWith(color: k.inkSoft),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(title, style: k.title.copyWith(fontSize: 22), overflow: TextOverflow.ellipsis),
+                        ),
+                        if (status != null) ...[const SizedBox(width: 12), status!],
+                        // Takes the room left, so the actions sit at the far end.
+                        const Expanded(child: SizedBox()),
+                        for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 10), child: a),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    final wide = box.maxWidth > 1000;
+                    final mainCol = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: main);
+                    final sideCol = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: side);
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1240),
+                          child: wide
+                              ? Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: mainCol),
+                                    const SizedBox(width: 24),
+                                    SizedBox(width: 340, child: sideCol),
+                                  ],
+                                )
+                              : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [mainCol, sideCol]),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
 }
 
-/// A filter for a list, as a bordered chip; filled with the accent's tint
+/// Which section is showing, for the page heading over it: the shell puts
+/// this around every section, so a section's toolbar can head the page with
+/// its name without each of the 35 screens being told it.
+class AdminSectionScope extends InheritedWidget {
+  final String title;
+  final String group;
+
+  const AdminSectionScope({super.key, required this.title, required this.group, required super.child});
+
+  static AdminSectionScope? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AdminSectionScope>();
+
+  @override
+  bool updateShouldNotify(AdminSectionScope old) => old.title != title || old.group != group;
+}
+
+/// The count beside a page's title — "Articles 679" — as the CRM's grey
+/// badge.
+class AdminCountBadge extends StatelessWidget {
+  final String text;
+  const AdminCountBadge(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: k.hover, borderRadius: BorderRadius.circular(6)),
+      child: Text(text, style: k.label.copyWith(fontSize: 12.5, color: k.inkSoft)),
+    );
+  }
+}
+
+/// The top of a page, as the CRM's: the title large with its count, a line
+/// under it saying what the page is, the page's main buttons at the far end.
+/// The title is the section's own unless one is given.
+class AdminPageHeader extends StatelessWidget {
+  final String? title;
+  final String? subtitle;
+  final String? count;
+  final List<Widget> actions;
+
+  /// For a page that ends here, a line under the header; a list's toolbar
+  /// draws its own under its tabs.
+  final bool divider;
+
+  const AdminPageHeader({super.key, this.title, this.subtitle, this.count, this.actions = const [], this.divider = true});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    final name = title ?? AdminSectionScope.maybeOf(context)?.title ?? '';
+    return Container(
+      padding: EdgeInsets.fromLTRB(24, 20, 24, divider ? 18 : 12),
+      decoration: BoxDecoration(
+        color: k.surface,
+        border: divider ? Border(bottom: BorderSide(color: k.border)) : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(name, style: k.title.copyWith(fontSize: 22)),
+                    if (count != null) AdminCountBadge(count!),
+                  ],
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(subtitle!, style: k.hint.copyWith(fontSize: 13.5)),
+                ],
+              ],
+            ),
+          ),
+          for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 10), child: a),
+        ],
+      ),
+    );
+  }
+}
+
+/// Inside a toolbar's tab row: [AdminFilterChip]s there are drawn as tabs.
+class _AdminTabRow extends InheritedWidget {
+  const _AdminTabRow({required super.child});
+
+  static bool of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<_AdminTabRow>() != null;
+
+  @override
+  bool updateShouldNotify(_AdminTabRow old) => false;
+}
+
+/// A filter for a list. In a list's toolbar it is one of the tabs under the
+/// title, underlined when chosen, as the CRM's "All projects / To-do / In
+/// progress"; anywhere else a bordered chip, filled with the accent's tint
 /// when chosen. Each screen drew its own, in four shapes and two blues.
 class AdminFilterChip extends StatelessWidget {
   final String label;
@@ -449,6 +817,50 @@ class AdminFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = AdminKit.of(context);
+    if (_AdminTabRow.of(context)) {
+      return InkWell(
+        onTap: onTap,
+        hoverColor: Colors.transparent,
+        child: AnimatedContainer(
+          duration: k.motion,
+          curve: k.curve,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: selected ? k.accent : Colors.transparent, width: 2),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected ? k.accent : k.inkSoft,
+                ),
+              ),
+              if (count != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: selected ? k.accentSoft : k.hover,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: k.label.copyWith(fontSize: 11.5, color: selected ? k.accent : k.inkSoft),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),
       child: InkWell(
@@ -477,7 +889,7 @@ class AdminFilterChip extends StatelessWidget {
   }
 }
 
-/// The search box at the start of a list's toolbar.
+/// The search box at the end of a list's tab row.
 class AdminSearchField extends StatelessWidget {
   final String hint;
   final TextEditingController? controller;
@@ -491,7 +903,7 @@ class AdminSearchField extends StatelessWidget {
     final k = AdminKit.of(context);
     return SizedBox(
       width: width,
-      height: 40,
+      height: 38,
       child: TextField(
         controller: controller,
         onChanged: onChanged,
@@ -505,38 +917,183 @@ class AdminSearchField extends StatelessWidget {
   }
 }
 
-/// The bar over a list: search, filters, the count and the main action —
-/// the same on every screen, white with a line under it.
+/// The head of a list page, as the CRM's: the section's title with the
+/// count and the main button ("New article") on one line; under it the
+/// filters as tabs, the search at the far end; a line under the whole.
+///
+/// It used to be one bar — search, chips, count, button — under a title
+/// that sat only in the top bar. Every list has it, so all 32 change here.
+/// [showTitle] is off for a second toolbar inside a page that already has
+/// its heading; that one keeps the single bar.
 class AdminListToolbar extends StatelessWidget {
   final Widget? search;
   final List<Widget> filters;
   final String? count;
   final List<Widget> actions;
+  final bool showTitle;
 
-  const AdminListToolbar({super.key, this.search, this.filters = const [], this.count, this.actions = const []});
+  const AdminListToolbar({
+    super.key,
+    this.search,
+    this.filters = const [],
+    this.count,
+    this.actions = const [],
+    this.showTitle = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    if (!showTitle) return _singleBar(k);
+
+    final tabs = filters.isEmpty
+        ? null
+        : _AdminTabRow(
+            // Many filters scroll rather than push the search off the row.
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: filters),
+            ),
+          );
+    return Container(
+      decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AdminPageHeader(count: count, actions: actions, divider: false),
+          if (tabs != null || search != null)
+            LayoutBuilder(
+              builder: (context, box) {
+                // Narrow: the search on a line of its own over the tabs.
+                if (box.maxWidth < 720) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (search != null)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(24, 0, 24, tabs == null ? 14 : 4),
+                          child: Align(alignment: AlignmentDirectional.centerStart, child: search),
+                        ),
+                      if (tabs != null) Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: tabs),
+                    ],
+                  );
+                }
+                return Padding(
+                  padding: EdgeInsetsDirectional.fromSTEB(10, 0, 24, tabs == null ? 14 : 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(child: tabs ?? const SizedBox()),
+                      if (search != null)
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 16, bottom: 6),
+                          child: search,
+                        ),
+                    ],
+                  ),
+                );
+              },
+            )
+          else
+            const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
+  Widget _singleBar(AdminKit k) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+    decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
+    child: Row(
+      children: [
+        if (search != null) ...[search!, const SizedBox(width: 12)],
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: filters),
+          ),
+        ),
+        if (count != null) ...[
+          const SizedBox(width: 12),
+          Text(count!, style: k.hint),
+        ],
+        for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 12), child: a),
+      ],
+    ),
+  );
+}
+
+/// The grey row naming a table's columns, as the CRM's: small, quiet, on
+/// the faint grey, a line under it.
+class AdminTableHeader extends StatelessWidget {
+  final List<Widget> children;
+  const AdminTableHeader({super.key, required this.children});
 
   @override
   Widget build(BuildContext context) {
     final k = AdminKit.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: BoxDecoration(color: k.surface, border: Border(bottom: BorderSide(color: k.border))),
-      child: Row(
-        children: [
-          if (search != null) ...[search!, const SizedBox(width: 12)],
-          // Many filters scroll rather than push the actions off the bar.
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: filters),
-            ),
-          ),
-          if (count != null) ...[
-            const SizedBox(width: 12),
-            Text(count!, style: k.hint),
-          ],
-          for (final a in actions) Padding(padding: const EdgeInsetsDirectional.only(start: 12), child: a),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(color: k.subtle, border: Border(bottom: BorderSide(color: k.border))),
+      child: DefaultTextStyle.merge(
+        style: k.label.copyWith(fontSize: 12.5, color: k.inkSoft),
+        child: Row(children: children),
+      ),
+    );
+  }
+}
+
+/// One row of a table: white, roomy, grey under the pointer, a line under.
+class AdminTableRow extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  /// A row that needs telling apart — a review waiting for approval — in
+  /// place of white.
+  final Color? color;
+  const AdminTableRow({super.key, required this.child, this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    return Material(
+      color: color ?? k.surface,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 58),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: k.border.withValues(alpha: 0.7)))),
+          alignment: AlignmentDirectional.centerStart,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// A name's initials in a soft round badge, as the CRM's lists show people
+/// and companies.
+class AdminInitials extends StatelessWidget {
+  final String name;
+  final double size;
+  const AdminInitials(this.name, {super.key, this.size = 32});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AdminKit.of(context);
+    final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final letters = words.isEmpty
+        ? '?'
+        : (words.length == 1 ? words.first.characters.take(2).toString() : '${words[0].characters.first}${words[1].characters.first}');
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: k.accentSoft, shape: BoxShape.circle),
+      child: Text(
+        letters.toUpperCase(),
+        style: k.label.copyWith(fontSize: size * 0.36, color: k.accent, fontWeight: FontWeight.w600),
       ),
     );
   }

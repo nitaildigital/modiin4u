@@ -114,37 +114,19 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
               }
               return Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.border.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 48),
-                        _Col(tr('שם', 'Name'), flex: 3),
-                        _Col(tr('כתובת', 'Address'), flex: 3),
-                        if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
-                        _Col(tr('סטטוס', 'Status'), flex: 1),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
+                  AdminTableHeader(
+                    children: [
+                      const SizedBox(width: 48),
+                      _Col(tr('שם', 'Name'), flex: 3),
+                      _Col(tr('כתובת', 'Address'), flex: 3),
+                      if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
+                      _Col(tr('סטטוס', 'Status'), flex: 1),
+                      const SizedBox(width: 40),
+                    ],
                   ),
                   Expanded(
-                    child: ListView.separated(
+                    child: ListView.builder(
                       itemCount: lots.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: AppColors.border.withValues(alpha: 0.3),
-                      ),
                       itemBuilder: (_, i) => _buildRow(lots[i], isWide),
                     ),
                   ),
@@ -168,96 +150,93 @@ class _AdminParkingScreenState extends ConsumerState<AdminParkingScreen> {
       color: AppColors.grayText,
     );
 
-    return InkWell(
+    return AdminTableRow(
       onTap: () => _showEditor(lot: p),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Row(
-          children: [
-            NetworkPhoto(
-              url: p['image_url'] as String?,
-              width: 38,
-              height: 38,
-              radius: BorderRadius.circular(6),
-              icon: Icons.local_parking,
-              iconSize: 16,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p['name'] as String? ?? '',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubik,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.navy,
-                    ),
+      child: Row(
+        children: [
+          NetworkPhoto(
+            url: p['image_url'] as String?,
+            width: 38,
+            height: 38,
+            radius: BorderRadius.circular(6),
+            icon: Icons.local_parking,
+            iconSize: 16,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p['name'] as String? ?? '',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubik,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.navy,
                   ),
-                  if (nameEn.isNotEmpty)
-                    Text(
-                      nameEn,
-                      style: small.copyWith(color: AppColors.grayLight),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Text(
-                p['address'] as String? ?? '',
-                style: small,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isWide)
-              Expanded(
-                flex: 2,
-                child: Text(
-                  lat == null || lng == null
-                      ? ''
-                      : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
-                  style: small,
-                  textDirection: TextDirection.ltr,
-                  textAlign: adminEnglish.value
-                      ? TextAlign.left
-                      : TextAlign.right,
                 ),
-              ),
-            Expanded(
-              flex: 1,
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: AdminPill(
-                  active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
-                  active ? AdminKit.of(context).success : AdminKit.of(context).muted,
-                ),
-              ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_vert,
-                size: 18,
-                color: AppColors.grayLight,
-              ),
-              onSelected: (v) => switch (v) {
-                'edit' => _showEditor(lot: p),
-                _ => _toggle(p),
-              },
-              itemBuilder: (_) => [
-                _menuItem('edit', tr('עריכה', 'Edit')),
-                // Hidden, not deleted — shown again from the same menu.
-                _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
+                if (nameEn.isNotEmpty)
+                  Text(
+                    nameEn,
+                    style: small.copyWith(color: AppColors.grayLight),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
               ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              p['address'] as String? ?? '',
+              style: small,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isWide)
+            Expanded(
+              flex: 2,
+              child: Text(
+                lat == null || lng == null
+                    ? ''
+                    : '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
+                style: small,
+                textDirection: TextDirection.ltr,
+                textAlign: adminEnglish.value
+                    ? TextAlign.left
+                    : TextAlign.right,
+              ),
+            ),
+          Expanded(
+            flex: 1,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: AdminPill(
+                active ? tr('מוצג', 'Shown') : tr('מוסתר', 'Hidden'),
+                active ? AdminKit.of(context).success : AdminKit.of(context).muted,
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.more_vert,
+              size: 18,
+              color: AppColors.grayLight,
+            ),
+            onSelected: (v) => switch (v) {
+              'edit' => _showEditor(lot: p),
+              _ => _toggle(p),
+            },
+            itemBuilder: (_) => [
+              _menuItem('edit', tr('עריכה', 'Edit')),
+              // Hidden, not deleted — shown again from the same menu.
+              _menuItem('toggle', active ? tr('הסתרה', 'Hide') : tr('הצגה מחדש', 'Show again')),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -729,12 +708,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

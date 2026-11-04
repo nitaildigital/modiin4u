@@ -36,6 +36,59 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
 
     return Column(
       children: [
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש לפי עסק...', 'Search by business...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
+              setState(() => _statusFilter = '');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter(null);
+            }),
+            AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
+              setState(() => _statusFilter = 'active');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('active');
+            }),
+            AdminFilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
+              setState(() => _statusFilter = 'paused');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('paused');
+            }),
+            AdminFilterChip(tr('בוטל', 'Cancelled'), _statusFilter == 'cancelled', () {
+              setState(() => _statusFilter = 'cancelled');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('cancelled');
+            }),
+            AdminFilterChip(tr('פג תוקף', 'Expired'), _statusFilter == 'expired', () {
+              setState(() => _statusFilter = 'expired');
+              ref
+                  .read(adminAgreementListProvider.notifier)
+                  .setStatusFilter('expired');
+            }),
+          ],
+          count: loaded == null
+              ? null
+              : tr('${loaded.length} הסכמים', '${loaded.length} agreements'),
+          actions: [
+            AdminToolbarButton(
+              label: tr('הסכם חדש', 'New agreement'),
+              onPressed: () => _showEditor(context, ref),
+            ),
+          ],
+        ),
         // ─── Stats bar ───
         if (loaded != null)
           Builder(
@@ -92,60 +145,6 @@ class _AdminAgreementsScreenState extends ConsumerState<AdminAgreementsScreen> {
               );
             },
           ),
-
-        AdminListToolbar(
-          search: AdminSearchField(
-            controller: _searchController,
-            width: isWide ? 280 : 180,
-            hint: tr('חיפוש לפי עסק...', 'Search by business...'),
-            onChanged: (v) => _debouncer.run(() {
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setSearch(v.isEmpty ? null : v);
-            }),
-          ),
-          filters: [
-            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () {
-              setState(() => _statusFilter = '');
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setStatusFilter(null);
-            }),
-            AdminFilterChip(tr('פעיל', 'Active'), _statusFilter == 'active', () {
-              setState(() => _statusFilter = 'active');
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setStatusFilter('active');
-            }),
-            AdminFilterChip(tr('מושהה', 'Paused'), _statusFilter == 'paused', () {
-              setState(() => _statusFilter = 'paused');
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setStatusFilter('paused');
-            }),
-            AdminFilterChip(tr('בוטל', 'Cancelled'), _statusFilter == 'cancelled', () {
-              setState(() => _statusFilter = 'cancelled');
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setStatusFilter('cancelled');
-            }),
-            AdminFilterChip(tr('פג תוקף', 'Expired'), _statusFilter == 'expired', () {
-              setState(() => _statusFilter = 'expired');
-              ref
-                  .read(adminAgreementListProvider.notifier)
-                  .setStatusFilter('expired');
-            }),
-          ],
-          count: loaded == null
-              ? null
-              : tr('${loaded.length} הסכמים', '${loaded.length} agreements'),
-          actions: [
-            AdminToolbarButton(
-              label: tr('הסכם חדש', 'New agreement'),
-              onPressed: () => _showEditor(context, ref),
-            ),
-          ],
-        ),
 
         // ─── Table ───
         Expanded(

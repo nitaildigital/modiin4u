@@ -38,6 +38,7 @@ class AdminSitePagesScreen extends ConsumerWidget {
 
     return Column(
       children: [
+        const AdminPageHeader(),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),

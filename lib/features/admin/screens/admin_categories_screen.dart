@@ -122,37 +122,19 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
               }
               return Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.border.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _Col(tr('שם', 'Name'), flex: 3),
-                        _Col(tr('שיוך', 'Scope'), flex: 1),
-                        if (isWide) _Col(tr('פריטים', 'Items'), flex: 1),
-                        if (isWide) _Col(tr('סדר', 'Order'), flex: 1),
-                        _Col(tr('סטטוס', 'Status'), flex: 1),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
+                  AdminTableHeader(
+                    children: [
+                      _Col(tr('שם', 'Name'), flex: 3),
+                      _Col(tr('שיוך', 'Scope'), flex: 1),
+                      if (isWide) _Col(tr('פריטים', 'Items'), flex: 1),
+                      if (isWide) _Col(tr('סדר', 'Order'), flex: 1),
+                      _Col(tr('סטטוס', 'Status'), flex: 1),
+                      const SizedBox(width: 40),
+                    ],
                   ),
                   Expanded(
-                    child: ListView.separated(
+                    child: ListView.builder(
                       itemCount: categories.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        color: AppColors.border.withValues(alpha: 0.3),
-                      ),
                       itemBuilder: (_, i) {
                         final c = categories[i];
                         final isChild = c['parent_id'] != null;
@@ -160,119 +142,113 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                         final scope = c['scope'] as String? ?? '';
                         final icon = c['icon'] as String? ?? '';
 
-                        return InkWell(
+                        return AdminTableRow(
                           onTap: () => _showEditor(context, ref, category: c),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Row(
-                                    children: [
-                                      // A child is indented inside the name
-                                      // cell only, so the columns after it
-                                      // stay in line with its parent's.
-                                      if (isChild) const SizedBox(width: 24),
-                                      // The picture the site's category
-                                      // tiles show, when it has one.
-                                      if ((c['image_url'] as String? ?? '')
-                                          .isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8,
-                                          ),
-                                          child: NetworkPhoto(
-                                            url: c['image_url'] as String,
-                                            width: 32,
-                                            height: 32,
-                                            radius: BorderRadius.circular(4),
-                                            icon: Icons.image_outlined,
-                                            iconSize: 14,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Row(
+                                  children: [
+                                    // A child is indented inside the name
+                                    // cell only, so the columns after it
+                                    // stay in line with its parent's.
+                                    if (isChild) const SizedBox(width: 24),
+                                    // The picture the site's category
+                                    // tiles show, when it has one.
+                                    if ((c['image_url'] as String? ?? '')
+                                        .isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsetsDirectional.only(end: 10),
+                                        child: NetworkPhoto(
+                                          url: c['image_url'] as String,
+                                          width: 32,
+                                          height: 32,
+                                          radius: BorderRadius.circular(4),
+                                          icon: Icons.image_outlined,
+                                          iconSize: 14,
+                                        ),
+                                      ),
+                                    if (icon.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsetsDirectional.only(end: 10),
+                                        child: Text(
+                                          icon,
+                                          style: const TextStyle(
+                                            fontSize: 16,
                                           ),
                                         ),
-                                      if (icon.isNotEmpty)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8,
-                                          ),
-                                          child: Text(
-                                            icon,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                          ),
+                                      ),
+                                    Flexible(
+                                      child: Text(
+                                        c['name'] as String? ?? '',
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 14,
+                                          fontWeight: isChild
+                                              ? FontWeight.w400
+                                              : FontWeight.w600,
+                                          color: AppColors.navy,
                                         ),
+                                      ),
+                                    ),
+                                    // The English name, when it has one.
+                                    if ((c['name_en'] as String?)?.trim().isNotEmpty ?? false)
                                       Flexible(
                                         child: Text(
-                                          c['name'] as String? ?? '',
+                                          '  ·  ${(c['name_en'] as String).trim()}',
+                                          overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontFamily: AppFonts.rubik,
-                                            fontSize: 14,
-                                            fontWeight: isChild
-                                                ? FontWeight.w400
-                                                : FontWeight.w600,
-                                            color: AppColors.navy,
+                                            fontSize: 13,
+                                            color: AppColors.grayMeta,
                                           ),
                                         ),
                                       ),
-                                      // The English name, when it has one.
-                                      if ((c['name_en'] as String?)?.trim().isNotEmpty ?? false)
-                                        Flexible(
-                                          child: Text(
-                                            '  ·  ${(c['name_en'] as String).trim()}',
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: AppFonts.rubik,
-                                              fontSize: 13,
-                                              color: AppColors.grayMeta,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                                Expanded(flex: 1, child: _ScopePill(scope)),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      '${AdminCategoryListNotifier.itemCount(c)}',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
-                                        color: AppColors.grayText,
-                                      ),
-                                    ),
-                                  ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      '${c['sort_order'] ?? 0}',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
-                                        color: AppColors.grayText,
-                                      ),
-                                    ),
-                                  ),
+                              ),
+                              Expanded(flex: 1, child: _ScopePill(scope)),
+                              if (isWide)
                                 Expanded(
                                   flex: 1,
-                                  child: Align(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    child: AdminPill(
-                                      active ? tr('פעיל', 'Active') : tr('מושבת', 'Disabled'),
-                                      active
-                                          ? AdminKit.of(context).success
-                                          : AdminKit.of(context).muted,
+                                  child: Text(
+                                    '${AdminCategoryListNotifier.itemCount(c)}',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      color: AppColors.grayText,
                                     ),
                                   ),
                                 ),
-                                PopupMenuButton<String>(
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    '${c['sort_order'] ?? 0}',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      color: AppColors.grayText,
+                                    ),
+                                  ),
+                                ),
+                              Expanded(
+                                flex: 1,
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: AdminPill(
+                                    active ? tr('פעיל', 'Active') : tr('מושבת', 'Disabled'),
+                                    active
+                                        ? AdminKit.of(context).success
+                                        : AdminKit.of(context).muted,
+                                  ),
+                                ),
+                              ),
+                              // As wide as the header leaves for it, so the columns line up.
+                              SizedBox(
+                                width: 40,
+                                child: PopupMenuButton<String>(
                                   icon: const Icon(
                                     Icons.more_vert,
                                     size: 18,
@@ -312,8 +288,8 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
                                     // is.
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -919,22 +895,9 @@ class _ScopePill extends StatelessWidget {
       'job' => (tr('משרות', 'Jobs'), AppColors.turquoise),
       _ => (scope, AppColors.grayLight),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
+    // The kit's pill: its own size in the column, where this one stretched
+    // across it and pressed the item count against its end.
+    return AdminPill(label, color);
   }
 }
 
@@ -949,12 +912,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

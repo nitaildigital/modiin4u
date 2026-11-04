@@ -115,7 +115,6 @@ class AdminJobsScreen extends ConsumerWidget {
             data: (_) => shown.isEmpty
                 ? Center(child: Text(tr('אין משרות.', 'No jobs.'), style: k.hint))
                 : ListView.builder(
-                    padding: const EdgeInsets.all(24),
                     itemCount: shown.length,
                     itemBuilder: (context, i) => _JobRow(job: shown[i].$1, applications: shown[i].$2),
                   ),
@@ -238,7 +237,7 @@ class _JobRowState extends ConsumerState<_JobRow> {
       _ => k.muted,
     };
 
-    return AdminCard(
+    return AdminTableRow(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

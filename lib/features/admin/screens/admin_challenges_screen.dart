@@ -42,6 +42,7 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
     return Column(
       children: [
         AdminListToolbar(
+          showTitle: false,
           search: AdminSearchField(
             controller: _searchController,
             width: isWide ? 280 : 180,

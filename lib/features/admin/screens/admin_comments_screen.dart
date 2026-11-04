@@ -96,48 +96,6 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
 
     return Column(
       children: [
-        // ─── Stats ───
-        if (list != null)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.border.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                _StatChip(
-                  tr('ממתינות', 'Pending'),
-                  '${list.where((c) => c['status'] == 'pending').length}',
-                  AppColors.gold,
-                ),
-                const SizedBox(width: 12),
-                _StatChip(
-                  tr('מאושרות', 'Approved'),
-                  '${list.where((c) => c['status'] == 'approved').length}',
-                  AppColors.success,
-                ),
-                const SizedBox(width: 12),
-                // `report_count` is how many residents reported the comment.
-                _StatChip(
-                  tr('דווחו', 'Reported'),
-                  '${list.where((c) => ((c['report_count'] as num?) ?? 0) > 0).length}',
-                  AppColors.error,
-                ),
-                const SizedBox(width: 12),
-                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
-              ],
-            ),
-          ),
-
-        // Nothing creates comments yet; an empty list should not read as
-        // "all caught up".
-        const _NothingWritesThisNote(),
-
         // ─── Toolbar ───
         AdminListToolbar(
           search: AdminSearchField(
@@ -195,6 +153,47 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
           ],
           count: list != null ? tr('${list.length} תגובות', '${list.length} comments') : null,
         ),
+        // ─── Stats ───
+        if (list != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                _StatChip(
+                  tr('ממתינות', 'Pending'),
+                  '${list.where((c) => c['status'] == 'pending').length}',
+                  AppColors.gold,
+                ),
+                const SizedBox(width: 12),
+                _StatChip(
+                  tr('מאושרות', 'Approved'),
+                  '${list.where((c) => c['status'] == 'approved').length}',
+                  AppColors.success,
+                ),
+                const SizedBox(width: 12),
+                // `report_count` is how many residents reported the comment.
+                _StatChip(
+                  tr('דווחו', 'Reported'),
+                  '${list.where((c) => ((c['report_count'] as num?) ?? 0) > 0).length}',
+                  AppColors.error,
+                ),
+                const SizedBox(width: 12),
+                _StatChip(tr('סה״כ', 'Total'), '${list.length}', AppColors.midBlue),
+              ],
+            ),
+          ),
+
+        // Nothing creates comments yet; an empty list should not read as
+        // "all caught up".
+        const _NothingWritesThisNote(),
 
         // ─── List ───
         Expanded(
@@ -232,13 +231,8 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                   ),
                 );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+              return ListView.builder(
                 itemCount: list.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.3),
-                ),
                 itemBuilder: (_, i) {
                   final c = list[i];
                   final id = c['id'] as String;
@@ -249,16 +243,12 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
                             .trim()
                       : '';
 
-                  return Container(
+                  return AdminTableRow(
                     color: reports > 0
-                        ? AppColors.error.withValues(alpha: 0.04)
+                        ? Color.alphaBlend(AppColors.error.withValues(alpha: 0.05), Colors.white)
                         : (status == 'pending'
-                              ? AppColors.gold.withValues(alpha: 0.04)
+                              ? Color.alphaBlend(AppColors.gold.withValues(alpha: 0.06), Colors.white)
                               : null),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

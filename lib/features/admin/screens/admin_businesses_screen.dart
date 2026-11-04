@@ -365,35 +365,22 @@ class _BusinessTable extends StatelessWidget {
     return Column(
       children: [
         // Header — CRM-style table header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: const BoxDecoration(
-            color: AppColors.adminContentBg,
-            border: Border(
-              bottom: BorderSide(color: AppColors.adminCardBorder, width: 1),
-            ),
-          ),
-          child: Row(
-            children: [
-              _Col(tr('עסק', 'Business'), flex: 3),
-              if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
-              _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
-              _Col(tr('סטטוס', 'Status'), flex: 1),
-              if (isWide) _Col(tr('דירוג', 'Rating'), flex: 1),
-              if (isWide) _Col(tr('ביקורות', 'Reviews'), flex: 1),
-              const SizedBox(width: 40),
-            ],
-          ),
+        AdminTableHeader(
+          children: [
+            _Col(tr('עסק', 'Business'), flex: 3),
+            if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
+            _Col(tr('שכונה', 'Neighbourhood'), flex: 2),
+            _Col(tr('סטטוס', 'Status'), flex: 1),
+            if (isWide) _Col(tr('דירוג', 'Rating'), flex: 1),
+            if (isWide) _Col(tr('ביקורות', 'Reviews'), flex: 1),
+            const SizedBox(width: 40),
+          ],
         ),
 
         // Rows
         Expanded(
-          child: ListView.separated(
+          child: ListView.builder(
             itemCount: businesses.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.3),
-            ),
             itemBuilder: (_, i) {
               final biz = businesses[i];
               final status = biz['status'] as String? ?? 'draft';
@@ -402,256 +389,250 @@ class _BusinessTable extends StatelessWidget {
               final rating = (biz['rating'] as num?)?.toDouble() ?? 0;
               final reviewCount = biz['review_count'] as int? ?? 0;
 
-              return InkWell(
+              return AdminTableRow(
                 onTap: () => onTap(biz),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      // Logo + Name. The slot is kept when there is no
-                      // logo, so the columns after it stay aligned.
-                      if (biz['logo_url'] == null)
-                        const SizedBox(width: 48)
-                      else ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            biz['logo_url'] as String,
+                child: Row(
+                  children: [
+                    // Logo + Name. The slot is kept when there is no
+                    // logo, so the columns after it stay aligned.
+                    if (biz['logo_url'] == null)
+                      const SizedBox(width: 48)
+                    else ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          biz['logo_url'] as String,
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
                             width: 38,
                             height: 38,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Icon(
-                                Icons.store,
-                                size: 18,
-                                color: AppColors.grayLight,
-                              ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.store,
+                              size: 18,
+                              color: AppColors.grayLight,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  biz['name'] as String? ?? '',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                  ),
+                                ),
+                              ),
+                              // Parks share this list; the badge tells
+                              // them apart at a glance.
+                              if (biz['kind'] == 'park') ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F4EA),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                   child: Text(
-                                    biz['name'] as String? ?? '',
-                                    overflow: TextOverflow.ellipsis,
+                                    tr('פארק', 'Park'),
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubik,
-                                      fontSize: 14,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.navy,
+                                      color: const Color(0xFF1E7B34),
                                     ),
                                   ),
                                 ),
-                                // Parks share this list; the badge tells
-                                // them apart at a glance.
-                                if (biz['kind'] == 'park') ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE6F4EA),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      tr('פארק', 'Park'),
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF1E7B34),
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
-                            ),
-                            Text(
-                              biz['slug'] as String? ?? '',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 11,
-                                color: AppColors.grayLight,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Its categories, from entity_categories. A dash where
-                      // there are none: such a business is in no category
-                      // list on the site, which is worth seeing here.
-                      if (isWide)
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            (categoryNames[biz['id']] ?? const []).isEmpty
-                                ? '—'
-                                : categoryNames[biz['id']]!.join(', '),
+                            ],
+                          ),
+                          Text(
+                            biz['slug'] as String? ?? '',
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.grayText,
+                              fontSize: 11,
+                              color: AppColors.grayLight,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      // Neighborhood
+                        ],
+                      ),
+                    ),
+                    // Its categories, from entity_categories. A dash where
+                    // there are none: such a business is in no category
+                    // list on the site, which is worth seeing here.
+                    if (isWide)
                       Expanded(
                         flex: 2,
                         child: Text(
-                          neighborhood?['name'] as String? ?? '—',
+                          (categoryNames[biz['id']] ?? const []).isEmpty
+                              ? '—'
+                              : categoryNames[biz['id']]!.join(', '),
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.grayText,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    // Neighborhood
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        neighborhood?['name'] as String? ?? '—',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    // Status
+                    Expanded(flex: 1, child: _StatusPill(status)),
+                    // Rating
+                    if (isWide)
+                      Expanded(
+                        flex: 1,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (rating > 0) ...[
+                              Icon(
+                                Icons.star,
+                                size: 14,
+                                color: rating >= 4
+                                    ? AppColors.gold
+                                    : AppColors.grayLight,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                rating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ] else
+                              Text(
+                                '—',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 13,
+                                  color: AppColors.grayLight,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    // Reviews
+                    if (isWide)
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          '$reviewCount',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 13,
+                            color: AppColors.grayText,
                           ),
                         ),
                       ),
-                      // Status
-                      Expanded(flex: 1, child: _StatusPill(status)),
-                      // Rating
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (rating > 0) ...[
-                                Icon(
-                                  Icons.star,
-                                  size: 14,
-                                  color: rating >= 4
-                                      ? AppColors.gold
-                                      : AppColors.grayLight,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  rating.toStringAsFixed(1),
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ] else
-                                Text(
-                                  '—',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubik,
-                                    fontSize: 13,
-                                    color: AppColors.grayLight,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      // Reviews
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
+                    // Actions
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: AppColors.grayLight,
+                      ),
+                      onSelected: (v) => onAction(v, biz),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
                           child: Text(
-                            '$reviewCount',
+                            tr('עריכה', 'Edit'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
-                              color: AppColors.grayText,
                             ),
                           ),
                         ),
-                      // Actions
-                      PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: AppColors.grayLight,
+                        PopupMenuItem(
+                          value: 'invite_owner',
+                          child: Text(
+                            tr('הזמנת בעלים במייל', 'Invite owner by e-mail'),
+                            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                          ),
                         ),
-                        onSelected: (v) => onAction(v, biz),
-                        itemBuilder: (_) => [
+                        // Views and clicks on the business's page (00048).
+                        PopupMenuItem(
+                          value: 'stats',
+                          child: Text(
+                            tr('סטטיסטיקות', 'Statistics'),
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        if (status != 'active')
                           PopupMenuItem(
-                            value: 'edit',
+                            value: 'activate',
                             child: Text(
-                              tr('עריכה', 'Edit'),
+                              status == 'closed' ? tr('פתיחה מחדש', 'Reopen') : tr('אשר', 'Confirm'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
                               ),
                             ),
                           ),
+                        if (status != 'suspended')
                           PopupMenuItem(
-                            value: 'invite_owner',
+                            value: 'suspend',
                             child: Text(
-                              tr('הזמנת בעלים במייל', 'Invite owner by e-mail'),
-                              style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
-                            ),
-                          ),
-                          // Views and clicks on the business's page (00048).
-                          PopupMenuItem(
-                            value: 'stats',
-                            child: Text(
-                              tr('סטטיסטיקות', 'Statistics'),
+                              tr('השהה', 'Pause'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
                               ),
                             ),
                           ),
-                          if (status != 'active')
-                            PopupMenuItem(
-                              value: 'activate',
-                              child: Text(
-                                status == 'closed' ? tr('פתיחה מחדש', 'Reopen') : tr('אשר', 'Confirm'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
+                        if (status != 'closed')
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              tr('סגירת העסק', 'Closing the business'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
+                                color: AppColors.error,
                               ),
                             ),
-                          if (status != 'suspended')
-                            PopupMenuItem(
-                              value: 'suspend',
-                              child: Text(
-                                tr('השהה', 'Pause'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          if (status != 'closed')
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text(
-                                tr('סגירת העסק', 'Closing the business'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                  color: AppColors.error,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -673,12 +654,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

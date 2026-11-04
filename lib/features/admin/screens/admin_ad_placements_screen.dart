@@ -25,6 +25,32 @@ class _AdminAdPlacementsScreenState
 
     return Column(
       children: [
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.ad_units, size: 20, color: AdminKit.of(context).inkSoft),
+              const SizedBox(width: 8),
+              Text(
+                tr('מיקומי פרסום', 'Ad placements'),
+                style: AdminKit.of(context).heading,
+              ),
+            ],
+          ),
+          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
+          // on a failed load and greys the whole section instead of letting
+          // the list below show the error and a retry.
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} מיקומים', '${list.length} placements'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('מיקום חדש', 'New placement'),
+              onPressed: () => _showEditor(context, ref),
+            ),
+          ],
+        ),
         // ─── Stats bar ───
         // Only once the list is in; a failed load is shown by the table.
         if (asyncData.valueOrNull case final list?)
@@ -64,33 +90,6 @@ class _AdminAdPlacementsScreenState
               );
             },
           ),
-
-        AdminListToolbar(
-          search: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.ad_units, size: 20, color: AdminKit.of(context).inkSoft),
-              const SizedBox(width: 8),
-              Text(
-                tr('מיקומי פרסום', 'Ad placements'),
-                style: AdminKit.of(context).heading,
-              ),
-            ],
-          ),
-          // `valueOrNull`, not `whenData(...).value`: the latter rethrows
-          // on a failed load and greys the whole section instead of letting
-          // the list below show the error and a retry.
-          count: switch (asyncData.valueOrNull) {
-            final list? => tr('${list.length} מיקומים', '${list.length} placements'),
-            null => null,
-          },
-          actions: [
-            AdminToolbarButton(
-              label: tr('מיקום חדש', 'New placement'),
-              onPressed: () => _showEditor(context, ref),
-            ),
-          ],
-        ),
 
         // ─── Table ───
         Expanded(

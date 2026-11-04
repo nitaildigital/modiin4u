@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// The address to load a photo from our Supabase storage at.
@@ -11,7 +12,27 @@ import 'package:flutter/material.dart';
 /// quota then at 1%. [NetworkPhoto] decodes it at the size it is drawn, so a
 /// phone's memory holds no more than before. The parameters stay for when
 /// small copies are stored at upload (PLAN.md, 9 Oct).
-String sizedPhotoUrl(String url, double logicalWidth, double devicePixelRatio) => url;
+///
+/// The web build is the panel only, and there the originals were the whole
+/// cost: Categories asked for 26 pictures of 1536 × 1024, 93.6 MB, to draw
+/// them 32 pixels wide, and showed placeholders until they came (16 Oct).
+/// On the web a stored photo is asked of the website's own resizer, at the
+/// panel's address — `/_next/image/`, which nginx sends to the site
+/// (deploy/nginx/snippets/modiin4u-admin.conf) — at the width it is drawn:
+/// 9 KB for that pizza. It is the site's, not Supabase's, so no quota; and
+/// the same copies www makes, at the widths it allows (site/next.config.ts).
+/// [NetworkPhoto] falls back to the original if the resizer is not there.
+String sizedPhotoUrl(String url, double logicalWidth, double devicePixelRatio) {
+  if (!kIsWeb) return url;
+  final w = decodeWidth(logicalWidth, devicePixelRatio);
+  final path = url.split('?').first.toLowerCase();
+  if (w == null ||
+      !url.contains('.supabase.co/storage/v1/object/public/') ||
+      !RegExp(r'\.(jpe?g|png|webp)$').hasMatch(path)) {
+    return url;
+  }
+  return Uri.base.resolve('/_next/image/?url=${Uri.encodeComponent(url)}&w=$w&q=75').toString();
+}
 
 /// The pixel width to decode a photo drawn [logicalWidth] wide at, rounded
 /// up to a few steps; null where the width is not known.
@@ -104,18 +125,25 @@ class NetworkPhoto extends StatelessWidget {
       final needed = fit == BoxFit.cover && logicalHeight.isFinite
           ? (logicalWidth.isFinite ? logicalWidth : 0).clamp(logicalHeight * 16 / 9, double.infinity).toDouble()
           : logicalWidth;
-      return CachedNetworkImage(
-        imageUrl: sizedPhotoUrl(src, needed, MediaQuery.devicePixelRatioOf(context)),
+      final dpr = MediaQuery.devicePixelRatioOf(context);
+      final sized = sizedPhotoUrl(src, needed, dpr);
+      CachedNetworkImage image(String address, Widget Function() onError) => CachedNetworkImage(
+        imageUrl: address,
         // Decoded at the size it is drawn: a 4 MB original in a card takes
         // the memory of a card-sized picture.
-        memCacheWidth: decodeWidth(needed, MediaQuery.devicePixelRatioOf(context)),
+        memCacheWidth: decodeWidth(needed, dpr),
         width: width,
         height: height,
         fit: fit,
         fadeInDuration: const Duration(milliseconds: 250),
         placeholder: (_, _) => fallback,
-        errorWidget: (_, _, _) => fallback,
+        errorWidget: (_, _, _) => onError(),
       );
+      // A small copy that could not be had — no resizer where the panel is
+      // run locally — is the original after all.
+      return sized == src
+          ? image(src, () => fallback)
+          : image(sized, () => image(src, () => fallback));
     }
 
     final w = width;

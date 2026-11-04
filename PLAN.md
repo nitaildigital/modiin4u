@@ -3457,6 +3457,59 @@ on the OnePlus. **iOS had lost its launch logo altogether:**
 was added on 8 Oct (4cceeb8) and deleted with the Next.js commit (4eb8ea9),
 so iPhone builds since showed an empty navy screen; it is back, to commit.
 
+**The panel laid out as the PersonaAI CRM — 16 Oct (branch
+`feature/admin-redesign`; Harshit: "the visual structure and layout of
+this, not the colours").** The reference is the CRM screens in PersonaAI's
+Figma file (H7j1C60jDRfzJPlZvQwbGo, page Website, bottom row: Overview,
+Leads, Tasks, Project Management, Project Detail, Team). Modiin4u's blue
+stays; the layout is theirs:
+
+- **The frame.** A white sidebar with the logo, a search for a section
+  (Ctrl/⌘K, Enter opens the first match), the six headings and a soft tint
+  on the open section; it folds to a rail of icons. The section and the
+  fold are kept on the browser, and the sidebar scrolls to the open section
+  after a reload or a search. Below 800 px it is a drawer. The top bar is a
+  breadcrumb, View site, HE/EN, settings and the admin's menu (a MenuAnchor:
+  the popup opened outside the panel's direction and was right to left in
+  English). A section comes in with a short fade.
+- **Every list page** (the 32 that use `AdminListToolbar`) opens with the
+  section's title large and its count beside it, the main button at the far
+  end, the status filters as underlined tabs and the search beside them. The
+  title comes from the shell (`AdminSectionScope`), so no screen was told
+  its name. Where a page put figures or a note above its toolbar (revenue,
+  deals, tags, trash and others, 13 screens), the toolbar moved to the top.
+  The three tabbed sections (Overview, Challenges & groups, Flags) have the
+  heading over their tabs; the toolbars inside them keep the single bar.
+- **Tables** of articles, businesses, events, real estate, deals, car parks
+  and campaigns: the CRM's grey header row and roomy white rows, grey under
+  the pointer (`AdminTableHeader`, `AdminTableRow`). Then the rest the same
+  day (Harshit: "do these also"): users as the CRM's Leads (a column each
+  for phone, email, neighbourhood), the team as a table (member, role,
+  access) instead of cards, the activity log as a table (action, item,
+  admin, when) instead of a timeline, and agents, municipal places, jobs,
+  reviews and comments as white rows; a review or comment waiting for
+  approval keeps its tint. Messages was already the CRM's inbox. `AdminPill`
+  keeps its size in a wide column. Escape closes the panel's dialogs and
+  menus (checked; it failed only while the sidebar's search held the
+  keyboard).
+- **Editors** are the CRM's detail page: "Back to Articles", the title with
+  its status, the actions beside it — and the sidebar and top bar stay. The
+  editor is still a page of its own on the navigator, drawn inside the
+  shell's frame (`AdminShellScope`): the screens close dialogs and editors
+  with `Navigator.pop(context)` in 83 places, which a navigator nested in
+  the shell would have sent to the wrong page. The editors do not know
+  whether anything changed, so going to another section from an editor
+  asks first.
+- **The overview's figures** are the CRM's cards: an icon in a tinted
+  square (from the table the figure counts), the label, the number large.
+- **The theme** (`AdminKit.theme`) dresses the screens' own dialogs,
+  messages, menus, buttons, tabs, chips and scrollbars: white, a thin
+  border, grey under the pointer, no ripple and no pink Material tint.
+
+Checked in a browser at 1440 and 760 px, in Hebrew and English, signed in
+as a temporary admin: real articles and a business opened and left
+unsaved. Not deployed.
+
 **Google Play: "not an official app" on every municipal page — 19 Oct
 (branch `fix/municipal-disclaimer`).** Play rejected the Android app under
 its Misleading Claims policy (government information): the Municipal tab

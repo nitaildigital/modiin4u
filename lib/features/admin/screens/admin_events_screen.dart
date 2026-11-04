@@ -282,35 +282,20 @@ class _EventTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              _Col(tr('שם אירוע', 'Event name'), flex: 3),
-              _Col(tr('תאריך', 'Date'), flex: 2),
-              if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
-              _Col(tr('קטגוריה', 'Category'), flex: 2),
-              _Col(tr('סטטוס', 'Status'), flex: 1),
-              if (isWide) _Col(tr('מתעניינים', 'Interested'), flex: 1),
-              const SizedBox(width: 40),
-            ],
-          ),
+        AdminTableHeader(
+          children: [
+            _Col(tr('שם אירוע', 'Event name'), flex: 3),
+            _Col(tr('תאריך', 'Date'), flex: 2),
+            if (isWide) _Col(tr('מיקום', 'Location'), flex: 2),
+            _Col(tr('קטגוריה', 'Category'), flex: 2),
+            _Col(tr('סטטוס', 'Status'), flex: 1),
+            if (isWide) _Col(tr('מתעניינים', 'Interested'), flex: 1),
+            const SizedBox(width: 40),
+          ],
         ),
         Expanded(
-          child: ListView.separated(
+          child: ListView.builder(
             itemCount: events.length,
-            separatorBuilder: (_, _) => Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.3),
-            ),
             itemBuilder: (_, i) {
               final ev = events[i];
               final id = ev['id'] as String;
@@ -336,182 +321,176 @@ class _EventTable extends StatelessWidget {
                   );
               final cats = categoriesOf(id);
 
-              return InkWell(
+              return AdminTableRow(
                 onTap: () => onTap(ev),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                if (isFeatured)
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.only(end: 4),
-                                    child: Icon(
-                                      Icons.star,
-                                      size: 14,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                if (isFree)
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.only(end: 4),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.success.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Text(
-                                        tr('חינם', 'Free'),
-                                        style: TextStyle(
-                                          fontFamily: AppFonts.rubik,
-                                          fontSize: 9,
-                                          color: AppColors.success,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                Flexible(
-                                  child: Text(
-                                    ev['title'] as String? ?? '',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.navy,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (isFeatured)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 4),
+                                  child: Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: AppColors.gold,
                                   ),
                                 ),
-                              ],
-                            ),
-                            if (!isFree && price != null)
-                              Text(
-                                '₪${price == price.truncate() ? price.toInt() : price}',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 11,
-                                  color: AppColors.grayLight,
+                              if (isFree)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 4),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.success.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                    child: Text(
+                                      tr('חינם', 'Free'),
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubik,
+                                        fontSize: 9,
+                                        color: AppColors.success,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              Flexible(
+                                child: Text(
+                                  ev['title'] as String? ?? '',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                            ],
+                          ),
+                          if (!isFree && price != null)
                             Text(
-                              endDate.isNotEmpty && endDate != startDate
-                                  ? '$startDate – $endDate'
-                                  : startDate,
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              isAllDay
-                                  ? tr('כל היום', 'All day')
-                                  : end.isNotEmpty
-                                  ? '$start–$end'
-                                  : start,
+                              '₪${price == price.truncate() ? price.toInt() : price}',
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 11,
                                 color: AppColors.grayLight,
                               ),
                             ),
-                          ],
-                        ),
+                        ],
                       ),
-                      if (isWide)
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            (ev['is_online'] as bool? ?? false)
-                                ? tr('אונליין', 'Online')
-                                : venue ?? '',
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            endDate.isNotEmpty && endDate != startDate
+                                ? '$startDate – $endDate'
+                                : startDate,
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.grayText,
+                              fontSize: 13,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                          Text(
+                            isAllDay
+                                ? tr('כל היום', 'All day')
+                                : end.isNotEmpty
+                                ? '$start–$end'
+                                : start,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 11,
+                              color: AppColors.grayLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isWide)
                       Expanded(
                         flex: 2,
                         child: Text(
-                          cats.isEmpty ? '—' : cats.join(', '),
+                          (ev['is_online'] as bool? ?? false)
+                              ? tr('אונליין', 'Online')
+                              : venue ?? '',
                           style: TextStyle(
                             fontFamily: AppFonts.rubik,
                             fontSize: 12,
-                            color: cats.isEmpty
-                                ? AppColors.grayLight
-                                : AppColors.grayText,
+                            color: AppColors.grayText,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Expanded(flex: 1, child: _StatusPill(status)),
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
-                          child: Text(
-                            capacity != null && capacity > 0
-                                ? '$rsvps/$capacity'
-                                : '$rsvps',
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 13,
-                              color: AppColors.grayText,
-                            ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        cats.isEmpty ? '—' : cats.join(', '),
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubik,
+                          fontSize: 12,
+                          color: cats.isEmpty
+                              ? AppColors.grayLight
+                              : AppColors.grayText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(flex: 1, child: _StatusPill(status)),
+                    if (isWide)
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          capacity != null && capacity > 0
+                              ? '$rsvps/$capacity'
+                              : '$rsvps',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
                           ),
                         ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: AppColors.grayLight,
-                        ),
-                        onSelected: (v) => onAction(v, ev),
-                        itemBuilder: (_) => [
-                          _menuItem('edit', tr('עריכה', 'Edit')),
-                          if (status != 'published')
-                            _menuItem('publish', tr('פרסם', 'Publish')),
-                          if (status != 'draft')
-                            _menuItem('draft', tr('החזר לטיוטה', 'Back to draft')),
-                          // One item: "cancel" and "delete" both set
-                          // status = 'cancelled' — the row is never removed.
-                          if (status != 'cancelled')
-                            _menuItem(
-                              'cancel',
-                              tr('בטל אירוע', 'Cancel event'),
-                              color: AppColors.error,
-                            ),
-                        ],
                       ),
-                    ],
-                  ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: AppColors.grayLight,
+                      ),
+                      onSelected: (v) => onAction(v, ev),
+                      itemBuilder: (_) => [
+                        _menuItem('edit', tr('עריכה', 'Edit')),
+                        if (status != 'published')
+                          _menuItem('publish', tr('פרסם', 'Publish')),
+                        if (status != 'draft')
+                          _menuItem('draft', tr('החזר לטיוטה', 'Back to draft')),
+                        // One item: "cancel" and "delete" both set
+                        // status = 'cancelled' — the row is never removed.
+                        if (status != 'cancelled')
+                          _menuItem(
+                            'cancel',
+                            tr('בטל אירוע', 'Cancel event'),
+                            color: AppColors.error,
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -1528,12 +1507,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

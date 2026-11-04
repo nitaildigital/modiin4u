@@ -99,34 +99,6 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
 
     return Column(
       children: [
-        // ─── Figures, for the whole table ───
-        if (totals != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.border.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                _StatChip(tr('סה״כ קבצים', 'Total files'), '${totals.files}', AppColors.midBlue),
-                _StatChip(tr('תמונות', 'Photos'), '${totals.images}', AppColors.midBlue),
-                _StatChip(
-                  tr('נפח כולל', 'Total size'),
-                  _formatSize(totals.bytes),
-                  AppColors.gold,
-                ),
-              ],
-            ),
-          ),
-
         // ─── Toolbar ───
         AdminListToolbar(
           search: AdminSearchField(
@@ -204,6 +176,33 @@ class _AdminMediaScreenState extends ConsumerState<AdminMediaScreen> {
               ),
           ],
         ),
+        // ─── Figures, for the whole table ───
+        if (totals != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                _StatChip(tr('סה״כ קבצים', 'Total files'), '${totals.files}', AppColors.midBlue),
+                _StatChip(tr('תמונות', 'Photos'), '${totals.images}', AppColors.midBlue),
+                _StatChip(
+                  tr('נפח כולל', 'Total size'),
+                  _formatSize(totals.bytes),
+                  AppColors.gold,
+                ),
+              ],
+            ),
+          ),
 
         // ─── Content ───
         Expanded(

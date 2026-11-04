@@ -27,6 +27,37 @@ class _AdminHomeBuilderScreenState
 
     return Column(
       children: [
+        // ─── Toolbar ───
+        AdminListToolbar(
+          search: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.dashboard_customize, size: 20, color: AppColors.navy),
+              const SizedBox(width: 8),
+              Text(
+                tr('בונה מסך הבית', 'Home screen builder'),
+                style: TextStyle(
+                  fontFamily: AppFonts.rubik,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            AdminToolbarButton(
+              primary: false,
+              icon: Icons.publish,
+              label: tr('פרסם הכל', 'Publish all'),
+              onPressed: _publishAll,
+            ),
+            AdminToolbarButton(
+              label: tr('בלוק חדש', 'New block'),
+              onPressed: () => _showEditor(context, ref),
+            ),
+          ],
+        ),
         // ─── Stats bar ───
         if (asyncData.valueOrNull case final list?)
           Builder(
@@ -63,38 +94,6 @@ class _AdminHomeBuilderScreenState
               );
             },
           ),
-
-        // ─── Toolbar ───
-        AdminListToolbar(
-          search: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.dashboard_customize, size: 20, color: AppColors.navy),
-              const SizedBox(width: 8),
-              Text(
-                tr('בונה מסך הבית', 'Home screen builder'),
-                style: TextStyle(
-                  fontFamily: AppFonts.rubik,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            AdminToolbarButton(
-              primary: false,
-              icon: Icons.publish,
-              label: tr('פרסם הכל', 'Publish all'),
-              onPressed: _publishAll,
-            ),
-            AdminToolbarButton(
-              label: tr('בלוק חדש', 'New block'),
-              onPressed: () => _showEditor(context, ref),
-            ),
-          ],
-        ),
 
         // ─── Block List ───
         Expanded(

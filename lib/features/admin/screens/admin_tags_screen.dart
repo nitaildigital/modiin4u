@@ -38,10 +38,6 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
 
     return Column(
       children: [
-        // Tags look like they label things on the site; today they label
-        // nothing, and the client should not have to find that out.
-        const _NotShownNote(),
-
         // ─── Toolbar ───
         AdminListToolbar(
           search: AdminSearchField(
@@ -79,6 +75,9 @@ class _AdminTagsScreenState extends ConsumerState<AdminTagsScreen> {
             ),
           ],
         ),
+        // Tags look like they label things on the site; today they label
+        // nothing, and the client should not have to find that out.
+        const _NotShownNote(),
 
         // ─── Tags Grid ───
         Expanded(

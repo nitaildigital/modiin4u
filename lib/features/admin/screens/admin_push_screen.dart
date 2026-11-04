@@ -65,6 +65,41 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
 
     return Column(
       children: [
+        // ─── Toolbar ───
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 320 : 200,
+            hint: tr('חיפוש הודעה...', 'Search notifications...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminPushListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          filters: [
+            for (final e in {
+              '': tr('הכל', 'All'),
+              'draft': tr('טיוטה', 'Draft'),
+              'scheduled': tr('מתוזמן', 'Scheduled'),
+              'sent': tr('נשלח', 'Sent'),
+              'cancelled': tr('בוטל', 'Cancelled'),
+            }.entries)
+              AdminFilterChip(e.value, _statusFilter == e.key, () {
+                setState(() => _statusFilter = e.key);
+                ref
+                    .read(adminPushListProvider.notifier)
+                    .setStatusFilter(e.key.isEmpty ? null : e.key);
+              }),
+          ],
+          count: loaded != null ? tr('${loaded.length} הודעות', '${loaded.length} notifications') : null,
+          actions: [
+            AdminToolbarButton(
+              label: tr('הודעה חדשה', 'New notification'),
+              onPressed: () => _showPushEditor(context),
+            ),
+          ],
+        ),
         const _HowItWorksNote(),
 
         // ─── Stats Row ───
@@ -104,42 +139,6 @@ class _AdminPushScreenState extends ConsumerState<AdminPushScreen> {
               ],
             ),
           ),
-
-        // ─── Toolbar ───
-        AdminListToolbar(
-          search: AdminSearchField(
-            controller: _searchController,
-            width: isWide ? 320 : 200,
-            hint: tr('חיפוש הודעה...', 'Search notifications...'),
-            onChanged: (v) => _debouncer.run(() {
-              ref
-                  .read(adminPushListProvider.notifier)
-                  .setSearch(v.isEmpty ? null : v);
-            }),
-          ),
-          filters: [
-            for (final e in {
-              '': tr('הכל', 'All'),
-              'draft': tr('טיוטה', 'Draft'),
-              'scheduled': tr('מתוזמן', 'Scheduled'),
-              'sent': tr('נשלח', 'Sent'),
-              'cancelled': tr('בוטל', 'Cancelled'),
-            }.entries)
-              AdminFilterChip(e.value, _statusFilter == e.key, () {
-                setState(() => _statusFilter = e.key);
-                ref
-                    .read(adminPushListProvider.notifier)
-                    .setStatusFilter(e.key.isEmpty ? null : e.key);
-              }),
-          ],
-          count: loaded != null ? tr('${loaded.length} הודעות', '${loaded.length} notifications') : null,
-          actions: [
-            AdminToolbarButton(
-              label: tr('הודעה חדשה', 'New notification'),
-              onPressed: () => _showPushEditor(context),
-            ),
-          ],
-        ),
 
         // ─── Table ───
         Expanded(

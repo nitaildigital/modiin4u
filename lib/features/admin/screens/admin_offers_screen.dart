@@ -49,6 +49,53 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
 
     return Column(
       children: [
+        AdminListToolbar(
+          search: AdminSearchField(
+            controller: _searchController,
+            width: isWide ? 280 : 180,
+            hint: tr('חיפוש מבצע...', 'Search deals...'),
+            onChanged: (v) => _debouncer.run(() {
+              ref
+                  .read(adminOfferListProvider.notifier)
+                  .setSearch(v.isEmpty ? null : v);
+            }),
+          ),
+          // The four values of `offer_status`. "Scheduled" and "paused"
+          // were offered here too; the table has neither.
+          filters: [
+            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
+            AdminFilterChip(
+              tr('פעיל', 'Active'),
+              _statusFilter == 'active',
+              () => _filter('active'),
+            ),
+            AdminFilterChip(
+              tr('טיוטה', 'Draft'),
+              _statusFilter == 'draft',
+              () => _filter('draft'),
+            ),
+            AdminFilterChip(
+              tr('פג תוקף', 'Expired'),
+              _statusFilter == 'expired',
+              () => _filter('expired'),
+            ),
+            AdminFilterChip(
+              tr('אזל', 'Sold out'),
+              _statusFilter == 'redeemed_out',
+              () => _filter('redeemed_out'),
+            ),
+          ],
+          count: switch (asyncData.valueOrNull) {
+            final list? => tr('${list.length} מבצעים', '${list.length} deals'),
+            null => null,
+          },
+          actions: [
+            AdminToolbarButton(
+              label: tr('מבצע חדש', 'New deal'),
+              onPressed: () => _showEditor(context),
+            ),
+          ],
+        ),
         // ─── Stats bar ───
         // `valueOrNull`, not `whenData(...).value`: the latter rethrows on a
         // failed load and greys the whole section instead of letting the
@@ -108,54 +155,6 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
             },
           ),
 
-        AdminListToolbar(
-          search: AdminSearchField(
-            controller: _searchController,
-            width: isWide ? 280 : 180,
-            hint: tr('חיפוש מבצע...', 'Search deals...'),
-            onChanged: (v) => _debouncer.run(() {
-              ref
-                  .read(adminOfferListProvider.notifier)
-                  .setSearch(v.isEmpty ? null : v);
-            }),
-          ),
-          // The four values of `offer_status`. "Scheduled" and "paused"
-          // were offered here too; the table has neither.
-          filters: [
-            AdminFilterChip(tr('הכל', 'All'), _statusFilter.isEmpty, () => _filter('')),
-            AdminFilterChip(
-              tr('פעיל', 'Active'),
-              _statusFilter == 'active',
-              () => _filter('active'),
-            ),
-            AdminFilterChip(
-              tr('טיוטה', 'Draft'),
-              _statusFilter == 'draft',
-              () => _filter('draft'),
-            ),
-            AdminFilterChip(
-              tr('פג תוקף', 'Expired'),
-              _statusFilter == 'expired',
-              () => _filter('expired'),
-            ),
-            AdminFilterChip(
-              tr('אזל', 'Sold out'),
-              _statusFilter == 'redeemed_out',
-              () => _filter('redeemed_out'),
-            ),
-          ],
-          count: switch (asyncData.valueOrNull) {
-            final list? => tr('${list.length} מבצעים', '${list.length} deals'),
-            null => null,
-          },
-          actions: [
-            AdminToolbarButton(
-              label: tr('מבצע חדש', 'New deal'),
-              onPressed: () => _showEditor(context),
-            ),
-          ],
-        ),
-
         // ─── Table ───
         Expanded(
           child: asyncData.when(
@@ -190,38 +189,20 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
               }
               return Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.border.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _Col(tr('מבצע', 'Deal'), flex: 3),
-                        _Col(tr('עסק', 'Business'), flex: 2),
-                        if (isWide) _Col(tr('תגית באתר', 'Tag on the site'), flex: 1),
-                        if (isWide) _Col(tr('נלקחו · מומשו', 'Claimed · used'), flex: 1),
-                        if (isWide) _Col(tr('בתוקף עד', 'Valid until'), flex: 1),
-                        _Col(tr('סטטוס', 'Status'), flex: 1),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
+                  AdminTableHeader(
+                    children: [
+                      _Col(tr('מבצע', 'Deal'), flex: 3),
+                      _Col(tr('עסק', 'Business'), flex: 2),
+                      if (isWide) _Col(tr('תגית באתר', 'Tag on the site'), flex: 1),
+                      if (isWide) _Col(tr('נלקחו · מומשו', 'Claimed · used'), flex: 1),
+                      if (isWide) _Col(tr('בתוקף עד', 'Valid until'), flex: 1),
+                      _Col(tr('סטטוס', 'Status'), flex: 1),
+                      const SizedBox(width: 40),
+                    ],
                   ),
                   Expanded(
-                    child: ListView.separated(
+                    child: ListView.builder(
                       itemCount: list.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: AppColors.border.withValues(alpha: 0.3),
-                      ),
                       itemBuilder: (_, i) {
                         final o = list[i];
                         final status = o['status'] as String? ?? 'draft';
@@ -237,162 +218,156 @@ class _AdminOffersScreenState extends ConsumerState<AdminOffersScreen> {
                         final residentsOnly = o['audience'] == 'verified';
                         final endAt = israelFromStored(o['end_at'] as String? ?? '');
 
-                        return InkWell(
+                        return AdminTableRow(
                           onTap: () => _showEditor(context, offer: o),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Row(
-                                    children: [
-                                      if (isFeatured)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 6,
-                                          ),
-                                          child: Icon(
-                                            Icons.star,
-                                            size: 16,
-                                            color: AppColors.gold,
-                                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Row(
+                                  children: [
+                                    if (isFeatured)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 6,
                                         ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              name,
-                                              style: TextStyle(
-                                                fontFamily: AppFonts.rubik,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.navy,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            Text(
-                                              [
-                                                if (residentsOnly)
-                                                  tr('לתושבים בלבד', 'Residents only'),
-                                                if ((o['code'] as String? ?? '')
-                                                    .isNotEmpty)
-                                                  tr('קוד ${o['code']}', 'Code ${o['code']}'),
-                                                if ((o['description']
-                                                            as String? ??
-                                                        '')
-                                                    .isNotEmpty)
-                                                  o['description'] as String,
-                                              ].join(' · '),
-                                              style: TextStyle(
-                                                fontFamily: AppFonts.rubik,
-                                                fontSize: 11,
-                                                color: AppColors.grayLight,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
+                                        child: Icon(
+                                          Icons.star,
+                                          size: 16,
+                                          color: AppColors.gold,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    bizName,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 13,
-                                      color: AppColors.grayText,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      offerBadge(name) ?? '—',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 12,
-                                        color: AppColors.orange,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      '${maxClaims != null ? '$claims / $maxClaims' : '$claims'} · $used',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 13,
-                                        fontFeatures: const [
-                                          FontFeature.tabularFigures(),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            name,
+                                            style: TextStyle(
+                                              fontFamily: AppFonts.rubik,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.navy,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            [
+                                              if (residentsOnly)
+                                                tr('לתושבים בלבד', 'Residents only'),
+                                              if ((o['code'] as String? ?? '')
+                                                  .isNotEmpty)
+                                                tr('קוד ${o['code']}', 'Code ${o['code']}'),
+                                              if ((o['description']
+                                                          as String? ??
+                                                      '')
+                                                  .isNotEmpty)
+                                                o['description'] as String,
+                                            ].join(' · '),
+                                            style: TextStyle(
+                                              fontFamily: AppFonts.rubik,
+                                              fontSize: 11,
+                                              color: AppColors.grayLight,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                if (isWide)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Text(
-                                      endAt == null
-                                          ? tr('ללא', 'None')
-                                          : '${formatAdminDate(endAt)} '
-                                                '${formatAdminTime(endAt.hour, endAt.minute)}',
-                                      textDirection: TextDirection.ltr,
-                                      textAlign: adminEnglish.value
-                                          ? TextAlign.left
-                                          : TextAlign.right,
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubik,
-                                        fontSize: 12,
-                                        color:
-                                            endAt != null &&
-                                                endAt.isBefore(israelNow())
-                                            ? AppColors.error
-                                            : AppColors.grayText,
-                                      ),
-                                    ),
-                                  ),
-                                Expanded(flex: 1, child: _StatusPill(status)),
-                                PopupMenuButton<String>(
-                                  icon: const Icon(
-                                    Icons.more_vert,
-                                    size: 18,
-                                    color: AppColors.grayLight,
-                                  ),
-                                  onSelected: (v) => _handleAction(v, o),
-                                  itemBuilder: (_) => [
-                                    _menuItem('edit', tr('עריכה', 'Edit')),
-                                    _menuItem('claims', tr('שוברים שנלקחו', 'Claimed vouchers')),
-                                    if (status != 'active')
-                                      _menuItem('activate', tr('הפעל', 'Activate')),
-                                    // One item: "end" and "delete" both set
-                                    // status = 'expired' — the row is never
-                                    // removed, and "הפעל" brings it back.
-                                    if (status != 'expired')
-                                      _menuItem(
-                                        'expire',
-                                        tr('סיים מבצע', 'End deal'),
-                                        color: AppColors.error,
-                                      ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  bizName,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubik,
+                                    fontSize: 13,
+                                    color: AppColors.grayText,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    offerBadge(name) ?? '—',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 12,
+                                      color: AppColors.orange,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    '${maxClaims != null ? '$claims / $maxClaims' : '$claims'} · $used',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 13,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              if (isWide)
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    endAt == null
+                                        ? tr('ללא', 'None')
+                                        : '${formatAdminDate(endAt)} '
+                                              '${formatAdminTime(endAt.hour, endAt.minute)}',
+                                    textDirection: TextDirection.ltr,
+                                    textAlign: adminEnglish.value
+                                        ? TextAlign.left
+                                        : TextAlign.right,
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubik,
+                                      fontSize: 12,
+                                      color:
+                                          endAt != null &&
+                                              endAt.isBefore(israelNow())
+                                          ? AppColors.error
+                                          : AppColors.grayText,
+                                    ),
+                                  ),
+                                ),
+                              Expanded(flex: 1, child: _StatusPill(status)),
+                              PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  size: 18,
+                                  color: AppColors.grayLight,
+                                ),
+                                onSelected: (v) => _handleAction(v, o),
+                                itemBuilder: (_) => [
+                                  _menuItem('edit', tr('עריכה', 'Edit')),
+                                  _menuItem('claims', tr('שוברים שנלקחו', 'Claimed vouchers')),
+                                  if (status != 'active')
+                                    _menuItem('activate', tr('הפעל', 'Activate')),
+                                  // One item: "end" and "delete" both set
+                                  // status = 'expired' — the row is never
+                                  // removed, and "הפעל" brings it back.
+                                  if (status != 'expired')
+                                    _menuItem(
+                                      'expire',
+                                      tr('סיים מבצע', 'End deal'),
+                                      color: AppColors.error,
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -1113,12 +1088,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayText,
-        ),
       ),
     );
   }

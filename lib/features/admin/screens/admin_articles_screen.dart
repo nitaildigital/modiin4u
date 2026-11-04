@@ -267,35 +267,20 @@ class _ArticleTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              _Col(tr('כותרת', 'Title'), flex: 4),
-              if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
-              if (isWide) _Col(tr('סטטוס', 'Status'), flex: 1),
-              if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
-              _Col('SEO', flex: 1),
-              if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
-              const SizedBox(width: 40),
-            ],
-          ),
+        AdminTableHeader(
+          children: [
+            _Col(tr('כותרת', 'Title'), flex: 4),
+            if (isWide) _Col(tr('קטגוריה', 'Category'), flex: 2),
+            if (isWide) _Col(tr('סטטוס', 'Status'), flex: 1),
+            if (isWide) _Col(tr('צפיות', 'Views'), flex: 1),
+            _Col('SEO', flex: 1),
+            if (isWide) _Col(tr('תאריך', 'Date'), flex: 2),
+            const SizedBox(width: 40),
+          ],
         ),
         Expanded(
-          child: ListView.separated(
+          child: ListView.builder(
             itemCount: articles.length,
-            separatorBuilder: (_, _) => Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.3),
-            ),
             itemBuilder: (_, i) {
               final a = articles[i];
               final status = a['status'] as String? ?? 'draft';
@@ -312,249 +297,243 @@ class _ArticleTable extends StatelessWidget {
               // filed nowhere; only the second is "—".
               final categoryNames = a['category_names'] as List<String>?;
 
-              return InkWell(
+              return AdminTableRow(
                 onTap: () => onTap(a),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      // Cover image thumbnail
-                      if (coverUrl != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            coverUrl,
+                child: Row(
+                  children: [
+                    // Cover image thumbnail
+                    if (coverUrl != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(
+                          coverUrl,
+                          width: 52,
+                          height: 36,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
                             width: 52,
                             height: 36,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 52,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Icon(
-                                Icons.broken_image,
-                                size: 16,
-                                color: AppColors.grayLight,
-                              ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.broken_image,
+                              size: 16,
+                              color: AppColors.grayLight,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        flex: 4,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                if (isBreaking)
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.only(end: 6),
-                                    child: Icon(
-                                      Icons.bolt,
-                                      size: 14,
-                                      color: AppColors.error,
-                                    ),
-                                  ),
-                                if (isFeatured)
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.only(end: 6),
-                                    child: Icon(
-                                      Icons.star,
-                                      size: 14,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                Flexible(
-                                  child: Text(
-                                    a['title'] as String? ?? '',
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubik,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.navy,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (isBreaking)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 6),
+                                  child: Icon(
+                                    Icons.bolt,
+                                    size: 14,
+                                    color: AppColors.error,
                                   ),
                                 ),
-                              ],
-                            ),
-                            Text(
-                              a['slug'] as String? ?? '',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubik,
-                                fontSize: 11,
-                                color: AppColors.grayLight,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Category
-                      if (isWide)
-                        Expanded(
-                          flex: 2,
-                          child: categoryNames == null
-                              ? const SizedBox.shrink()
-                              : categoryNames.isEmpty
-                              ? Text(
-                                  '—',
+                              if (isFeatured)
+                                Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 6),
+                                  child: Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: AppColors.gold,
+                                  ),
+                                ),
+                              Flexible(
+                                child: Text(
+                                  a['title'] as String? ?? '',
                                   style: TextStyle(
                                     fontFamily: AppFonts.rubik,
-                                    fontSize: 12,
-                                    color: AppColors.grayLight,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
                                   ),
-                                )
-                              : Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  children: [
-                                    for (final name in categoryNames)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            a['slug'] as String? ?? '',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubik,
+                              fontSize: 11,
+                              color: AppColors.grayLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Category
+                    if (isWide)
+                      Expanded(
+                        flex: 2,
+                        child: categoryNames == null
+                            ? const SizedBox.shrink()
+                            : categoryNames.isEmpty
+                            ? Text(
+                                '—',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubik,
+                                  fontSize: 12,
+                                  color: AppColors.grayLight,
+                                ),
+                              )
+                            : Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: [
+                                  for (final name in categoryNames)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.midBlue.withValues(
+                                          alpha: 0.1,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.midBlue.withValues(
-                                            alpha: 0.1,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          name,
-                                          style: TextStyle(
-                                            fontFamily: AppFonts.rubik,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.midBlue,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
+                                        borderRadius: BorderRadius.circular(
+                                          6,
                                         ),
                                       ),
-                                  ],
-                                ),
+                                      child: Text(
+                                        name,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubik,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.midBlue,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                      ),
+                    if (isWide) Expanded(flex: 1, child: _StatusPill(status)),
+                    if (isWide)
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          '$views',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 13,
+                            color: AppColors.grayText,
+                          ),
                         ),
-                      if (isWide) Expanded(flex: 1, child: _StatusPill(status)),
-                      if (isWide)
-                        Expanded(
-                          flex: 1,
+                      ),
+                    Expanded(
+                      flex: 1,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            hasMeta ? Icons.check_circle : Icons.cancel,
+                            size: 14,
+                            color: hasMeta
+                                ? AppColors.success
+                                : AppColors.error.withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            hasSlug ? Icons.check_circle : Icons.cancel,
+                            size: 14,
+                            color: hasSlug
+                                ? AppColors.success
+                                : AppColors.error.withValues(alpha: 0.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isWide)
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          publishedAt != null
+                              ? _formatDate(publishedAt)
+                              : tr('לא פורסם', 'Not published'),
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubik,
+                            fontSize: 12,
+                            color: AppColors.grayText,
+                          ),
+                        ),
+                      ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: AppColors.grayLight,
+                      ),
+                      onSelected: (v) => onAction(v, a),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
                           child: Text(
-                            '$views',
+                            tr('עריכה', 'Edit'),
                             style: TextStyle(
                               fontFamily: AppFonts.rubik,
                               fontSize: 13,
-                              color: AppColors.grayText,
                             ),
                           ),
                         ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              hasMeta ? Icons.check_circle : Icons.cancel,
-                              size: 14,
-                              color: hasMeta
-                                  ? AppColors.success
-                                  : AppColors.error.withValues(alpha: 0.4),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              hasSlug ? Icons.check_circle : Icons.cancel,
-                              size: 14,
-                              color: hasSlug
-                                  ? AppColors.success
-                                  : AppColors.error.withValues(alpha: 0.4),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isWide)
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            publishedAt != null
-                                ? _formatDate(publishedAt)
-                                : tr('לא פורסם', 'Not published'),
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubik,
-                              fontSize: 12,
-                              color: AppColors.grayText,
-                            ),
-                          ),
-                        ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: AppColors.grayLight,
-                        ),
-                        onSelected: (v) => onAction(v, a),
-                        itemBuilder: (_) => [
+                        if (status != 'published')
                           PopupMenuItem(
-                            value: 'edit',
+                            value: 'publish',
                             child: Text(
-                              tr('עריכה', 'Edit'),
+                              tr('פרסם', 'Publish'),
                               style: TextStyle(
                                 fontFamily: AppFonts.rubik,
                                 fontSize: 13,
                               ),
                             ),
                           ),
-                          if (status != 'published')
-                            PopupMenuItem(
-                              value: 'publish',
-                              child: Text(
-                                tr('פרסם', 'Publish'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
+                        if (status != 'draft')
+                          PopupMenuItem(
+                            value: 'draft',
+                            child: Text(
+                              tr('החזר לטיוטה', 'Back to draft'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
                               ),
                             ),
-                          if (status != 'draft')
-                            PopupMenuItem(
-                              value: 'draft',
-                              child: Text(
-                                tr('החזר לטיוטה', 'Back to draft'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
+                          ),
+                        if (status != 'archived')
+                          PopupMenuItem(
+                            value: 'archive',
+                            child: Text(
+                              tr('העבר לארכיון', 'Move to archive'),
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubik,
+                                fontSize: 13,
                               ),
                             ),
-                          if (status != 'archived')
-                            PopupMenuItem(
-                              value: 'archive',
-                              child: Text(
-                                tr('העבר לארכיון', 'Move to archive'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.rubik,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          // An item reading "delete" stood here. It asked
-                          // for confirmation and then archived the article —
-                          // exactly what "העבר לארכיון" above it does. There
-                          // is no permanent delete for an article: removing
-                          // one would take its comments with it. Offering the
-                          // word without the deed helped nobody.
-                        ],
-                      ),
-                    ],
-                  ),
+                          ),
+                        // An item reading "delete" stood here. It asked
+                        // for confirmation and then archived the article —
+                        // exactly what "העבר לארכיון" above it does. There
+                        // is no permanent delete for an article: removing
+                        // one would take its comments with it. Offering the
+                        // word without the deed helped nobody.
+                      ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -1453,12 +1432,6 @@ class _Col extends StatelessWidget {
       flex: flex,
       child: Text(
         label,
-        style: TextStyle(
-          fontFamily: AppFonts.rubik,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.grayLight,
-        ),
       ),
     );
   }

@@ -22,11 +22,14 @@ class AdminStepsSection extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
+          const AdminPageHeader(divider: false),
           Container(
             color: Colors.white,
             child: TabBar(
               isScrollable: true,
               tabAlignment: TabAlignment.start,
+              // The first tab's words under the heading's first letter.
+              padding: const EdgeInsetsDirectional.only(start: 8),
               labelStyle: TextStyle(
                 fontFamily: AppFonts.rubik,
                 fontSize: 14,
