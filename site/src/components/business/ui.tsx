@@ -323,3 +323,34 @@ export function ShareMenu({ title, he, children, nativeFirst = false, className 
     </Popover>
   );
 }
+
+/** The cover filling its frame, as the design draws it — unless the photo is
+ *  much narrower than the frame (a portrait or a square in the page-wide
+ *  desktop band), where filling it showed a strip of the middle and cut off
+ *  heads (Harshit, 4 Nov). Such a photo is shown whole, at [side] (away from
+ *  the name over it), over a blurred copy of itself that fills the rest.
+ *  Decided once the photo is in and its shape known; until then it fills. */
+export function CoverPhoto({ src, alt, side = 'center' }: { src: string; alt: string; side?: 'left' | 'right' | 'center' }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [whole, setWhole] = useState(false);
+  const check = useCallback(() => {
+    const img = ref.current;
+    const frame = img?.parentElement;
+    if (!img || !frame || !img.naturalWidth || !img.naturalHeight || !frame.clientHeight) return;
+    // How much wider the frame is than the photo: past 1.6, filling it keeps
+    // less than about 60% of the photo's height.
+    const ratio = (frame.clientWidth / frame.clientHeight) / (img.naturalWidth / img.naturalHeight);
+    setWhole(ratio > 1.6);
+  }, []);
+  // A photo already in the cache can load before the page is interactive,
+  // when onLoad is not heard.
+  useEffect(() => { if (ref.current?.complete) check(); }, [check]);
+  const at = side === 'left' ? 'object-left' : side === 'right' ? 'object-right' : 'object-center';
+  return (
+    <>
+      {whole && <img src={src} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover blur-2xl" />}
+      <img ref={ref} src={src} alt={alt} onLoad={check}
+        className={`absolute inset-0 size-full ${whole ? `object-contain ${at}` : 'object-cover'}`} />
+    </>
+  );
+}

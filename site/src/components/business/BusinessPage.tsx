@@ -10,7 +10,7 @@ import {
 } from '@/lib/data/business';
 import { JsonLd } from '@/components/JsonLd';
 import { directionsUrl, shownPhone, telNumber, waNumber } from '@/lib/contact';
-import { BusinessUI, BackButton, CallMenu, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
+import { BusinessUI, BackButton, CallMenu, CoverPhoto, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
 import { DesktopReviews, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
 import { GoogleHours } from './GoogleHours';
 import { BusinessMap } from './BusinessMap';
@@ -229,7 +229,7 @@ function Hero({ v }: { v: View }) {
   const now = v.hours.length ? openNow(v.hours) : null;
   return (
     <section className="relative h-[550px] overflow-hidden bg-gradient-to-r from-[#0058B5] to-[#010A36]">
-      {cover && <img src={sized(cover, 1440)} alt={v.name} className="absolute inset-0 size-full object-cover" />}
+      {cover && <CoverPhoto src={sized(cover, 1440)} alt={v.name} side={he ? 'left' : 'right'} />}
       {/* The design darkens the half the name sits on, fading to clear. The
           Flutter page meant to and drew nothing (an empty box sized itself
           to no height); mirrored for Hebrew, the name lands on another part
@@ -529,7 +529,7 @@ function Phone({ v }: { v: View }) {
       {/* The photo, with the logo half over its lower edge. */}
       <div className="relative h-[310px]">
         <div className="relative h-[260px] overflow-hidden bg-gradient-to-b from-[#010A36] to-[#0058B5]">
-          {v.cover && <img src={sized(v.cover, 430)} alt={v.name} className="absolute inset-0 size-full object-cover" />}
+          {v.cover && <CoverPhoto src={sized(v.cover, 430)} alt={v.name} />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           {!v.cover && <span className="absolute inset-0 flex items-center justify-center"><Reserve size={60} color="rgba(255,255,255,0.25)" /></span>}
           <div className="absolute start-3 top-[7px]"><BackButton fallback={href('/business/')} label={t('חזרה', 'Back')} /></div>

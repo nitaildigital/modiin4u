@@ -5702,6 +5702,24 @@ so a white page with no bar of its own would otherwise keep the white clock
 of the photo page before it. Checked in the iPhone simulator: event,
 article, business, listing at rest and scrolled, then News and Municipal.
 
+### A portrait cover on a business page — 4 Nov
+
+Harshit: Eldad Nona's page (a refrigerator technician) showed a strip of
+his shirt — the head cut off — because the cover fills its frame
+(`object-cover`) and his photo is a portrait (900×1200) in the desktop's
+page-wide band, about 1440×550: a third of the photo's height was left. The
+phone's 260-tall header lost two thirds of it too.
+
+`CoverPhoto` (`site/src/components/business/ui.tsx`) keeps filling the frame
+as the design draws it, unless the frame is more than 1.6 times wider than
+the photo (filling it would keep less than about 60% of its height): then
+the photo is shown whole over a blurred copy of itself. On the desktop it
+sits on the side away from the name (left in Hebrew), on the phone in the
+middle. A wide cover (16:9 in the desktop band is 1.47) is drawn exactly as
+before. The shape is only known once the photo is in, so it fills until
+then. Checked locally at 1440 and 390 px on his page and on a wide cover.
+The app's business page has the same 260-tall header and is not changed.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
