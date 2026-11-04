@@ -1,12 +1,12 @@
-import 'package:flutter_quill_delta_from_html/flutter_quill_delta_from_html.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:modiin4u/features/admin/widgets/editor_html.dart';
 import 'package:modiin4u/features/admin/widgets/pasted_html.dart';
 import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 
 /// What the article editor would save after this paste: the HTML read into
 /// the editor and written out again, as admin_rich_editor.dart does.
 String saved(String html) {
-  final ops = HtmlToDelta().convert(html).toJson().cast<Map<String, dynamic>>();
+  final ops = editorDelta(html).toJson().cast<Map<String, dynamic>>();
   return QuillDeltaToHtmlConverter(
     ops,
     ConverterOptions(
@@ -51,5 +51,17 @@ void main() {
         '<h2>כותרת</h2><p>טקסט <strong>מודגש</strong></p>');
     expect(saved(cleanPastedHtml('<p class=MsoNormal><span style="font-weight:bold">מודגש</span> רגיל</p>')),
         '<p><strong>מודגש</strong> רגיל</p>');
+  });
+
+  // An article opened and edited came back with its paragraphs as one
+  // (4 Nov), which also lost the article page's middle banner.
+  test('an article keeps its paragraphs through the editor', () {
+    expect(saved('<p>אחת</p><p>שתיים</p><p>שלוש</p>'), '<p>אחת</p><p>שתיים</p><p>שלוש</p>');
+    expect(saved('<p>פתיחה</p><h3>כותרת</h3><p>טקסט</p><ul><li>פריט</li></ul><p>סוף</p>'),
+        '<p>פתיחה</p><h3>כותרת</h3><p>טקסט</p><ul><li>פריט</li></ul><p>סוף</p>');
+    // As the WordPress import wrote them: a line break between paragraphs,
+    // attributes on them, bold inside.
+    expect(saved('<p data-path-to-node="1"><b>מודגש</b> ורגיל</p>\n<p data-path-to-node="2">שני</p>'),
+        '<p><strong>מודגש</strong> ורגיל</p><p>שני</p>');
   });
 }

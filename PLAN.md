@@ -5659,6 +5659,27 @@ page, replaceable from the panel, and right on a phone. Migrations 00086 and
   read again on each article opened, so a change shows without restarting
   the app. It reaches people with the next store build.
 
+### The article editor keeps paragraphs — 4 Nov
+
+Found in the end-to-end test after the branches were merged. The HTML
+reader under the panel's editor (flutter_quill_delta_from_html) takes `<p>`
+for inline text and starts a new line only before a heading, list, div,
+quote or code block. So an article opened in the editor showed its
+paragraphs run together, and typing anything saved them as one paragraph,
+which also cost the article its middle banner. It had been so since the
+editor came in (7 Oct); merely opening and saving never wrote the body, and
+no article edited since the launch was found merged.
+- `editorDelta` (`editor_html.dart`) reads both an opened article and a
+  formatted paste: every top-level element that is not inline text starts
+  its own line.
+- Checked by reading all 694 bodies in and out again, without saving: 633
+  came out different before, 61 after. Those 61 hold what the editor has
+  never had a form for — tables (the Shabbat-times box), lists nested in
+  lists, paragraphs inside a quote or a wrapper `<div>` — and the reader
+  still runs their lines together or drops some (a nested list loses the
+  line above it). For those articles the editor's HTML view is the safe way
+  to edit.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

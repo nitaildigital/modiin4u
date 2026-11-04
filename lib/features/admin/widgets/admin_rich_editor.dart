@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/internal.dart' show ClipboardServiceProvider;
-import 'package:flutter_quill_delta_from_html/flutter_quill_delta_from_html.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
@@ -12,6 +11,7 @@ import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
+import 'editor_html.dart';
 import 'pasted_html.dart';
 
 /// The panel's text editor for an article's (or page's) body: bold, italic,
@@ -104,7 +104,7 @@ class _AdminRichEditorState extends State<AdminRichEditor> {
             .map((p) => '<p>${const HtmlEscape().convert(p.trim()).replaceAll('\n', '<br>')}</p>')
             .join();
     try {
-      final delta = HtmlToDelta().convert(source);
+      final delta = editorDelta(source);
       if (delta.isEmpty) return Document();
       return Document.fromDelta(delta);
     } catch (_) {
@@ -121,7 +121,7 @@ class _AdminRichEditorState extends State<AdminRichEditor> {
     final html = await ClipboardServiceProvider.instance.getHtmlText();
     if (html == null || html.trim().isEmpty) return false;
     try {
-      final delta = HtmlToDelta().convert(cleanPastedHtml(html));
+      final delta = editorDelta(cleanPastedHtml(html));
       if (delta.isEmpty) return false;
       final sel = _controller.selection;
       _controller.replaceText(
