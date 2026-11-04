@@ -46,10 +46,18 @@ export default async function ArticlePage({ params }: Props) {
   const lang = await getLang();
   const t = tr(lang);
   const path = `/news/${slug}/`;
-  const [cats, comments, side, inline] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), banners('ARTICLE_INLINE')]);
+  // The story's three banners — its start, middle and end (the client, 4 Nov);
+  // ARTICLE_INLINE is the end.
+  const [cats, comments, side, top, middle, inline] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'),
+    banners('ARTICLE_TOP'), banners('ARTICLE_MIDDLE'), banners('ARTICLE_INLINE')]);
   const related = await relatedArticles(a.id, cats.map((c) => c.id), 4);
   const cat = cats[0];
   const image = a.featured_image || a.og_image;
+  // The page's one H1 is the headline: a heading the story's own text opens
+  // with an h1 is set as an h2.
+  const story = storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2'));
+  // Cut only when a middle banner is booked; otherwise the story is one piece.
+  const halves = middle[0] ? splitStory(story) : null;
 
   return (
     <article className="wrap py-8 desk:py-15">
@@ -127,13 +135,20 @@ export default async function ArticlePage({ params }: Props) {
       <div className="mt-6 grid gap-12 desk:mt-8 desk:grid-cols-[1fr_426px] desk:gap-[150px]">
         <div className="min-w-0">
           <div className="hidden desk:block"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
-          {/* The page's one H1 is the headline above: a heading the story's own
-              text opens with an h1 is set as an h2. */}
-          <div className="prose-site desk:mt-8" dangerouslySetInnerHTML={{ __html: storyPhotos((a.body ?? '').replace(/<(\/?)h1(\s|>)/gi, '<$1h2$2')) }} />
+          {top[0] && <div className="mb-8 max-w-[796px] desk:mb-0 desk:mt-8"><BannerImage banner={top[0]} phone /></div>}
+          {halves ? (
+            <>
+              <div className="prose-site desk:mt-8" dangerouslySetInnerHTML={{ __html: halves[0] }} />
+              <div className="my-8 max-w-[796px]"><BannerImage banner={middle[0]} phone /></div>
+              <div className="prose-site" dangerouslySetInnerHTML={{ __html: halves[1] }} />
+            </>
+          ) : (
+            <div className="prose-site desk:mt-8" dangerouslySetInnerHTML={{ __html: story }} />
+          )}
           {/* On a phone the share comes after the story, where the app has it. */}
           <div className="mt-8 desk:hidden"><ShareBar url={SITE_URL + href(path)} title={a.title} lang={lang} views={a.view_count ?? 0} shares={a.share_count ?? 0} /></div>
           {/* The campaign booked under the story; nothing when none is. */}
-          {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} /></div>}
+          {inline[0] && <div className="mt-14 max-w-[796px]"><BannerImage banner={inline[0]} phone /></div>}
 
           {comments.length > 0 && (
             <section className="mt-12 border-t border-line pt-8">
@@ -198,4 +213,35 @@ function storyPhotos(html: string): string {
     });
     return `<img${a} loading="lazy" decoding="async">`;
   });
+}
+
+/** The story cut in two at the end of the paragraph nearest its middle, for
+ *  the banner there (the client, 4 Nov). Only between paragraphs of the
+ *  story itself — never inside a list, a table, a quote or a figure — and
+ *  only with two paragraphs or more on each side: a short story has no
+ *  middle, and gets the banners at its start and end alone. */
+function splitStory(html: string): [string, string] | null {
+  const tags = /<(\/?)(p|ul|ol|table|blockquote|figure)\b[^>]*>/gi;
+  const cuts: number[] = [];
+  let depth = 0;
+  for (const m of html.matchAll(tags)) {
+    const closing = m[1] === '/';
+    if (m[2].toLowerCase() === 'p') {
+      if (closing && depth === 0) cuts.push(m.index + m[0].length);
+    } else {
+      depth = Math.max(0, depth + (closing ? -1 : 1));
+    }
+  }
+  if (cuts.length < 4) return null;
+  // Nearest the middle of what is read, not of the markup: a photo's tag is
+  // long and says nothing.
+  const text = (s: string) => s.replace(/<[^>]*>/g, '').length;
+  const half = text(html) / 2;
+  const cut = cuts.slice(1, -1).reduce((best, c) =>
+    Math.abs(text(html.slice(0, c)) - half) < Math.abs(text(html.slice(0, best)) - half) ? c : best);
+  // One very long paragraph can leave no break near the middle; a banner at
+  // nine tenths would sit on the one at the end (6 of 583 stories, 4 Nov).
+  const at = text(html.slice(0, cut)) / (half * 2);
+  if (at < 0.25 || at > 0.75) return null;
+  return [html.slice(0, cut), html.slice(cut)];
 }

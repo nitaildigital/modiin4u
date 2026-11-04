@@ -1,6 +1,8 @@
 import { db } from '../supabase';
 
-export type Banner = { id: string; image_url: string; destination_url: string | null; name: string };
+/** [mobile_image_url] is the campaign's phone-shaped creative, when it has
+ *  one (00086); only the article page's slots use it so far. */
+export type Banner = { id: string; image_url: string; destination_url: string | null; name: string; mobile_image_url?: string | null };
 
 /** The paid banners running now in one slot (`ad_placements.code`), through
  *  `active_banners()` (00028): the creative and the link, nothing else. A slot

@@ -55,7 +55,11 @@ class AdminAdPlacementListNotifier extends AdminTableNotifier {
 Map<String, String> get placementSiteSizes => <String, String>{
   'HOME_TOP': tr('728×90 · עמוד הבית, מתחת לכרטיסים · מוצג באנר אחד', '728×90 · home page, below the cards · one banner shown'),
   'HOME_MAP_SIDE': tr('ליד המפה בעמוד הבית: הראשון 460×281, השני והשלישי 220×220', 'Next to the map on the home page: the first 460×281, the second and third 220×220'),
-  'ARTICLE_INLINE': tr('רוחב 796 (בעיצוב 796×228) · מתחת לכתבה · מוצג באנר אחד', 'Width 796 (796×228 in the design) · below the article · one banner shown'),
+  // The article page's three (the client, 4 Nov): on a phone the campaign's
+  // mobile image is shown in place of the desktop one, when it has one.
+  'ARTICLE_TOP': tr('796×228 · ראש הכתבה, מעל הטקסט · בטלפון: תמונת המובייל, למשל 800×500 · מוצג באנר אחד', '796×228 · top of the article, above the text · on a phone: the mobile image, e.g. 800×500 · one banner shown'),
+  'ARTICLE_MIDDLE': tr('796×228 · אמצע הכתבה (בכתבה של 4 פסקאות ומעלה) · בטלפון: תמונת המובייל, למשל 800×500 · מוצג באנר אחד', '796×228 · middle of the article (4 paragraphs or more) · on a phone: the mobile image, e.g. 800×500 · one banner shown'),
+  'ARTICLE_INLINE': tr('796×228 · סוף הכתבה, מתחת לטקסט · בטלפון: תמונת המובייל, למשל 800×500 · מוצג באנר אחד', '796×228 · end of the article, below the text · on a phone: the mobile image, e.g. 800×500 · one banner shown'),
   'NEWS_SIDEBAR':
       tr('עמוד החדשות: רוחב 370, גובה חופשי · עמוד כתבה: 426×260 לרוחב', 'News page: width 370, any height · article page: 426×260 wide'),
   'RESTAURANTS_TOP': tr('520×300 · שלושה בשורה בראש עמוד המסעדות', '520×300 · three in a row at the top of the Restaurants page'),

@@ -5567,6 +5567,30 @@ Found testing the app on Android and the iPhone simulator.
   owner's own `listings/<id>/…` files are now removed with it; one that
   cannot be does not fail the delete.
 
+### Three banners on the article page — 4 Nov
+
+The client: banners at the beginning, the middle and the end of the article
+page, replaceable from the panel, and right on a phone. Migration 00086.
+- **Slots, not a field on each article.** `ARTICLE_TOP` (new, above the
+  story), `ARTICLE_MIDDLE` (new) and `ARTICLE_INLINE` (the one the page
+  already drew under the story, relabelled "סוף הכתבה"). He books a campaign
+  in each under Campaigns, and replaces or ends it there; the same three
+  show on every article. A slot with nothing booked draws nothing, as
+  everywhere on the site — no grey boxes, no invented ads.
+- **The middle** is the end of the top-level paragraph nearest half the
+  story's text — never inside a list, table, quote or figure. A story needs
+  four paragraphs or more, and the break must fall between a quarter and
+  three quarters of the way, or it gets no middle banner (it would sit on
+  the end one). Of the 692 published stories, 577 get one.
+- **Phones.** A campaign has had a mobile image since 00008, but the site
+  was never given it. `active_banners()` now returns it, and in these three
+  slots a phone (under 1100 px, the site's phone layout) shows it in place
+  of the wide desktop one, which on a phone is a thin strip. Other slots
+  keep drawing the desktop image: their shapes are fixed by their layouts.
+  The panel's field and its size notes say so (desktop 796×228, mobile for
+  example 800×500).
+- **The app** shows no banners on its article screen; not done here.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
