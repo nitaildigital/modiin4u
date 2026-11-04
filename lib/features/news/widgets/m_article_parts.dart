@@ -141,7 +141,37 @@ class MNewsDateLine extends StatelessWidget {
 /// client's WordPress are HTML; printed as text they showed their tags.
 class MArticleBody extends StatefulWidget {
   final Article article;
-  const MArticleBody({super.key, required this.article});
+
+  /// The banner halfway through the story (00087), at [middleCut].
+  final Widget? middle;
+
+  const MArticleBody({super.key, required this.article, this.middle});
+
+  /// The block after which the middle banner goes, as on the website: the
+  /// end of the paragraph nearest half the story's text, with two
+  /// paragraphs or more on each side and between a quarter and three
+  /// quarters of the way — otherwise none, and the story is one piece.
+  static int? middleCut(List<ArticleBlock> blocks) {
+    final paragraphs = [
+      for (var i = 0; i < blocks.length; i++)
+        if (blocks[i].kind == ArticleBlockKind.paragraph) i,
+    ];
+    if (paragraphs.length < 4) return null;
+    int len(ArticleBlock b) => b.spans.fold(0, (n, s) => n + s.text.length);
+    final upTo = <int>[];
+    var sum = 0;
+    for (final b in blocks) {
+      sum += len(b);
+      upTo.add(sum);
+    }
+    if (sum == 0) return null;
+    final half = sum / 2;
+    final cut = paragraphs.sublist(1, paragraphs.length - 1).reduce(
+          (best, i) => (upTo[i] - half).abs() < (upTo[best] - half).abs() ? i : best,
+        );
+    final at = upTo[cut] / sum;
+    return at < 0.25 || at > 0.75 ? null : cut;
+  }
 
   @override
   State<MArticleBody> createState() => _MArticleBodyState();
@@ -246,11 +276,14 @@ class _MArticleBodyState extends State<MArticleBody> {
       );
     }
 
+    final middle = widget.middle;
+    final cut = middle == null ? null : MArticleBody.middleCut(blocks);
     final children = <Widget>[];
     for (var i = 0; i < blocks.length; i++) {
       if (i > 0) children.add(const SizedBox(height: 12));
       final block = blocks[i];
       children.add(block.kind == ArticleBlockKind.image ? _MInlinePhoto(block: block) : text(block));
+      if (i == cut) children.addAll([const SizedBox(height: 20), middle!, const SizedBox(height: 8)]);
     }
 
     return Directionality(

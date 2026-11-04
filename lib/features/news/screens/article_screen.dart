@@ -10,6 +10,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/article.dart';
 import '../providers/news_providers.dart';
+import '../widgets/article_banner.dart';
 import '../widgets/m_article_comments.dart';
 import '../widgets/m_article_parts.dart';
 import 'web_article_screen.dart';
@@ -167,6 +168,12 @@ class _ArticleView extends ConsumerWidget {
     final related =
         ref.watch(relatedArticlesProvider(article.id)).valueOrNull ??
         const <Article>[];
+    // The story's three banners (the client, 4 Nov): its own from the
+    // panel's editor, or else the defaults set in Articles — as on the site.
+    final defaults = ref.watch(articleBannerDefaultsProvider).valueOrNull;
+    final top = articleBanner(article.banners, defaults, 'top');
+    final middle = articleBanner(article.banners, defaults, 'middle');
+    final end = articleBanner(article.banners, defaults, 'end');
 
     return SingleChildScrollView(
       child: Column(
@@ -176,10 +183,23 @@ class _ArticleView extends ConsumerWidget {
           const SizedBox(height: 16),
           _Header(article: article),
           const SizedBox(height: 20),
+          if (top != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: ArticleBanner(banner: top),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: MArticleBody(article: article),
+            child: MArticleBody(
+              article: article,
+              middle: middle == null ? null : ArticleBanner(banner: middle),
+            ),
           ),
+          if (end != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+              child: ArticleBanner(banner: end),
+            ),
           MArticleComments(
             key: ValueKey(article.id),
             articleId: article.id,

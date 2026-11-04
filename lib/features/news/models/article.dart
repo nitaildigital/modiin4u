@@ -43,6 +43,10 @@ class Article {
   /// row; the article page prints it only once it is not.
   final int shareCount;
 
+  /// Its own banners — top, middle, end — from the panel's editor
+  /// (`articles.banners`, 00087); read by `articleBanner`.
+  final Object? banners;
+
   const Article({
     required this.id,
     required this.title,
@@ -65,6 +69,7 @@ class Article {
     this.status = ArticleStatus.published,
     this.viewCount = 0,
     this.shareCount = 0,
+    this.banners,
   });
 
   Article copyWith({
@@ -109,6 +114,7 @@ class Article {
       status: status ?? this.status,
       viewCount: viewCount ?? this.viewCount,
       shareCount: shareCount ?? this.shareCount,
+      banners: banners,
     );
   }
 
@@ -154,6 +160,7 @@ class Article {
       ),
       viewCount: (json['view_count'] as num?)?.toInt() ?? 0,
       shareCount: (json['share_count'] as num?)?.toInt() ?? 0,
+      banners: json['banners'],
     );
   }
 }

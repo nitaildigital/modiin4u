@@ -5652,7 +5652,12 @@ page, replaceable from the panel, and right on a phone. Migrations 00086 and
   returns a campaign's mobile image now, for later use.
 - **Media check.** The panel's unused-file check (00034) searches json
   columns, so a banner's file is never cleared away as unused.
-- **The app** shows no banners on its article screen; not done here.
+- **The app** shows the same three on its article screen
+  (`article_banner.dart`): the article's own or the default, the phone
+  image on a phone, the middle one by the same rule (`MArticleBody.
+  middleCut`), a tap opening the link outside the app. The defaults are
+  read again on each article opened, so a change shows without restarting
+  the app. It reaches people with the next store build.
 
 ## 9. How the data layer is built
 
