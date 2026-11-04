@@ -62,8 +62,14 @@ echo "── uploading to $USR@$HOST:/srv/modiin4u-site"
 # (PageSpeed swung 4 s to 12 s after the 15 Oct deploy). They are images
 # only and stay right across builds; the rest of .next/cache (page and
 # data copies) goes, as a new build may have dropped what an old page names.
+# The old build's scripts and styles (.next/static) are kept as well, for a
+# week (removed below). nginx goes on serving a page's last copy for a while
+# after a deploy (proxy.conf: stale while it fetches a new one), and that
+# copy names the old build's files: deleted, the page came up unstyled or as
+# "Application error" (4 Nov). Their names carry a hash, so an old file
+# never stands in for a new one.
 rsync -az --delete --exclude 'node_modules/@img/sharp-linux-x64' --exclude 'node_modules/@img/sharp-libvips-linux-x64' \
-  --exclude '.next/cache/images' \
+  --exclude '.next/cache/images' --filter 'P /.next/static/**' \
   "$OUT/" "$USR@$HOST:/srv/modiin4u-site/"
 ssh "$USR@$HOST" bash -s <<'REMOTE'
 set -e
@@ -75,6 +81,11 @@ if [ ! -d node_modules/@img/sharp-linux-x64 ]; then
   cp -r "$T"/node_modules/@img/sharp-linux-x64 "$T"/node_modules/@img/sharp-libvips-linux-x64 node_modules/@img/ && rm -rf "$T"
   echo "   installed the Linux image library"
 fi
+# The kept files of builds more than a week old: by then no cached page
+# names them (the page cache keeps a copy a day at most). This build's own
+# arrive with today's date.
+find .next/static -type f -mtime +7 -delete
+find .next/static -type d -empty -delete
 chown -R www-data:www-data /srv/modiin4u-site && systemctl restart modiin4u-site && sleep 2 && systemctl is-active modiin4u-site
 REMOTE
 echo "── done"

@@ -5720,6 +5720,23 @@ before. The shape is only known once the photo is in, so it fills until
 then. Checked locally at 1440 and 390 px on his page and on a wide cover.
 The app's business page has the same 260-tall header and is not changed.
 
+### Unstyled pages after a deploy — 4 Nov
+
+After the deploy of the cover fix, live pages came up without their styles
+(Harshit's screenshot of a category page) or as "Application error". nginx
+keeps a copy of each page for up to a day and, once a copy is past its
+minute, serves it while it fetches a new one (`proxy_cache_background_update`
+with `use_stale updating`, proxy.conf). That old copy names the old build's
+CSS and script files, and `rsync --delete` had just removed them: 404. Each
+page mended itself after one visit, so every page cached before the deploy
+broke once, for whoever came next — after every deploy until now.
+
+`deploy_site.sh` now keeps the old builds' `.next/static` files (an rsync
+protect rule) and removes the ones more than a week old; their names carry
+a hash, so an old file never stands in for a new one. For this deploy the
+old files were already gone: the pages heal as they are visited, or at once
+by emptying `/var/cache/nginx/modiin4u-pages` on the server.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
