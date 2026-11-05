@@ -16,7 +16,7 @@
     "@supabase/supabase-js": "^2.109.0",
     "iconsax-react": "^0.0.8",
     "leaflet": "1.9",
-    "next": "15.5.27",
+    "next": "15.5.29",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0"
@@ -29,7 +29,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.27",
+    "eslint-config-next": "15.5.29",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

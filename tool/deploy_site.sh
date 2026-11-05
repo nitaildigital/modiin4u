@@ -55,8 +55,9 @@ $BUILD_ONLY && { echo "── built only, server untouched"; exit 0; }
 HOST=$(get DEPLOY_HOST); USR=$(get DEPLOY_USER)
 echo "── uploading to $USR@$HOST:/srv/modiin4u-site"
 # The image library is per platform: this Mac's build carries the macOS
-# one, the server needs Linux's. Those are installed on the server once and
-# kept out of --delete; a server without them gets them here.
+# one, the server needs Linux's. Those are installed on the server and kept
+# out of --delete; they are installed again whenever the build's sharp asks
+# for other versions (below).
 # The resized photos (.next/cache/images) are kept too: --delete emptied
 # them on every deploy, so each first visit had every photo made again
 # (PageSpeed swung 4 s to 12 s after the 15 Oct deploy). They are images
@@ -74,13 +75,21 @@ rsync -az --delete --exclude 'node_modules/@img/sharp-linux-x64' --exclude 'node
 ssh "$USR@$HOST" bash -s <<'REMOTE'
 set -e
 cd /srv/modiin4u-site
-if [ ! -d node_modules/@img/sharp-linux-x64 ]; then
-  V=$(node -p 'require("./node_modules/sharp/package.json").version')
-  LV=$(node -p 'require("./node_modules/sharp/package.json").optionalDependencies["@img/sharp-libvips-linux-x64"]')
+# The Linux image library, at the versions this build's sharp names. It was
+# installed only when missing, so a newer sharp ran on the first one the
+# server ever got: security fixes in the library never reached it (5 Nov,
+# the image resizer's advisory). Now any difference installs it again.
+V=$(node -p 'require("./node_modules/sharp/package.json").version')
+LV=$(node -p 'require("./node_modules/sharp/package.json").optionalDependencies["@img/sharp-libvips-linux-x64"]')
+have() { node -p "try { require('./node_modules/@img/$1/package.json').version } catch (e) { '' }"; }
+if [ "$(have sharp-linux-x64)" != "$V" ] || [ "$(have sharp-libvips-linux-x64)" != "$LV" ]; then
   T=$(mktemp -d); (cd "$T" && npm init -y >/dev/null && npm install --no-audit --no-fund "@img/sharp-linux-x64@$V" "@img/sharp-libvips-linux-x64@$LV" >/dev/null)
+  rm -rf node_modules/@img/sharp-linux-x64 node_modules/@img/sharp-libvips-linux-x64
   cp -r "$T"/node_modules/@img/sharp-linux-x64 "$T"/node_modules/@img/sharp-libvips-linux-x64 node_modules/@img/ && rm -rf "$T"
-  echo "   installed the Linux image library"
+  echo "   installed the Linux image library $V (libvips $LV)"
 fi
+# The library as the site will load it: the deploy stops here if it cannot.
+node -e 'const s = require("./node_modules/sharp"); console.log("   image library: sharp " + s.versions.sharp + ", libvips " + s.versions.vips)'
 # The kept files of builds more than a week old: by then no cached page
 # names them (the page cache keeps a copy a day at most). This build's own
 # arrive with today's date.

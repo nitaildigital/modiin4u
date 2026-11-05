@@ -5745,6 +5745,29 @@ a hash, so an old file never stands in for a new one. For this deploy the
 old files were already gone: the pages heal as they are visited, or at once
 by emptying `/var/cache/nginx/modiin4u-pages` on the server.
 
+### Next.js 15.5.29 and the server's image library — 5 Nov
+
+The security review (5 Nov) found the site on Next.js 15.5.27, which
+`npm audit` flags for GHSA-2464-fhr4-w9xw: remote code execution through the
+image resizer (`/_next/image/`) when SVG files are involved. The resizer is
+public, and residents can upload files into the storage it reads. Harshit:
+fix this one only. `next` and `eslint-config-next` are now 15.5.29, the
+newest of the 15.5 line (no move to 16).
+
+The deploy installed the server's Linux image library (`@img/sharp-linux-x64`
+and its libvips) only when it was missing, so whatever sharp a build
+brought, the server went on with the first one it ever had, and fixes in
+the library never reached it. `deploy_site.sh` now installs it again
+whenever its versions differ from those the build's sharp names, and prints
+the versions the site will load (the deploy stops if it cannot load them).
+
+Checked locally on the production build (`--build-only`, run as the server
+runs it): the pages render with their styles and no script errors; a stored
+photo is resized at the site's widths to the same bytes the live site
+gives; an SVG, another host and the metadata address are refused (400).
+`npm audit` still names the postcss that Next bundles (high): it runs only
+while the site is built, on our CSS, not on anything a visitor sends.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
