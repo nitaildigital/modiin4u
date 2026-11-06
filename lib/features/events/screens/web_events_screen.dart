@@ -602,7 +602,7 @@ class _WebEventsContentState extends ConsumerState<WebEventsContent>
       icon: searching ? IconsaxPlusLinear.search_status : IconsaxPlusLinear.calendar_1,
       title: searching
           ? _t('No events match your search', 'אין אירועים שתואמים לחיפוש')
-          : _t('No events listed yet', 'עדיין לא פורסמו אירועים'),
+          : _t('No upcoming events', 'אין אירועים קרובים'),
       body: searching
           ? _t('Try a different word, or clear the search.',
               'נסו מילה אחרת, או נקו את החיפוש.')

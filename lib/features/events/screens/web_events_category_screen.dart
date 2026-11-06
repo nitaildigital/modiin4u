@@ -532,7 +532,7 @@ class _WebEventsCategoryContentState extends ConsumerState<WebEventsCategoryCont
       icon: filtering ? IconsaxPlusLinear.search_status : IconsaxPlusLinear.calendar_1,
       title: filtering
           ? _t('No events match your filters', 'אין אירועים שתואמים את הסינון')
-          : _t('No events listed yet', 'עדיין לא פורסמו אירועים'),
+          : _t('No upcoming events', 'אין אירועים קרובים'),
       body: filtering
           ? _t('Try clearing a filter or searching for somewhere else.',
               'נסו להסיר סינון או לחפש מקום אחר.')

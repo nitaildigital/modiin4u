@@ -142,7 +142,7 @@ export function EventsCategoryBrowser({ lang, events, categories, byEvent, initi
           {visible.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center p-8 text-center">
               {filtering ? <SearchStatus size={48} color="rgba(109,109,109,0.5)" /> : <Calendar1 size={48} color="rgba(109,109,109,0.5)" />}
-              <p className="mt-4 font-nunito text-xl font-semibold text-navy">{filtering ? t('אין אירועים שתואמים את הסינון', 'No events match your filters') : t('עדיין לא פורסמו אירועים', 'No events listed yet')}</p>
+              <p className="mt-4 font-nunito text-xl font-semibold text-navy">{filtering ? t('אין אירועים שתואמים את הסינון', 'No events match your filters') : t('אין אירועים קרובים', 'No upcoming events')}</p>
               <p className="mt-2 text-sm text-gray-text">{filtering ? t('נסו להסיר סינון או לחפש מקום אחר.', 'Try clearing a filter or searching for somewhere else.') : t('אירועים חדשים יופיעו כאן עם פרסומם.', 'New events will appear here as they are published.')}</p>
             </div>
           ) : visible.map((e) => <Row key={e.id} event={e} lang={lang} link={eventHref[e.id]} />)}

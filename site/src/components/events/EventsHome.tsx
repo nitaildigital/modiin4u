@@ -189,7 +189,7 @@ export function EventsHome({ lang, heading, headingIsH1, events, categories, byE
               <div className="flex flex-col items-center rounded-xl border border-line px-6 py-[72px] text-center">
                 {searching ? <SearchStatus size={44} color="rgba(95,94,90,0.5)" /> : <Calendar1 size={44} color="rgba(95,94,90,0.5)" />}
                 <p className="mt-4 font-nunito text-xl font-semibold text-navy">
-                  {searching ? t('אין אירועים שתואמים לחיפוש', 'No events match your search') : t('עדיין לא פורסמו אירועים', 'No events listed yet')}
+                  {searching ? t('אין אירועים שתואמים לחיפוש', 'No events match your search') : t('אין אירועים קרובים', 'No upcoming events')}
                 </p>
                 <p className="mt-2 text-sm text-gray-text">
                   {searching ? t('נסו מילה אחרת, או נקו את החיפוש.', 'Try a different word, or clear the search.') : t('אירועים חדשים יופיעו כאן עם פרסומם.', 'New events will appear here as they are published.')}
