@@ -75,7 +75,15 @@ class AdminArticleListNotifier
     }
   }
 
+  /// Counts loads, so that one overtaken by a newer load — a search typed on
+  /// after a pause — drops its answer instead of painting the older result
+  /// over the newer: "פ" matches hundreds of articles and answered after
+  /// "פאנל" (6 Nov). The same guard as AdminTableNotifier's.
+  int _loadTicket = 0;
+
   Future<void> load() async {
+    final ticket = ++_loadTicket;
+    bool current() => mounted && ticket == _loadTicket;
     if (!_loadingMore) state = const AsyncValue.loading();
     try {
       var query = SupabaseConfig.client.from('articles').select();
@@ -101,7 +109,7 @@ class AdminArticleListNotifier
         for (final r in list) r['id'] as String,
       ]);
 
-      if (mounted) {
+      if (current()) {
         totalCount = rows.count;
         state = AsyncValue.data([
           for (final r in list)
@@ -113,7 +121,7 @@ class AdminArticleListNotifier
         ]);
       }
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (current()) state = AsyncValue.error(e, st);
     }
   }
 

@@ -5793,6 +5793,27 @@ a row archived and a log entry added while the screens were closed appear
 when they are opened (13 → 14 items, 193 → 194 records). The test rows and
 the temporary admin were removed after.
 
+The debouncer only helps while letters come faster than 400 ms. Typed
+slower, or with a pause inside the word, each search still goes out, and
+Articles, Businesses and Media — the three sections with their own loading
+code rather than AdminTableNotifier — kept whichever answer came last. The
+other six sections of the eight were already safe: AdminTableNotifier
+numbers its loads and drops one a newer load has overtaken. The three now
+do the same. The website had one box like it, the places search in the
+Urban Profile steps (`UrbanSteps.tsx`); it now ignores an answer for text
+that has since changed, as the app's version already did. The app's own
+search boxes were checked and need nothing: they filter what is loaded, or
+are Riverpod providers that drop a superseded answer themselves.
+
+Checked live after the deploy, typing a letter every 600 ms with the first
+letter's answer held back 3 s in the browser, so that it lands last. Before
+it, "פאנל" in Articles listed 479 articles, the answer for "פ". After it:
+Articles shows "פאנל"'s own 0, Businesses "פיצה"'s 11 (not "פ"'s 180), Media
+"logo"'s 0, and the website's places search "קפה"'s 3 (not "ק"'s 20). A
+browser holding the old service worker kept running the old panel until its
+cache was cleared, as deploy_web.sh warns. The temporary admin was removed
+after.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

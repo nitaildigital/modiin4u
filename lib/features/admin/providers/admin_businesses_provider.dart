@@ -152,7 +152,15 @@ class AdminBusinessListNotifier
     load();
   }
 
+  /// Counts loads, so that one overtaken by a newer load — a search typed on
+  /// after a pause — drops its answer instead of painting the older result
+  /// over the newer: the shorter text matches more and answers last
+  /// (6 Nov). The same guard as AdminTableNotifier's.
+  int _loadTicket = 0;
+
   Future<void> load() async {
+    final ticket = ++_loadTicket;
+    bool current() => mounted && ticket == _loadTicket;
     state = const AsyncValue.loading();
     try {
       var query = SupabaseConfig.client
@@ -181,10 +189,13 @@ class AdminBusinessListNotifier
         );
         rows.addAll(batch);
         if (batch.length < page) break;
+        // A newer load has the list now; the rest of these pages is not
+        // wanted.
+        if (!current()) return;
       }
-      if (mounted) state = AsyncValue.data(rows);
+      if (current()) state = AsyncValue.data(rows);
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (current()) state = AsyncValue.error(e, st);
     }
   }
 

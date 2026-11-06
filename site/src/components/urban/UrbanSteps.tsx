@@ -199,9 +199,15 @@ function Places({ lang, me, onDone, onSkip, onBack }: { lang: Lang; me: Mine; on
   const [found, setFound] = useState<Place[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When the text changes, an answer still on its way for the old text is
+  // dropped: a shorter word matches more and can answer last, replacing the
+  // list for the word typed (6 Nov).
   useEffect(() => {
-    const id = setTimeout(() => { searchPlaces(query).then(setFound, () => setFound([])); }, query ? 300 : 0);
-    return () => clearTimeout(id);
+    let stale = false;
+    const id = setTimeout(() => {
+      searchPlaces(query).then((p) => { if (!stale) setFound(p); }, () => { if (!stale) setFound([]); });
+    }, query ? 300 : 0);
+    return () => { stale = true; clearTimeout(id); };
   }, [query]);
   const name = (p: Place) => (lang === 'en' && p.name_en?.trim()) || p.name;
   const has = (p: Place) => chosen.some((c) => c.id === p.id);

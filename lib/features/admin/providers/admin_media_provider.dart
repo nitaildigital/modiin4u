@@ -66,7 +66,14 @@ class AdminMediaListNotifier
   String? _search;
   String? _mime;
 
+  /// Counts loads, so that one overtaken by a newer load — a search typed on
+  /// after a pause — drops its answer instead of painting the older result
+  /// over the newer, as AdminTableNotifier does (6 Nov).
+  int _loadTicket = 0;
+
   Future<void> load() async {
+    final ticket = ++_loadTicket;
+    bool current() => mounted && ticket == _loadTicket;
     if (!_loadingMore) state = const AsyncValue.loading();
     try {
       // The galleries each file is in come along, so a photo imported
@@ -88,15 +95,15 @@ class AdminMediaListNotifier
           .order('id')
           .limit(_window)
           .count(CountOption.exact);
-      if (!mounted) return;
+      if (!current()) return;
       final rows = List<Map<String, dynamic>>.from(res.data);
       await _nameGalleries(rows);
-      if (!mounted) return;
+      if (!current()) return;
       totalCount = res.count;
       state = AsyncValue.data(rows);
       _loadTotals();
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (current()) state = AsyncValue.error(e, st);
     }
   }
 
