@@ -46,30 +46,14 @@ class AdminProfilesNotifier extends AdminTableNotifier {
         },
       );
 
-  ProfileFilter _filter = ProfileFilter.all;
-
-  void setFilter(ProfileFilter filter) {
-    _filter = filter;
-    load();
-  }
-
-  @override
-  Future<void> load() async {
-    await super.load();
-    if (_filter == ProfileFilter.all) return;
-
-    state.whenData((rows) {
-      state = AsyncValue.data(
-        rows.where((r) {
-          return switch (_filter) {
-            ProfileFilter.banned => r['is_banned'] == true,
-            ProfileFilter.verified => r['is_verified'] == true,
-            ProfileFilter.all => true,
-          };
-        }).toList(),
-      );
-    });
-  }
+  /// Asked of the database, not picked out of the rows already read: those
+  /// were the newest 500, so a resident banned or verified before them was
+  /// missing from "Banned" and "Verified", and the count was of the 500 only
+  /// (6 Nov).
+  void setFilter(ProfileFilter filter) => setColumnFilters({
+    'is_banned': filter == ProfileFilter.banned ? true : null,
+    'is_verified': filter == ProfileFilter.verified ? true : null,
+  });
 
   Future<void> updateProfile(String id, Map<String, dynamic> fields) =>
       update(id, fields);

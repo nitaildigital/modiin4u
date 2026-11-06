@@ -17,16 +17,6 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
   final _searchController = TextEditingController();
   String _actionFilter = '';
 
-  /// Read again each time the log is opened. The list is kept for the whole
-  /// session, so actions taken after the first visit were missing from it
-  /// (four edits on 6 Nov, still "193 records"). The filter starts at "All",
-  /// as the chips do.
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => ref.read(adminAuditProvider.notifier).setActionFilter(null));
-  }
-
   @override
   void dispose() {
     _searchController.dispose();

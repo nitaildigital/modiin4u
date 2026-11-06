@@ -81,12 +81,19 @@ class AdminArticleListNotifier
   /// "פאנל" (6 Nov). The same guard as AdminTableNotifier's.
   int _loadTicket = 0;
 
+  /// What the list shows, and no more. It read every column, each article's
+  /// whole body among them, 500 at a time for a table of titles (6 Nov); the
+  /// editor reads the full row itself ([fullArticle]).
+  static const _listColumns =
+      'id, title, slug, status, published_at, featured_image, is_breaking, '
+      'is_featured, meta_description, view_count, created_at, updated_at';
+
   Future<void> load() async {
     final ticket = ++_loadTicket;
     bool current() => mounted && ticket == _loadTicket;
     if (!_loadingMore) state = const AsyncValue.loading();
     try {
-      var query = SupabaseConfig.client.from('articles').select();
+      var query = SupabaseConfig.client.from('articles').select(_listColumns);
 
       if (_status != null && _status!.isNotEmpty) {
         query = query.eq('status', _status!);
@@ -218,6 +225,18 @@ class AdminArticleListNotifier
       row['featured_image'] = fields['cover_image_url'];
     }
     return row;
+  }
+
+  /// The whole article, in the form's names, for the editor. The list holds
+  /// only what it shows, and an editor opened on that would have saved an
+  /// empty body over the real one.
+  Future<Map<String, dynamic>> fullArticle(String id) async {
+    final row = await SupabaseConfig.client
+        .from('articles')
+        .select()
+        .eq('id', id)
+        .single();
+    return _toForm(Map<String, dynamic>.from(row));
   }
 
   /// The categories an article is filed under, read fresh for the editor.

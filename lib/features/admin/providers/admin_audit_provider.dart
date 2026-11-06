@@ -10,7 +10,7 @@ import '../admin_language.dart';
 /// built on it records its creates, edits, status changes and removals — and
 /// by the trash's restore.
 final adminAuditProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminAuditNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

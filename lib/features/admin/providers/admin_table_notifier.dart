@@ -178,11 +178,17 @@ class AdminTableNotifier
 
   /// Narrows the list to rows whose [column] equals [value]; null or an empty
   /// string takes the filter off.
-  void setColumnFilter(String column, Object? value) {
-    if (value == null || (value is String && value.isEmpty)) {
-      _filters.remove(column);
-    } else {
-      _filters[column] = value;
+  void setColumnFilter(String column, Object? value) => setColumnFilters({column: value});
+
+  /// [setColumnFilter] for several columns at once, read in one load.
+  void setColumnFilters(Map<String, Object?> values) {
+    for (final e in values.entries) {
+      final v = e.value;
+      if (v == null || (v is String && v.isEmpty)) {
+        _filters.remove(e.key);
+      } else {
+        _filters[e.key] = v;
+      }
     }
     load();
   }

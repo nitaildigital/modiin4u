@@ -7,6 +7,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/supabase/supabase_config.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../../news/models/article_body.dart';
 import '../providers/admin_articles_provider.dart';
 import '../ui/admin_kit.dart';
@@ -252,13 +253,24 @@ class _AdminArticlesScreenState extends ConsumerState<AdminArticlesScreen> {
     }
   }
 
-  void _showArticleEditor(
+  Future<void> _showArticleEditor(
     BuildContext context,
     WidgetRef ref, {
     Map<String, dynamic>? article,
-  }) {
+  }) async {
+    // The list holds only what it shows, not the body or the SEO fields, so
+    // an existing article is read whole before its editor opens (6 Nov).
+    var full = article;
+    if (article != null) {
+      final ok = await runAdminAction(context, () async {
+        full = await ref
+            .read(adminArticleListProvider.notifier)
+            .fullArticle(article['id'] as String);
+      });
+      if (!ok || !context.mounted) return;
+    }
     // A page of its own rather than a small dialog (7 Oct).
-    AdminEditorPage.open<void>(context, _ArticleEditorDialog(article: article));
+    AdminEditorPage.open<void>(context, _ArticleEditorDialog(article: full));
   }
 }
 
@@ -316,27 +328,17 @@ class _ArticleTable extends StatelessWidget {
                   children: [
                     // Cover image thumbnail
                     if (coverUrl != null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.network(
-                          coverUrl,
-                          width: 52,
-                          height: 36,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            width: 52,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.broken_image,
-                              size: 16,
-                              color: AppColors.grayLight,
-                            ),
-                          ),
-                        ),
+                      // A small copy at the size it is drawn, not the full
+                      // upload (6 Nov) — see NetworkPhoto.
+                      NetworkPhoto(
+                        url: coverUrl,
+                        width: 52,
+                        height: 36,
+                        radius: BorderRadius.circular(6),
+                        gradient: const [AppColors.surfaceLight, AppColors.surfaceLight],
+                        icon: Icons.broken_image,
+                        iconSize: 16,
+                        iconColor: AppColors.grayLight,
                       ),
                       const SizedBox(width: 10),
                     ],

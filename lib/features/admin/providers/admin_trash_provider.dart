@@ -16,7 +16,7 @@ import '../admin_language.dart';
 /// ever wrote to it, and copying rows out of their tables would break the
 /// links other rows keep to them. Nothing here expires or is purged.
 final adminTrashListProvider =
-    StateNotifierProvider<AdminTrashNotifier, AsyncValue<List<TrashItem>>>((
+    StateNotifierProvider.autoDispose<AdminTrashNotifier, AsyncValue<List<TrashItem>>>((
       ref,
     ) {
       return AdminTrashNotifier();

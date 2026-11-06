@@ -585,7 +585,7 @@ class _DetailsDialogState extends ConsumerState<_DetailsDialog> {
     _alt = TextEditingController(
       text: widget.media['alt_text'] as String? ?? '',
     );
-    _usage = ref.read(adminMediaListProvider.notifier).usageOf(widget.media);
+    _usage = ref.read(adminMediaListProvider.notifier).usageShownOf(widget.media);
   }
 
   @override
@@ -869,7 +869,7 @@ class _RemoveDialogState extends ConsumerState<_RemoveDialog> {
   @override
   void initState() {
     super.initState();
-    _usage = ref.read(adminMediaListProvider.notifier).usageOf(widget.media);
+    _usage = ref.read(adminMediaListProvider.notifier).usageShownOf(widget.media);
   }
 
   Future<void> _remove() async {

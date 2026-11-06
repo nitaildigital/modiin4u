@@ -162,18 +162,30 @@ final adminContentReachProvider = FutureProvider<AdminContentReach>((
 ) async {
   final client = SupabaseConfig.client;
 
-  final articleRows = List<Map<String, dynamic>>.from(
-    await client
-        .from('articles')
-        .select('title, view_count, share_count, save_count')
-        .order('view_count', ascending: false),
-  );
-  final eventRows = List<Map<String, dynamic>>.from(
-    await client
-        .from('events')
-        .select('title, view_count, rsvp_count, share_count, calendar_adds')
-        .order('view_count', ascending: false),
-  );
+  // Every row, a page at a time. One read stopped at 1000 rows and said
+  // nothing, so the totals would have quietly stopped growing (695 articles
+  // on 6 Nov). The database's own sums are switched off (PGRST123).
+  Future<List<Map<String, dynamic>>> all(String table, String columns) async {
+    const page = 1000;
+    final rows = <Map<String, dynamic>>[];
+    for (var from = 0; ; from += page) {
+      final batch = List<Map<String, dynamic>>.from(
+        await client
+            .from(table)
+            .select(columns)
+            .order('view_count', ascending: false)
+            .order('id')
+            .range(from, from + page - 1),
+      );
+      rows.addAll(batch);
+      if (batch.length < page) return rows;
+    }
+  }
+
+  final [articleRows, eventRows] = await Future.wait([
+    all('articles', 'id, title, view_count, share_count, save_count'),
+    all('events', 'id, title, view_count, rsvp_count, share_count, calendar_adds'),
+  ]);
 
   int sum(List<Map<String, dynamic>> rows, String column) =>
       rows.fold(0, (t, r) => t + ((r[column] as num?)?.toInt() ?? 0));

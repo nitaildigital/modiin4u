@@ -101,7 +101,13 @@ class AdminMediaListNotifier
       if (!current()) return;
       totalCount = res.count;
       state = AsyncValue.data(rows);
-      _loadTotals();
+      // The library's totals do not move with a search or a type filter:
+      // counted when the section opens and after a file is added or
+      // removed, not on every load (each search counted every row, 6 Nov).
+      if (!_totalsCounted) {
+        _totalsCounted = true;
+        _loadTotals();
+      }
     } catch (e, st) {
       if (current()) state = AsyncValue.error(e, st);
     }
@@ -271,6 +277,7 @@ class AdminMediaListNotifier
         fields: row,
         label: row['file_name'] as String?,
       );
+      _libraryChanged();
       await load();
       return row;
     } catch (_) {
@@ -280,6 +287,34 @@ class AdminMediaListNotifier
       } catch (_) {}
       rethrow;
     }
+  }
+
+  /// Set once the totals have been counted for this visit to the section.
+  bool _totalsCounted = false;
+
+  /// [usageOf]'s answers while the section is open. `media_usage` searches
+  /// every text column of every table, and ran again each time the same
+  /// file's details were opened (6 Nov). Only for showing: a removal asks
+  /// afresh ([deleteUnused]).
+  final _usageShown = <String, Future<List<MediaUse>>>{};
+
+  /// Where the file is shown, as last asked in this visit to the section.
+  Future<List<MediaUse>> usageShownOf(Map<String, dynamic> media) {
+    final key = media['id'] as String? ?? media['file_path'] as String? ?? '';
+    final known = _usageShown[key];
+    if (known != null) return known;
+    final asked = usageOf(media);
+    _usageShown[key] = asked;
+    // A failed answer is not kept, so opening the file again asks again.
+    asked.then((_) {}, onError: (Object _) => _usageShown.remove(key));
+    return asked;
+  }
+
+  /// After a file is added or removed: the totals change, and where files
+  /// are used may have.
+  void _libraryChanged() {
+    _usageShown.clear();
+    _loadTotals();
   }
 
   /// Where the file is shown. Every row the library holds today is in a
@@ -327,6 +362,7 @@ class AdminMediaListNotifier
         // the bucket shows nowhere.
       }
     }
+    _libraryChanged();
     await load();
   }
 

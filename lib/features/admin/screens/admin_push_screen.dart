@@ -6,6 +6,7 @@ import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../providers/admin_push_provider.dart';
 import '../providers/admin_realestate_provider.dart'
     show adminNeighborhoodOptionsProvider;
@@ -462,27 +463,17 @@ class _PushTable extends StatelessWidget {
                   child: Row(
                     children: [
                       if (n['image_url'] != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            n['image_url'] as String,
-                            width: 44,
-                            height: 44,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Icon(
-                                Icons.broken_image,
-                                size: 18,
-                                color: AppColors.grayLight,
-                              ),
-                            ),
-                          ),
+                        // A small copy at the size it is drawn, not the full
+                        // upload (6 Nov) — see NetworkPhoto.
+                        NetworkPhoto(
+                          url: n['image_url'] as String,
+                          width: 44,
+                          height: 44,
+                          radius: BorderRadius.circular(6),
+                          gradient: const [AppColors.surfaceLight, AppColors.surfaceLight],
+                          icon: Icons.broken_image,
+                          iconSize: 18,
+                          iconColor: AppColors.grayLight,
                         ),
                         const SizedBox(width: 10),
                       ],

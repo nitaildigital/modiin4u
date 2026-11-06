@@ -28,7 +28,6 @@ class AdminReviewsScreen extends ConsumerStatefulWidget {
 class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
   String _statusFilter = '';
   final _search = TextEditingController();
-  Future<void>? _pendingSearch;
 
   @override
   void dispose() {
@@ -43,16 +42,13 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
         .setStatusFilter(status.isEmpty ? null : status);
   }
 
+  /// Straight to the list, which waits for typing to pause (AdminTableNotifier
+  /// .setSearch). This screen had its own delay whose `ignore()` cancelled
+  /// nothing, so every letter still went through 400 ms late (6 Nov).
   void _onSearch(String v) {
-    _pendingSearch?.ignore();
-    _pendingSearch = Future.delayed(const Duration(milliseconds: 400)).then((
-      _,
-    ) {
-      if (!mounted) return;
-      ref
-          .read(adminReviewListProvider.notifier)
-          .setSearch(v.trim().isEmpty ? null : v.trim());
-    });
+    ref
+        .read(adminReviewListProvider.notifier)
+        .setSearch(v.trim().isEmpty ? null : v.trim());
   }
 
   @override

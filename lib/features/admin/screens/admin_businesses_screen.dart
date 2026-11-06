@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
     show FunctionException, PostgrestException, StorageException;
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/network_photo.dart';
 import '../ui/admin_kit.dart';
 import '../providers/admin_businesses_provider.dart';
 import '../widgets/business_stats_dialog.dart';
@@ -400,27 +401,17 @@ class _BusinessTable extends StatelessWidget {
                     if (biz['logo_url'] == null)
                       const SizedBox(width: 48)
                     else ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.network(
-                          biz['logo_url'] as String,
-                          width: 38,
-                          height: 38,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.store,
-                              size: 18,
-                              color: AppColors.grayLight,
-                            ),
-                          ),
-                        ),
+                      // A small copy at the size it is drawn, not the full
+                      // upload (6 Nov) — see NetworkPhoto.
+                      NetworkPhoto(
+                        url: biz['logo_url'] as String,
+                        width: 38,
+                        height: 38,
+                        radius: BorderRadius.circular(6),
+                        gradient: const [AppColors.surfaceLight, AppColors.surfaceLight],
+                        icon: Icons.store,
+                        iconSize: 18,
+                        iconColor: AppColors.grayLight,
                       ),
                       const SizedBox(width: 10),
                     ],

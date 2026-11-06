@@ -47,7 +47,8 @@ export function UrbanProfileView({ lang, username, stores }: {
 
   useEffect(() => {
     if (!ready) return;
-    if (!session) { setProfile(null); return; }
+    // Signed out after a failed read: the sign-in prompt, not the error.
+    if (!session) { setFailed(false); setProfile(null); return; }
     let stale = false;
     setFailed(false);
     setProfile(undefined);

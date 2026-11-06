@@ -25,19 +25,51 @@ final _requestsProvider = FutureProvider.autoDispose<List<PromotionRequest>>((re
   final rows = await q.order('created_at', ascending: false).limit(200);
   final list = List<Map<String, dynamic>>.from(rows).map(PromotionRequest.fromJson).toList();
   // What each one is for: a title and a picture, from the business, deal or
-  // job itself.
-  return Future.wait(
-    list.map((r) async {
-      try {
-        final t = await client.rpc('promotion_target', params: {'p_type': r.entityType, 'p_id': r.entityId});
-        final first = List<Map<String, dynamic>>.from(t as List).firstOrNull;
-        return r.withTarget(first?['title'] as String?, first?['image_url'] as String?);
-      } catch (_) {
-        return r;
-      }
-    }),
-  );
+  // job itself — what `promotion_target` gives, read one query per kind. It
+  // was one call per request, up to 200 at once (6 Nov).
+  final targets = await _targets(list);
+  return [
+    for (final r in list)
+      if (targets['${r.entityType}:${r.entityId}'] case final t?)
+        r.withTarget(t.$1, t.$2)
+      else
+        r,
+  ];
 });
+
+/// Title and picture per `type:id`, as `promotion_target` picks them: a
+/// business's cover or else its logo, a deal's picture, a job's picture or
+/// else its first photo. A kind that cannot be read is left without; the
+/// request still shows.
+Future<Map<String, (String?, String?)>> _targets(List<PromotionRequest> list) async {
+  final client = SupabaseConfig.client;
+  final ids = <String, Set<String>>{};
+  for (final r in list) {
+    ids.putIfAbsent(r.entityType, () => {}).add(r.entityId);
+  }
+  final out = <String, (String?, String?)>{};
+  Future<void> read(String type, String table, String columns,
+      (String?, String?) Function(Map<String, dynamic>) pick) async {
+    final wanted = ids[type];
+    if (wanted == null || wanted.isEmpty) return;
+    try {
+      final rows = await client.from(table).select(columns).inFilter('id', wanted.toList());
+      for (final row in List<Map<String, dynamic>>.from(rows)) {
+        out['$type:${row['id']}'] = pick(row);
+      }
+    } catch (_) {}
+  }
+
+  String? first(Object? images) => images is List && images.isNotEmpty ? images.first as String? : null;
+  await Future.wait([
+    read('business', 'businesses', 'id, name, cover_url, logo_url',
+        (b) => (b['name'] as String?, (b['cover_url'] ?? b['logo_url']) as String?)),
+    read('offer', 'offers', 'id, name, image_url', (o) => (o['name'] as String?, o['image_url'] as String?)),
+    read('job', 'jobs', 'id, title, image_url, images',
+        (j) => (j['title'] as String?, (j['image_url'] as String?) ?? first(j['images']))),
+  ]);
+  return out;
+}
 
 class AdminPromotionsScreen extends ConsumerWidget {
   const AdminPromotionsScreen({super.key});
