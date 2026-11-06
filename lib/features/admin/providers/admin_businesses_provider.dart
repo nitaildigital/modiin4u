@@ -343,12 +343,13 @@ class AdminBusinessListNotifier
 
     final gone = current.difference(wanted);
     if (gone.isNotEmpty) {
-      await client
+      await expectWritten(client
           .from('entity_categories')
           .delete()
           .eq('entity_type', 'business')
           .eq('entity_id', businessId)
-          .inFilter('category_id', gone.toList());
+          .inFilter('category_id', gone.toList())
+          .select('category_id'));
     }
 
     final added = wanted.difference(current);
@@ -464,7 +465,7 @@ Future<void> saveMenuItems(
   };
   final gone = stored.keys.where((id) => !kept.contains(id)).toList();
   if (gone.isNotEmpty) {
-    await client.from('business_menu_items').delete().inFilter('id', gone);
+    await expectWritten(client.from('business_menu_items').delete().inFilter('id', gone).select('id'));
   }
 
   final added = <Map<String, dynamic>>[];
@@ -485,7 +486,7 @@ Future<void> saveMenuItems(
         if (was[e.key] != e.value) e.key: e.value,
     };
     if (changed.isEmpty) continue;
-    await client.from('business_menu_items').update(changed).eq('id', id);
+    await expectWritten(client.from('business_menu_items').update(changed).eq('id', id).select('id'));
   }
   if (added.isNotEmpty) {
     await client.from('business_menu_items').insert(added);

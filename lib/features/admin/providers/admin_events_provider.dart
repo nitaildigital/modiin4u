@@ -83,7 +83,7 @@ class AdminEventListNotifier extends AdminTableNotifier {
       eventId = created['id'] as String;
       onCreated?.call(eventId);
     } else {
-      await client.from('events').update(row).eq('id', id);
+      await updateRow('events', id, row);
       eventId = id;
     }
 
@@ -133,14 +133,11 @@ class AdminEventListNotifier extends AdminTableNotifier {
     final before = (state.valueOrNull ?? const <Map<String, dynamic>>[])
         .where((r) => r['id'] == id)
         .firstOrNull;
-    await SupabaseConfig.client
-        .from('events')
-        .update({
-          'status': 'published',
-          if (publishedAt == null)
-            'published_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', id);
+    await updateRow('events', id, {
+      'status': 'published',
+      if (publishedAt == null)
+        'published_at': DateTime.now().toUtc().toIso8601String(),
+    });
     await recordAdminAction(
       action: auditActionFor({'status': 'published'}),
       table: 'events',

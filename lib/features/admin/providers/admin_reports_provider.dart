@@ -52,10 +52,7 @@ class AdminReportsNotifier extends AdminTableNotifier {
       'comment' => 'comments',
       _ => throw ArgumentError('only a review or a reply can be hidden here'),
     };
-    await SupabaseConfig.client
-        .from(table)
-        .update({'status': 'hidden'})
-        .eq('id', entityId);
+    await updateRow(table, entityId, {'status': 'hidden'});
     await _close(id, 'resolved', 'הוסתר · Hidden');
     // Every other open report on the same item is answered by this too, and
     // each reporter is told (00066).

@@ -168,10 +168,11 @@ class AdminHomeBuilderNotifier extends AdminTableNotifier {
     try {
       for (var i = 0; i < rows.length; i++) {
         if (rows[i]['sort_order'] == i) continue;
-        await client
+        await expectWritten(client
             .from('home_blocks')
             .update({'sort_order': i})
-            .eq('id', rows[i]['id'] as String);
+            .eq('id', rows[i]['id'] as String)
+            .select('id'));
       }
       // One entry for the block that was moved; the others only shifted.
       await recordAdminAction(

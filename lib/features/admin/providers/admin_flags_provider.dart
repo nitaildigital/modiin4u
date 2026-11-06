@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
-import 'admin_table_notifier.dart' show recordAdminAction, updateRow;
+import 'admin_table_notifier.dart' show expectWritten, recordAdminAction, updateRow;
 
 /// Feature flags and remote config, on the tables that hold them.
 ///
@@ -233,7 +233,9 @@ class AdminRemoteConfigNotifier
       (c) => c['id'] == id,
       orElse: () => const <String, dynamic>{},
     );
-    await SupabaseConfig.client.from('remote_config').delete().eq('id', id);
+    await expectWritten(
+      SupabaseConfig.client.from('remote_config').delete().eq('id', id).select('id'),
+    );
     await recordAdminAction(
       action: 'delete',
       table: 'remote_config',

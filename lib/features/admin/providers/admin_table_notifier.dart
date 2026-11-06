@@ -246,7 +246,9 @@ class AdminTableNotifier
       return;
     }
     final before = _rowById(id);
-    await SupabaseConfig.client.from(table).delete().eq('id', id);
+    await expectWritten(
+      SupabaseConfig.client.from(table).delete().eq('id', id).select('id'),
+    );
     await recordAdminAction(
       action: 'delete',
       table: table,
@@ -335,6 +337,17 @@ Future<void> updateRow(
   if (rows.isEmpty) {
     throw const AdminWriteRefused();
   }
+}
+
+/// [updateRow] for any write that must reach at least one row: an update or
+/// a delete ending in `.select('id')`, so the rows it touched come back.
+/// Row-level security refuses by matching nothing, which reports success;
+/// about forty writes in the panel trusted that, and a refused one would
+/// have said "saved" (6 Nov). Not for a delete that may legitimately find
+/// nothing, such as clearing a business's hours before writing them again.
+Future<void> expectWritten(Future<List<Map<String, dynamic>>> write) async {
+  final rows = await write;
+  if (rows.isEmpty) throw const AdminWriteRefused();
 }
 
 /// An update that reached no row — refused by the database's permissions,

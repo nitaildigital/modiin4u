@@ -45,7 +45,7 @@ class AdminReviewListNotifier extends AdminTableNotifier {
   /// zoneless time would be stored three hours out.
   Future<void> reply(String id, String? text) async {
     final body = text?.trim() ?? '';
-    await SupabaseConfig.client
+    await expectWritten(SupabaseConfig.client
         .from('reviews')
         .update(
           body.isEmpty
@@ -60,7 +60,8 @@ class AdminReviewListNotifier extends AdminTableNotifier {
                   'responded_at': DateTime.now().toUtc().toIso8601String(),
                 },
         )
-        .eq('id', id);
+        .eq('id', id)
+        .select('id'));
     await load();
   }
 }

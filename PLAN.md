@@ -5953,6 +5953,38 @@ directory, search, the bell, and sign-in with a resident account made for
 the test and removed after. The token renewal and the pull gestures could
 not be driven in the simulator, and were checked by reading the code.
 
+### Panel writes that must reach a row; the events empty state — 6 Nov
+
+Row-level security refuses a write by matching no row, and the write then
+reports success. `updateRow` already asked for the written ids back; about
+forty writes did not — the shared delete, saving an article or an event,
+their status changes, banning a resident, the Reviews reply, hiding a
+reported review, the home blocks' order, merging tags, removing a remote
+config, the business menu and category links, the gallery's removals, alt
+texts and order, step groups, jobs and deal claims. A refused one would
+have said "saved". They now go through `updateRow` or `expectWritten` (the
+same check for any write ending in `.select('id')`) and fail with "the
+change was not saved". Left as they were: writes that may rightly match
+nothing — dating a first publication or a closure only where none is set,
+clearing hours or categories before writing them again, closing the other
+reports on an item, and the clean-up after a failed upload. Nobody is
+refused today, since the panel's admins are super admins; this matters
+once limited roles are given out.
+
+The gallery also removed a photo's file before its record, so a refused
+delete would have left a record pointing at nothing; the record goes first
+now, and the file only once it has.
+
+Events with none to come said "no events have been published yet" on the
+website (and in the old Flutter web screens), while nine had been and were
+over. They now say "No upcoming events", as the app does.
+
+Checked on a local panel build against the live database, with the browser
+answering writes itself so nothing reached the table: a step group's Hide
+answered with no rows showed "the change was not saved" and left the group
+active; answered with its row, it went through without an error. The group
+was unchanged in the database after.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

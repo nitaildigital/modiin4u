@@ -71,7 +71,7 @@ class AdminProfilesNotifier extends AdminTableNotifier {
       'is_banned': banned,
       'ban_reason': banned ? (reason?.trim().isEmpty ?? true ? null : reason!.trim()) : null,
     };
-    await SupabaseConfig.client.from('profiles').update(fields).eq('id', id);
+    await updateRow('profiles', id, fields);
     await recordAdminAction(
       action: banned ? 'ban' : 'unban',
       table: 'profiles',

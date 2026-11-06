@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
 
 import '../../../core/supabase/supabase_config.dart';
-import 'admin_table_notifier.dart' show auditActionFor, recordAdminAction;
+import 'admin_table_notifier.dart'
+    show auditActionFor, expectWritten, recordAdminAction, updateRow;
 
 /// The news desk, on the live table.
 ///
@@ -311,7 +312,7 @@ class AdminArticleListNotifier
     final row = _toRow(fields);
     final before = _rowById(id);
     if (row.isNotEmpty) {
-      await SupabaseConfig.client.from('articles').update(row).eq('id', id);
+      await updateRow('articles', id, row);
     }
     if (row['status'] == 'published' && !row.containsKey('published_at')) {
       await _stampFirstPublication(id);
@@ -346,10 +347,7 @@ class AdminArticleListNotifier
 
   Future<void> updateStatus(String id, String status) async {
     final before = _rowById(id);
-    await SupabaseConfig.client
-        .from('articles')
-        .update({'status': status})
-        .eq('id', id);
+    await updateRow('articles', id, {'status': status});
     if (status == 'published') await _stampFirstPublication(id);
     await recordAdminAction(
       action: auditActionFor({'status': status}),
@@ -385,12 +383,13 @@ class AdminArticleListNotifier
   }) async {
     final client = SupabaseConfig.client;
     if (remove.isNotEmpty) {
-      await client
+      await expectWritten(client
           .from('entity_categories')
           .delete()
           .eq('entity_type', 'article')
           .eq('entity_id', articleId)
-          .inFilter('category_id', remove.toList());
+          .inFilter('category_id', remove.toList())
+          .select('category_id'));
     }
     if (add.isNotEmpty) {
       // Upserted with duplicates ignored, so a link someone else added in the

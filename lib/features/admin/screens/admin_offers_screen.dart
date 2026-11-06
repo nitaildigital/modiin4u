@@ -9,7 +9,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../deals/models/offer.dart' show offerBadge;
 import '../../../core/supabase/supabase_config.dart';
 import '../providers/admin_offers_provider.dart';
-import '../providers/admin_table_notifier.dart' show recordAdminAction;
+import '../providers/admin_table_notifier.dart' show expectWritten, recordAdminAction;
 import '../widgets/admin_events_form_fields.dart';
 import '../widgets/image_upload_field.dart';
 import '../widgets/admin_load_error.dart';
@@ -1159,7 +1159,7 @@ class _ClaimsDialogState extends State<_ClaimsDialog> {
       'redeemed_at': used ? DateTime.now().toUtc().toIso8601String() : null,
     };
     try {
-      await SupabaseConfig.client.from('offer_claims').update(fields).eq('id', id);
+      await expectWritten(SupabaseConfig.client.from('offer_claims').update(fields).eq('id', id).select('id'));
       await recordAdminAction(
         // `audit_action` has no "redeem"; the fields say which way.
         action: 'update',

@@ -133,7 +133,7 @@ class AdminTagListNotifier extends AdminTableNotifier {
     if (rows.isNotEmpty) await client.from('entity_tags').insert(rows);
 
     await client.from('entity_tags').delete().eq('tag_id', from);
-    await client.from('tags').delete().eq('id', from);
+    await expectWritten(client.from('tags').delete().eq('id', from).select('id'));
     await load();
   }
 }

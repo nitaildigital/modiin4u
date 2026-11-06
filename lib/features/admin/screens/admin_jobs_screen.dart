@@ -7,6 +7,7 @@ import '../../../shared/widgets/network_photo.dart';
 import '../../jobs/models/job.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
+import '../providers/admin_table_notifier.dart' show expectWritten;
 
 /// Every job opening businesses have posted (00052, 00069). Owners post and
 /// edit their own, live at once; the panel keeps the last word, as the
@@ -169,10 +170,11 @@ class _JobRowState extends ConsumerState<_JobRow> {
     // From now, or from the end of a promotion still running.
     final now = DateTime.now().toUtc();
     final from = j.promotedUntil != null && j.promotedUntil!.isAfter(now) ? j.promotedUntil!.toUtc() : now;
-    await _run(() => SupabaseConfig.client
+    await _run(() => expectWritten(SupabaseConfig.client
         .from('jobs')
         .update({'promoted_until': from.add(Duration(days: days)).toIso8601String()})
-        .eq('id', j.id));
+        .eq('id', j.id)
+        .select('id')));
   }
 
   Future<void> _announce(Job j) async {
@@ -305,7 +307,7 @@ class _JobRowState extends ConsumerState<_JobRow> {
                     busy: _busy,
                     onPressed: _busy
                         ? null
-                        : () => _run(() => client.from('jobs').update({'status': 'closed'}).eq('id', j.id)),
+                        : () => _run(() => expectWritten(client.from('jobs').update({'status': 'closed'}).eq('id', j.id).select('id'))),
                   )
                 else if (j.status != JobStatus.draft)
                   AdminButton.secondary(
@@ -313,7 +315,7 @@ class _JobRowState extends ConsumerState<_JobRow> {
                     busy: _busy,
                     onPressed: _busy
                         ? null
-                        : () => _run(() => client.from('jobs').update({'status': 'active'}).eq('id', j.id)),
+                        : () => _run(() => expectWritten(client.from('jobs').update({'status': 'active'}).eq('id', j.id).select('id'))),
                   ),
                 // The panel's own boost (J5): first in the jobs lists for the
                 // days chosen, as an approved promotion request would make it,

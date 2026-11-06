@@ -12,6 +12,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../providers/media_usage.dart';
 import '../admin_language.dart';
+import '../providers/admin_table_notifier.dart' show expectWritten;
 
 /// One photo in a gallery: either a row already stored, or a file picked in
 /// this session that has not been uploaded yet.
@@ -174,7 +175,7 @@ class AdminGalleryController extends ChangeNotifier {
     // ── Removed ──
     while (_removed.isNotEmpty) {
       final p = _removed.first;
-      await client.from('entity_media').delete().eq('id', p.entityMediaId!);
+      await expectWritten(client.from('entity_media').delete().eq('id', p.entityMediaId!).select('id'));
       await _dropMediaIfUnused(p);
       _removed.removeAt(0);
     }
@@ -190,10 +191,11 @@ class AdminGalleryController extends ChangeNotifier {
     // ── Alt text ──
     for (final p in photos) {
       if (p.alt == p.storedAlt || p.mediaId == null) continue;
-      await client
+      await expectWritten(client
           .from('media')
           .update({'alt_text': p.alt.isEmpty ? null : p.alt})
-          .eq('id', p.mediaId!);
+          .eq('id', p.mediaId!)
+          .select('id'));
       p.storedAlt = p.alt;
     }
 
@@ -201,10 +203,11 @@ class AdminGalleryController extends ChangeNotifier {
     for (var i = 0; i < photos.length; i++) {
       final p = photos[i];
       if (p.storedOrder == i) continue;
-      await client
+      await expectWritten(client
           .from('entity_media')
           .update({'sort_order': i})
-          .eq('id', p.entityMediaId!);
+          .eq('id', p.entityMediaId!)
+          .select('id'));
       p.storedOrder = i;
     }
 
@@ -243,14 +246,20 @@ class AdminGalleryController extends ChangeNotifier {
         return;
       }
     }
+    // The record first, and the file only once it is gone: removed the other
+    // way round, a delete the database refused left a record pointing at a
+    // file no longer there — a broken picture in the library (6 Nov). The
+    // photo is already off this gallery, so a refusal here leaves the file
+    // and its record as they were.
+    final deleted = await client.from('media').delete().eq('id', mediaId).select('id');
+    if (deleted.isEmpty) return;
     if (path != null && path.isNotEmpty) {
       try {
         await client.storage.from('media').remove([path]);
       } catch (_) {
-        // A file already gone should not keep the record alive.
+        // A file already gone is what was wanted.
       }
     }
-    await client.from('media').delete().eq('id', mediaId);
   }
 
   Future<void> _upload(AdminGalleryPhoto p, String entityId, int order) async {

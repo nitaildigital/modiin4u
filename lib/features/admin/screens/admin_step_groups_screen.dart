@@ -10,6 +10,7 @@ import '../widgets/admin_load_error.dart';
 import 'admin_challenges_screen.dart';
 import '../admin_language.dart';
 import '../ui/admin_kit.dart';
+import '../providers/admin_table_notifier.dart' show expectWritten;
 
 /// The panel's Step Counter section: the city's challenges, and the step
 /// groups residents make in the app.
@@ -185,10 +186,11 @@ class AdminStepGroupsScreen extends ConsumerWidget {
               onPressed: () async {
                 final ok = await runAdminAction(
                   context,
-                  () => SupabaseConfig.client
+                  () => expectWritten(SupabaseConfig.client
                       .from('step_groups')
                       .update({'is_hidden': !hidden})
-                      .eq('id', g['id'] as String),
+                      .eq('id', g['id'] as String)
+                      .select('id')),
                 );
                 if (ok) ref.invalidate(adminStepGroupsProvider);
               },
