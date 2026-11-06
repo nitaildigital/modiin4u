@@ -5814,6 +5814,39 @@ browser holding the old service worker kept running the old panel until its
 cache was cleared, as deploy_web.sh warns. The temporary admin was removed
 after.
 
+### Panel lists read again when opened; overtaken loads dropped — 6 Nov
+
+Every section's list was kept for the whole session, which was found for
+the trash and the activity log this morning and is true of all of them. On
+the live panel a report filed while Reports was closed was still missing
+when it was opened again (4, not 5) and appeared only after the page was
+reloaded; Reports and Comments had no Refresh button either, so a moderator
+could miss what residents sent in. The list also kept its search: reopened,
+Articles showed an empty box and "All" over the last search's rows.
+
+The section lists are now `autoDispose`: a section's list is let go when the
+section is left and read anew when it is opened, so every visit is like the
+first, which was always right — rows as they are now, with no search and the
+filter on "All", as the screen shows. Each list is used only by its own
+screen (Users by the dashboard's Users section), and editors open over the
+panel's page without taking it down, so a list stays alive while its editor
+is open. Trash and the activity log keep the reload they got this morning.
+Reports and Comments have a Refresh button, as Trash has.
+
+The same race as the searches, in three more places, now dropped by counting
+loads:
+- Trash tabs: "All" reads seventeen tables, one kind reads one, so a tab
+  clicked while "All" was loading had its list replaced when "All" answered.
+- Tags: the usage counts are read after the list, and an older load's
+  counts could land last and put its rows back.
+- The app's favourites and notification settings, which reload when the
+  person signed in changes: a read started for the previous person could
+  land after the switch and show their saved items, or their settings,
+  which a change then saved to the new account.
+
+The website's resident profile (`/u/<name>`) said "This profile is private"
+when the read failed; it now says it could not be loaded, with Try again.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

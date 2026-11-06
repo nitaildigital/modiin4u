@@ -9,7 +9,7 @@ import 'admin_table_notifier.dart';
 /// worked and was gone on the next launch. It reads and writes the real table
 /// now, so the panel is the way the client actually manages the directory.
 final adminBusinessListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminBusinessListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

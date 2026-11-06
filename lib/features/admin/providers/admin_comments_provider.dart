@@ -7,7 +7,7 @@ import 'admin_table_notifier.dart';
 /// The app writes them: replies to reviews on a business page, and comments
 /// on articles (00071). Both go up at once unless Settings ask for approval.
 final adminCommentsProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminCommentsNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

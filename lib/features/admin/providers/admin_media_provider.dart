@@ -23,7 +23,7 @@ import '../admin_language.dart';
 /// and its "upload" inserted a row of invented values — 800×600, 100 KB, a
 /// person's name as the uploader — with no file behind it.
 final adminMediaListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminMediaListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

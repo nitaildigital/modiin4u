@@ -11,7 +11,7 @@ import 'admin_table_notifier.dart';
 /// reason — the website prints `author_name`, not the profile. This reads the
 /// review's own columns, so the panel shows the name the website shows.
 final adminReviewListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminReviewListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

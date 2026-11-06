@@ -4,7 +4,7 @@ import 'admin_table_notifier.dart';
 
 /// Parking lots (migration 00030) — the pins on the app map's Parkings layer.
 final adminParkingListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminParkingListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) => AdminParkingListNotifier());

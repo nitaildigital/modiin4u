@@ -10,7 +10,7 @@ import 'admin_table_notifier.dart' show auditActionFor, recordAdminAction;
 /// the client's largest body of content, so this is the screen he will spend
 /// most of his time in.
 final adminArticleListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminArticleListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

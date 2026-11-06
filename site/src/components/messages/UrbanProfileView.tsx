@@ -40,12 +40,27 @@ export function UrbanProfileView({ lang, username, stores }: {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const { session, ready } = useSession();
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  // A read that failed is said so, with a way to try again: it showed "This
+  // profile is private", which a network error is not (6 Nov).
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!ready) return;
     if (!session) { setProfile(null); return; }
-    sessionDb().rpc('urban_profile', { p_username: username }).then(({ data }) => setProfile((data as Profile | null) ?? null));
-  }, [ready, session, username]);
+    let stale = false;
+    setFailed(false);
+    setProfile(undefined);
+    sessionDb().rpc('urban_profile', { p_username: username }).then(
+      ({ data, error }) => {
+        if (stale) return;
+        if (error) setFailed(true);
+        else setProfile((data as Profile | null) ?? null);
+      },
+      () => { if (!stale) setFailed(true); },
+    );
+    return () => { stale = true; };
+  }, [ready, session, username, attempt]);
 
   const local = (he: string, en: string | null) => (lang === 'en' && en?.trim() ? en : he);
   const placeHref = (p: Place) => href(`/business/${p.slug || p.id}/`);
@@ -53,7 +68,15 @@ export function UrbanProfileView({ lang, username, stores }: {
   return (
     <div className="wrap">
       <div className="mx-auto max-w-[560px] py-8 desk:py-12">
-        {profile === undefined ? (
+        {failed ? (
+          <div className="flex flex-col items-center py-16 text-center">
+            <p className="text-sm text-[#6D6D6D]">{t('לא ניתן היה לטעון את הפרופיל.', 'The profile could not be loaded.')}</p>
+            <button type="button" onClick={() => setAttempt((n) => n + 1)}
+              className="mt-4 flex h-11 items-center rounded-full border border-line px-6 text-sm font-medium text-ink">
+              {t('נסו שוב', 'Try again')}
+            </button>
+          </div>
+        ) : profile === undefined ? (
           <div className="flex justify-center py-16"><span className="size-9 animate-spin rounded-full border-[3px] border-midblue border-t-transparent" aria-hidden /></div>
         ) : profile === null ? (
           <div className="flex flex-col items-center py-12 text-center">

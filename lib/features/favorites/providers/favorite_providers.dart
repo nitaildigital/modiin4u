@@ -35,7 +35,13 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
     );
   }
 
+  /// Counts loads, so that one started for the previous person drops its
+  /// answer: signed out while the read was on its way, their saved items
+  /// came back after the hearts had been emptied (6 Nov).
+  int _loadTicket = 0;
+
   Future<void> _load(String? profileId) async {
+    final ticket = ++_loadTicket;
     if (profileId == null) {
       if (mounted) state = const {};
       return;
@@ -44,10 +50,10 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
       final keys = await _ref
           .read(favoriteRepositoryProvider)
           .fetchKeys(profileId);
-      if (mounted) state = keys;
+      if (mounted && ticket == _loadTicket) state = keys;
     } catch (_) {
       // A failed read leaves the hearts empty rather than wrong.
-      if (mounted) state = const {};
+      if (mounted && ticket == _loadTicket) state = const {};
     }
   }
 

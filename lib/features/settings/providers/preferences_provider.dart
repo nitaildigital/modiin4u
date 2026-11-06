@@ -38,7 +38,13 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
     super.dispose();
   }
 
+  /// Counts loads, so that one started for the previous person drops its
+  /// answer: with accounts switched while it was on its way, the new account
+  /// showed the old one's settings, and a change saved them to it (6 Nov).
+  int _loadTicket = 0;
+
   Future<void> _load(String? profileId) async {
+    final ticket = ++_loadTicket;
     if (profileId == null) {
       if (mounted) state = null;
       return;
@@ -50,13 +56,13 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
           .eq('id', profileId)
           .maybeSingle();
 
-      if (!mounted) return;
+      if (!mounted || ticket != _loadTicket) return;
       state = row == null
           ? const NotificationPreferences()
           : NotificationPreferences.fromJson(row);
     } catch (_) {
       // The defaults keep the screen usable rather than empty.
-      if (mounted) state = const NotificationPreferences();
+      if (mounted && ticket == _loadTicket) state = const NotificationPreferences();
     }
   }
 

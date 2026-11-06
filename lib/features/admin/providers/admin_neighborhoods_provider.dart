@@ -6,7 +6,7 @@ import 'admin_table_notifier.dart';
 /// Neighbourhoods, on the live table. A business points at one of these, and
 /// the app narrows events and offers by them.
 final adminNeighborhoodListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminNeighborhoodListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

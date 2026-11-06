@@ -9,7 +9,7 @@ import 'admin_table_notifier.dart';
 /// (`ad_placements`, `businesses`) — the table holds only their ids, so the
 /// list's old `placement_label` / `business_name` were always blank.
 final adminCampaignListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminCampaignListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

@@ -55,7 +55,7 @@ Map<String, dynamic> _withAuthor(Map<String, dynamic> row) {
 }
 
 final adminFeatureFlagListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminFeatureFlagListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {
@@ -167,7 +167,7 @@ class AdminFeatureFlagListNotifier
 }
 
 final adminRemoteConfigProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminRemoteConfigNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

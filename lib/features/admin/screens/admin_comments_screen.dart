@@ -152,6 +152,15 @@ class _AdminCommentsScreenState extends ConsumerState<AdminCommentsScreen> {
             ],
           ],
           count: list != null ? tr('${list.length} תגובות', '${list.length} comments') : null,
+          // Residents reply while the panel is open; without this the list
+          // showed only what was there when the section was opened (6 Nov).
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 18),
+              tooltip: tr('רענון', 'Refresh'),
+              onPressed: () => ref.read(adminCommentsProvider.notifier).load(),
+            ),
+          ],
         ),
         // ─── Stats ───
         if (list != null)

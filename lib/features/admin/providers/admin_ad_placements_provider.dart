@@ -9,7 +9,7 @@ import '../admin_language.dart';
 /// site in that slot right now. It used to read `active_campaigns_count`, a
 /// column the table does not have, so every slot said 0.
 final adminAdPlacementListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminAdPlacementListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

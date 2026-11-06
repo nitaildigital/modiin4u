@@ -14,7 +14,7 @@ import 'admin_table_notifier.dart';
 /// `payment_status` enum), `revenue_type` and `invoice_ref`, and the method
 /// of payment lives on `payments`, not here. Every filter chip failed.
 final adminRevenueListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminRevenueListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

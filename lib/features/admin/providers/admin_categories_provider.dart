@@ -8,7 +8,7 @@ import 'admin_table_notifier.dart';
 /// The directory and the restaurants screen both filter on these, so a
 /// category edited here changes what a resident sees.
 final adminCategoryListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminCategoryListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

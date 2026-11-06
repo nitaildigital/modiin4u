@@ -123,6 +123,16 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
             ],
           ],
           count: loaded != null ? tr('${loaded.length} דיווחים', '${loaded.length} reports') : null,
+          // Residents file reports while the panel is open; without this the
+          // queue showed only what was there when the section was opened
+          // (6 Nov: a new report stayed hidden until the page was reloaded).
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 18),
+              tooltip: tr('רענון', 'Refresh'),
+              onPressed: () => ref.read(adminReportsProvider.notifier).load(),
+            ),
+          ],
         ),
         // ─── Stats ───
         if (loaded != null)

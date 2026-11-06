@@ -20,7 +20,7 @@ enum ProfileFilter { all, banned, verified }
 /// `admin_articles_provider`), which is what the panel's own sections use, so
 /// only these two were missing.
 final adminProfilesProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminProfilesNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

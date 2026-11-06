@@ -6,7 +6,7 @@ import 'admin_table_notifier.dart';
 /// tiles list: institutions and synagogues, clinics, schools and
 /// kindergartens, train stations and bus stops, emergency numbers.
 final adminMunicipalPlacesProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminMunicipalPlacesNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) => AdminMunicipalPlacesNotifier());

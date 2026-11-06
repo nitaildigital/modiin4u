@@ -10,7 +10,7 @@ import 'admin_table_notifier.dart';
 /// card was permanently hidden and the feature could never be used. This is
 /// the form that fills it.
 final adminChallengeListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminChallengeListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

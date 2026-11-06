@@ -10,7 +10,7 @@ import 'admin_table_notifier.dart';
 /// columns here are named as the form already names them, so nothing is
 /// translated on the way in or out.
 final adminListingListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminListingListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

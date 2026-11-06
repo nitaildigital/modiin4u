@@ -14,7 +14,7 @@ import 'admin_table_notifier.dart';
 /// `usage_count` is not a column: it is counted from `entity_tags` on each
 /// load, so "sort by use" sorts by something real (all zero today).
 final adminTagListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminTagListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {
@@ -38,9 +38,16 @@ class AdminTagListNotifier extends AdminTableNotifier {
 
   String? _sortBy;
 
+  /// Counts this section's loads. The base drops a search overtaken by a
+  /// newer one, but the usage counts are read after it, and an older load's
+  /// counts could still land last and put its rows back (6 Nov).
+  int _tagLoad = 0;
+
   @override
   Future<void> load() async {
+    final ticket = ++_tagLoad;
     await super.load();
+    if (ticket != _tagLoad) return;
     final rows = state.valueOrNull;
     if (rows == null) return;
 
@@ -48,10 +55,10 @@ class AdminTagListNotifier extends AdminTableNotifier {
     try {
       usage = await _usageCounts();
     } catch (e, st) {
-      if (mounted) state = AsyncValue.error(e, st);
+      if (mounted && ticket == _tagLoad) state = AsyncValue.error(e, st);
       return;
     }
-    if (!mounted) return;
+    if (!mounted || ticket != _tagLoad) return;
 
     final counted = [
       for (final r in rows) {...r, 'usage_count': usage[r['id']] ?? 0},

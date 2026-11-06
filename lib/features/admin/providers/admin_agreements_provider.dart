@@ -11,7 +11,7 @@ import 'admin_table_notifier.dart';
 /// four words the migration's comment lists: active, paused, cancelled,
 /// expired.
 final adminAgreementListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminAgreementListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

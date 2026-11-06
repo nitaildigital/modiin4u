@@ -10,7 +10,7 @@ import 'admin_table_notifier.dart';
 /// saved; the list read `title` where the column is `name`, and showed no
 /// names at all. This writes the table's own columns.
 final adminOfferListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminOfferListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

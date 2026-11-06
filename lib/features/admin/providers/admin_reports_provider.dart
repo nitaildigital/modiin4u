@@ -8,7 +8,7 @@ import 'admin_table_notifier.dart';
 /// Filed from the app (`report_sheet.dart`): a review, a business or park,
 /// a listing. The website has no resident accounts, so none come from it.
 final adminReportsProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminReportsNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

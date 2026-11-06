@@ -9,7 +9,7 @@ import 'admin_table_notifier.dart';
 /// Removing one is switching it off (`is_active`), never deleting it — the
 /// client asked for nothing in the panel to be permanent.
 final adminRedirectListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminRedirectListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) => AdminRedirectListNotifier());

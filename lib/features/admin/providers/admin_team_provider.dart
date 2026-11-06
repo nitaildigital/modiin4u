@@ -12,7 +12,7 @@ import '../admin_language.dart';
 /// the screen used to read and write `name`, `email` and `role`, none of
 /// which are columns here, so nothing it saved could ever land.
 final adminTeamProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminTeamNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

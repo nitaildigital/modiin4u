@@ -10,7 +10,7 @@ import 'admin_table_notifier.dart';
 /// Nothing could create an agent, so that column could never be set and the
 /// contact block never appeared for any listing the client entered.
 final adminAgentListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminAgentListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

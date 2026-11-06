@@ -21,7 +21,7 @@ import 'admin_table_notifier.dart';
 /// Cancelling marks the row `cancelled` (migration 00035 added the word to
 /// `push_status`); it can be put back to draft.
 final adminPushListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminPushListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

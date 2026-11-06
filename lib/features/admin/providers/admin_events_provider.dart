@@ -12,7 +12,7 @@ import 'admin_table_notifier.dart';
 /// writes the table's own columns, and files the event under its categories
 /// in `entity_categories`, which is where the website reads them.
 final adminEventListProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminEventListNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

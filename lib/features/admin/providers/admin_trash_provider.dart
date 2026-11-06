@@ -217,7 +217,14 @@ class AdminTrashNotifier extends StateNotifier<AsyncValue<List<TrashItem>>> {
     load();
   }
 
+  /// Counts loads, so that one overtaken by a newer load drops its answer:
+  /// "All" reads seventeen tables and a single kind reads one, so a tab
+  /// clicked while "All" was still loading got its list replaced by
+  /// everything when "All" answered last (6 Nov).
+  int _loadTicket = 0;
+
   Future<void> load() async {
+    final ticket = ++_loadTicket;
     state = const AsyncValue.loading();
     final sources = _table == null
         ? trashSources
@@ -241,7 +248,7 @@ class AdminTrashNotifier extends StateNotifier<AsyncValue<List<TrashItem>>> {
         }
       }),
     );
-    if (!mounted) return;
+    if (!mounted || ticket != _loadTicket) return;
     failures = failed;
     final items = [for (final r in results) ...r]
       ..sort((a, b) {

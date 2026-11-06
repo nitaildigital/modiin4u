@@ -11,7 +11,7 @@ import '../admin_language.dart';
 /// `home_web_providers.dart`). The other kinds are arranged and stored here,
 /// but no screen draws from them yet; their rows are fixed in the screens.
 final adminHomeBuilderProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminHomeBuilderNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) {

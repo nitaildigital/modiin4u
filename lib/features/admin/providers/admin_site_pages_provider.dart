@@ -6,7 +6,7 @@ import 'admin_table_notifier.dart';
 /// the pages the website's footer links to. The text is the client's to
 /// write; the panel edits and publishes them.
 final adminSitePagesProvider =
-    StateNotifierProvider<
+    StateNotifierProvider.autoDispose<
       AdminSitePagesNotifier,
       AsyncValue<List<Map<String, dynamic>>>
     >((ref) => AdminSitePagesNotifier());
