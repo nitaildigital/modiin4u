@@ -5,25 +5,28 @@ import { BusinessCard, type BizCard } from './BusinessCard';
 import { FilterPill, ShowMore } from './ListControls';
 
 /** How many cards show before "Show more": all 232 at once would put the
- *  sections under the grid out of reach. Every card is in the page for
- *  search engines; the rest wait, hidden, for the button. */
+ *  sections under the grid out of reach. Only those are drawn; the rest are
+ *  in the page as plain hidden links, for search engines (and in the page's
+ *  ItemList and the sitemap). All 228 as full cards made the page 1.2 MB of
+ *  HTML with a thousand images for a phone to parse (6 Nov). */
 const PAGE = 24;
 
 /** The directory's results (web_businesses_screen _buildResultsSection; on a
  *  phone businesses_screen's list): the count, the Kosher and Delivery pills,
  *  and the cards. The search at the top suggests and opens the search
  *  results instead of narrowing these (DirectorySearch). */
-export function DirectoryResults({ items, lang }: { items: { card: BizCard; search: string }[]; lang: 'he' | 'en' }) {
+export function DirectoryResults({ items, lang }: { items: BizCard[]; lang: 'he' | 'en' }) {
   const t = (he: string, en: string) => (lang === 'he' ? he : en);
   const [filter, setFilter] = useState<-1 | 0 | 1>(-1);
   const [shown, setShown] = useState(PAGE);
 
-  const visible = useMemo(() => {
-    return new Set(items.filter(({ card }) => (filter !== 0 || !!card.kosher) && (filter !== 1 || card.delivery))
-      .map(({ card }) => card.id));
-  }, [items, filter]);
-  const count = visible.size;
-  let n = 0;
+  const visible = useMemo(
+    () => items.filter((card) => (filter !== 0 || !!card.kosher) && (filter !== 1 || card.delivery)),
+    [items, filter],
+  );
+  const count = visible.length;
+  const drawn = visible.slice(0, shown);
+  const drawnIds = new Set(drawn.map((card) => card.id));
 
   return (
     <section className="mt-7 desk:mt-20">
@@ -46,12 +49,14 @@ export function DirectoryResults({ items, lang }: { items: { card: BizCard; sear
         </div>
       ) : (
         <div className="mt-3 flex flex-col gap-3 desk:mt-8 desk:grid desk:grid-cols-3 desk:gap-6 min-[1374px]:grid-cols-4">
-          {items.map(({ card }) => {
-            const on = visible.has(card.id) && n++ < shown;
-            return <div key={card.id} className={on ? '' : 'hidden'}><BusinessCard b={card} lang={lang} variant="tile" /></div>;
-          })}
+          {drawn.map((card) => <div key={card.id}><BusinessCard b={card} lang={lang} variant="tile" /></div>)}
         </div>
       )}
+      <ul className="hidden">
+        {items.filter((card) => !drawnIds.has(card.id)).map((card) => (
+          <li key={card.id}><a href={card.href}>{card.name}</a></li>
+        ))}
+      </ul>
       {count > shown && (
         <ShowMore onClick={() => setShown(shown + PAGE)}>{t(`הצג עוד (נותרו ${count - shown})`, `Show more (${count - shown} left)`)}</ShowMore>
       )}

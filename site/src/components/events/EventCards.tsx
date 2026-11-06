@@ -44,7 +44,7 @@ export function WebEventCard({ event: e, lang, category }: { event: EventCard; l
   const place = venue(e, lang);
   const price = eventPrice(e, lang);
   return (
-    <Link href={href(`/event/${e.id}/`)}
+    <Link prefetch={false} href={href(`/event/${e.id}/`)}
       className="flex h-[364px] flex-col overflow-hidden rounded-xl border border-line bg-white transition hover:border-midblue hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
       <div className="relative h-[200px] shrink-0">
         <Photo url={e.image} alt={e.title} className="size-full" icon={Calendar1} iconSize={34} />
@@ -76,7 +76,7 @@ export function MEventCard({ event: e, lang, category }: { event: EventCard; lan
   const place = venue(e, lang);
   const price = eventPrice(e, lang);
   return (
-    <Link href={href(`/event/${e.id}/`)} className="block">
+    <Link prefetch={false} href={href(`/event/${e.id}/`)} className="block">
       <div className="relative h-[200px]">
         <Photo url={e.image} alt={e.title} className="size-full rounded-xl" icon={Calendar1} iconSize={40} />
         {e.start_date && (

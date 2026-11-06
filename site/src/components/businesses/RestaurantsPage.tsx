@@ -180,7 +180,7 @@ export async function RestaurantsPage({ path }: { path: string }) {
             <div className="mt-6">
               <RotatingRow cols="[--cols:5] min-[1540px]:[--cols:7]" gap={18} arrowTop="110px" lang={lang}>
                 {tiles.map(({ c, count, image }) => (
-                  <Link key={c.id} href={catHref(c.slug)} className="block overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:border-midblue hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+                  <Link prefetch={false} key={c.id} href={catHref(c.slug)} className="block overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:border-midblue hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
                     <Photo src={sizedPhoto(image, 600)} alt="" glyph={null} bg="bg-[#E8D5D0]" className="h-[150px] w-full" />
                     <span className="block p-3">
                       <span className="block truncate font-nunito text-lg font-semibold leading-[22px] text-navy">{catName(c, lang)}</span>
@@ -232,7 +232,7 @@ export async function RestaurantsPage({ path }: { path: string }) {
                 const n = counts.get(c.id);
                 return (
                   <li key={c.id} className="w-[120px] shrink-0">
-                    <Link href={catHref(c.slug)} className="block overflow-hidden rounded-xl border border-line bg-white">
+                    <Link prefetch={false} href={catHref(c.slug)} className="block overflow-hidden rounded-xl border border-line bg-white">
                       <Photo src={sizedPhoto(cuisinePhoto(c), 400)} alt="" icon={24} className="h-[90px] w-full" />
                       <span className="block p-2">
                         <span className="block truncate text-sm font-medium text-navy">{catName(c, lang)}</span>
@@ -257,7 +257,7 @@ export async function RestaurantsPage({ path }: { path: string }) {
                 <li key={b.id} className="relative w-[250px] shrink-0">
                   <Photo src={sizedPhoto(bizPhoto(b), 400)} alt={bizName(b, lang)} icon={32} className="h-[150px] w-full rounded-xl" />
                   <h3 dir="auto" className="mt-3 truncate font-nunito text-xl font-semibold text-navy">
-                    <Link href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
+                    <Link prefetch={false} href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
                   </h3>
                   <p className="mt-1 truncate text-sm text-gray-text">{phoneKind(b)}</p>
                   <PhoneAddress b={b} lang={lang} />
@@ -346,7 +346,7 @@ function PhoneSection({ title, more, to, rows, kindOf, lang, lead = false }: {
               </span>
             </div>
             <h3 dir="auto" className="mt-4 font-nunito text-xl font-semibold text-navy">
-              <Link href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
+              <Link prefetch={false} href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
             </h3>
             <p className="mt-2 text-sm text-gray-text">{kindOf(b)}</p>
             <PhoneAddress b={b} lang={lang} />

@@ -466,7 +466,7 @@ function SmallCard({ x, kind, lang }: { x: BusinessCard; kind?: Kind; lang: Lang
   const badge = kind ? BADGES[kind.rootSlug] : undefined;
   const photo = x.cover_url || x.og_image_url || x.logo_url;
   return (
-    <Link href={href(`/business/${x.slug || x.id}/`)} className="flex h-[348px] flex-col overflow-hidden rounded-xl border border-line bg-white">
+    <Link prefetch={false} href={href(`/business/${x.slug || x.id}/`)} className="flex h-[348px] flex-col overflow-hidden rounded-xl border border-line bg-white">
       <span className="flex h-[200px] shrink-0 items-center justify-center bg-gradient-to-r from-[#0058B5] to-[#010A36]">
         {photo ? <img src={sized(photo, 320)} alt="" loading="lazy" className="size-full object-cover" /> : <Shop size={40} color="rgba(255,255,255,0.6)" />}
       </span>

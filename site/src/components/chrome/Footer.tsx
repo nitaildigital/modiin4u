@@ -11,10 +11,14 @@ function store(settings: Record<string, unknown>, k: string): string | null {
   return typeof v === 'string' && v.trim().startsWith('https://') ? v.trim() : null;
 }
 
+/** The footer's links, like the header's and every card's, without
+ *  prefetch: each page is drawn on request, so a prefetch brought next to
+ *  nothing and went past the server's cache, ten times on every page
+ *  (6 Nov). */
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   const external = /^(https?:|mailto:|tel:)/.test(href);
   const cls = 'text-sm text-white hover:underline';
-  return external ? <a href={href} className={cls}>{children}</a> : <Link href={href} className={cls}>{children}</Link>;
+  return external ? <a href={href} className={cls}>{children}</a> : <Link prefetch={false} href={href} className={cls}>{children}</Link>;
 }
 
 function Column({ title, links, more }: { title: string; links: [string, string][]; more?: [string, string] }) {
@@ -25,7 +29,7 @@ function Column({ title, links, more }: { title: string; links: [string, string]
         {links.map(([label, href]) => <li key={href + label}><FooterLink href={href}>{label}</FooterLink></li>)}
         {more && (
           <li>
-            <Link href={more[1]} className="flex items-center gap-2 text-sm font-medium text-turquoise">
+            <Link prefetch={false} href={more[1]} className="flex items-center gap-2 text-sm font-medium text-turquoise">
               {more[0]}
               <img src="/icons/footer/arrow_right.svg" alt="" width={16} height={16} className="rtl:-scale-x-100" />
             </Link>
@@ -51,7 +55,7 @@ function Fold({ title, links, more }: { title: string; links: [string, string][]
         {links.map(([label, href]) => <li key={href + label}><FooterLink href={href}>{label}</FooterLink></li>)}
         {more && (
           <li>
-            <Link href={more[1]} className="flex items-center gap-2 text-sm font-medium text-turquoise">
+            <Link prefetch={false} href={more[1]} className="flex items-center gap-2 text-sm font-medium text-turquoise">
               {more[0]}
               <img src="/icons/footer/arrow_right.svg" alt="" width={16} height={16} className="rtl:-scale-x-100" />
             </Link>
@@ -164,7 +168,7 @@ export async function Footer({ lang }: { lang: Lang }) {
           <div className="mt-8 border-t border-white/15 pt-6">
             <span className="block h-[52px] w-[100px] bg-white" style={{ mask: 'url(/brand/logo_white.svg) center / contain no-repeat', WebkitMask: 'url(/brand/logo_white.svg) center / contain no-repeat' }} />
             <p className="mt-4 text-xs leading-[1.5] text-white/90">{about}</p>
-            <Link href="/about/" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-turquoise">
+            <Link prefetch={false} href="/about/" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-turquoise">
               {t('קראו עוד', 'Read more')}
               <img src="/icons/footer/arrow_right.svg" alt="" width={16} height={16} className="rtl:-scale-x-100" />
             </Link>
@@ -211,7 +215,7 @@ export async function Footer({ lang }: { lang: Lang }) {
             <span className="block h-[88px] w-[164px] bg-white" style={{ mask: 'url(/brand/logo_white.svg) center / contain no-repeat', WebkitMask: 'url(/brand/logo_white.svg) center / contain no-repeat' }} />
             <p className="mt-6 text-sm font-medium">{t('מודיעין בשבילך', 'Modiin for You')}</p>
             <p className="mt-4 text-xs leading-[1.4]">{about}</p>
-            <Link href="/about/" className="mt-6 flex items-center gap-2 text-sm font-medium text-turquoise">
+            <Link prefetch={false} href="/about/" className="mt-6 flex items-center gap-2 text-sm font-medium text-turquoise">
               {t('קראו עוד', 'Read more')}
               <img src="/icons/footer/arrow_right.svg" alt="" width={16} height={16} className="rtl:-scale-x-100" />
             </Link>
@@ -221,9 +225,9 @@ export async function Footer({ lang }: { lang: Lang }) {
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-white/15 py-4 text-center text-xs text-line desk:mt-16 desk:flex-row desk:flex-wrap desk:justify-between desk:border-0 desk:text-start desk:text-sm">
           <span>{t('כל הזכויות שמורות ל-modiin4u.co.il, 2026', 'All Rights Reserved to modiin4u.co.il, 2026')}</span>
           <span className="flex flex-wrap justify-center gap-x-3 gap-y-1 whitespace-nowrap">
-            <Link href="/terms/" className="hover:underline">{t('תנאי שימוש', 'Terms of Use')}</Link>|
-            <Link href="/privacy/" className="hover:underline">{t('מדיניות פרטיות', 'Privacy Policy')}</Link>|
-            <Link href="/delete-account/" className="hover:underline">{t('מחיקת חשבון', 'Delete account')}</Link>|
+            <Link prefetch={false} href="/terms/" className="hover:underline">{t('תנאי שימוש', 'Terms of Use')}</Link>|
+            <Link prefetch={false} href="/privacy/" className="hover:underline">{t('מדיניות פרטיות', 'Privacy Policy')}</Link>|
+            <Link prefetch={false} href="/delete-account/" className="hover:underline">{t('מחיקת חשבון', 'Delete account')}</Link>|
             {/* Where the cookie choice is opened again (CookieConsent). */}
             <CookieSettingsLink label={t('הגדרות עוגיות', 'Cookie settings')} className="hover:underline" />
           </span>

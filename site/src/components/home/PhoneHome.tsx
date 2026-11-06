@@ -26,7 +26,7 @@ function Header({ title, to, all, near }: { title: string; to: string; all: stri
       <span className="flex shrink-0 items-center gap-2.5">
         {/* "Near me": once the visitor allows it, the rows sort by distance. */}
         {near && <NearButton label={near[0]} done={near[1]} />}
-        <Link href={to} className="text-xs font-medium text-midblue">{all}</Link>
+        <Link prefetch={false} href={to} className="text-xs font-medium text-midblue">{all}</Link>
       </span>
     </div>
   );
@@ -67,7 +67,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
       <ul className="mt-4 grid grid-cols-4 px-3">
         {shortcuts.map(([label, icon, to]) => (
           <li key={icon}>
-            <Link href={to} className="flex flex-col items-center gap-2.5">
+            <Link prefetch={false} href={to} className="flex flex-col items-center gap-2.5">
               <img src={`/icons/m_home_cat_${icon}.svg`} alt="" width={48} height={48} className="size-12" />
               <span className="max-w-full truncate text-sm font-medium leading-[1.21] text-[#3D3D3D]">{label}</span>
             </Link>
@@ -86,7 +86,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               const address = [b.address?.trim(), bizNeighborhood(b, lang)].filter(Boolean).join(', ');
               const img = bizImage(b);
               return (
-                <Link key={b.id} href={href(`/business/${b.slug || b.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
+                <Link prefetch={false} key={b.id} href={href(`/business/${b.slug || b.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
                   <span className="relative block h-[140px] overflow-hidden rounded-lg" style={img ? undefined : { background: tintOf(b.id) }}>
                     {/* The first card is in view as the page opens, and the largest thing
                         in it: fetched at once and before the rest, not when
@@ -131,7 +131,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
             {offers.map((o) => {
               const img = o.image_url || o.businesses?.logo_url || o.businesses?.cover_url;
               return (
-                <Link key={o.id} href={href(`/deal/${o.id}/`)} className="relative h-[130px] w-[230px] shrink-0 snap-start overflow-hidden rounded-xl bg-[#E0E8F0]">
+                <Link prefetch={false} key={o.id} href={href(`/deal/${o.id}/`)} className="relative h-[130px] w-[230px] shrink-0 snap-start overflow-hidden rounded-xl bg-[#E0E8F0]">
                   {img && <img src={ownPhoto(img, 600) ?? img} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />}
                   <span className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.55))]" />
                   <span dir="auto" className="absolute bottom-3 right-3 left-3 line-clamp-2 text-right font-rubik text-base font-bold leading-tight text-white">{o.name}</span>
@@ -152,7 +152,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               const { month, day } = dayBadge(e.start_date, lang);
               const price = e.is_free ? t('חינם', 'Free') : eventPrice(e);
               return (
-                <Link key={e.id} href={href(`/event/${e.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
+                <Link prefetch={false} key={e.id} href={href(`/event/${e.id}/`)} className="w-[270px] shrink-0 snap-start rounded-xl border border-line bg-white p-2">
                   <span className="relative block h-[140px] overflow-hidden rounded-lg" style={img ? undefined : { background: tintOf(e.id) }}>
                     {img && <img src={ownPhoto(img, 600) ?? img} alt={e.title} loading="lazy" className="size-full object-cover" />}
                     {day && (
@@ -196,7 +196,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
               const address = l.address || (lang === 'en' && l.neighborhoods?.name_en) || l.neighborhoods?.name;
               return (
                 <li key={l.id} className="border-b border-line">
-                  <Link href={href(`/listing/${l.id}/`)} className="flex items-start gap-3 py-3">
+                  <Link prefetch={false} href={href(`/listing/${l.id}/`)} className="flex items-start gap-3 py-3">
                     {l.cover_url
                       ? <img src={ownPhoto(l.cover_url, 200) ?? l.cover_url} alt={l.title} loading="lazy" className="h-20 w-[95px] shrink-0 rounded-md object-cover" />
                       : <span className="flex h-20 w-[95px] shrink-0 items-center justify-center rounded-md bg-[#E0E8F0]"><House2 size={28} color="#9AA0A6" variant="Bold" /></span>}
@@ -233,7 +233,7 @@ export async function PhoneHome({ lang }: { lang: Lang }) {
           <Header title={t('חדשות אחרונות', 'Latest news')} to="/news/" all={all} />
           <Row gap="gap-5">
             {articles.map((a) => (
-              <Link key={a.id} href={href(`/news/${a.slug}/`)} className="w-[250px] shrink-0 snap-start">
+              <Link prefetch={false} key={a.id} href={href(`/news/${a.slug}/`)} className="w-[250px] shrink-0 snap-start">
                 {a.image
                   ? <img src={ownPhoto(a.image, 600) ?? a.image} alt="" loading="lazy" className="h-[150px] w-[250px] rounded-xl object-cover" />
                   : <span className="block h-[150px] w-[250px] rounded-xl" style={{ background: tintOf(a.id) }} />}

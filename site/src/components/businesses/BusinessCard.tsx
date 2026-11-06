@@ -120,8 +120,11 @@ export function BusinessCard({ b, lang, variant = 'place' }: { b: BizCard; lang:
           <h3 className={`truncate ${align} ${tile
             ? 'font-rubik text-[15px] font-semibold text-ink desk:font-nunito desk:text-xl desk:leading-[1.25] desk:text-navy'
             : 'font-nunito text-xl font-semibold leading-[1.25] text-navy'}`}>
-            {/* The whole card opens the business; Contact sits above the link. */}
-            <Link href={b.href} dir="auto" className="after:absolute after:inset-0">{b.name}</Link>
+            {/* The whole card opens the business; Contact sits above the link.
+                No prefetch, as on every card in a list: the pages are drawn
+                on request, so a prefetch fetched next to nothing, past the
+                server's cache, for each card scrolled into view (6 Nov). */}
+            <Link prefetch={false} href={b.href} dir="auto" className="after:absolute after:inset-0">{b.name}</Link>
           </h3>
           {phoneLine && (
             <p dir="auto" className={`truncate ${align} desk:hidden ${tile ? 'mt-1 font-rubik text-[13px] text-gray-text' : 'mt-2 text-sm text-gray-text'}`}>{phoneLine}</p>

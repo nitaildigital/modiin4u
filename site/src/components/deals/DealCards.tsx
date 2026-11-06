@@ -40,7 +40,7 @@ export function WebDealCard({ deal: d, lang }: { deal: Deal; lang: Lang }) {
   const place = neighborhood(d, lang) ?? d.business?.address ?? null;
   const biz = businessName(d, lang) ?? '';
   return (
-    <Link href={href(`/deal/${d.id}/`)} className="block w-[480px] shrink-0 rounded-xl border border-line bg-white p-4 transition-colors hover:border-midblue">
+    <Link prefetch={false} href={href(`/deal/${d.id}/`)} className="block w-[480px] shrink-0 rounded-xl border border-line bg-white p-4 transition-colors hover:border-midblue">
       <div className="flex h-[250px]">
         <div className="relative h-[191px] w-[157px] shrink-0">
           <Photo url={d.image_url ?? d.business?.cover} alt={d.name} className="size-full rounded-xl" icon={DiscountShape} iconSize={30} />
@@ -94,7 +94,7 @@ export function MDealCard({ deal: d, lang }: { deal: Deal; lang: Lang }) {
   const biz = businessName(d, lang);
   const logo = d.business?.logo ?? d.business?.cover ?? null;
   return (
-    <Link href={href(`/deal/${d.id}/`)} className="block pb-4">
+    <Link prefetch={false} href={href(`/deal/${d.id}/`)} className="block pb-4">
       <div className="relative h-[200px]">
         <Photo url={d.image_url ?? d.business?.cover} alt={d.name} className="size-full rounded-xl" icon={DiscountShape} iconSize={40} />
         {logo && (
@@ -140,7 +140,7 @@ export function MDealMiniCard({ deal: d, lang }: { deal: Deal; lang: Lang }) {
   const badge = dealBadge(d.name);
   const left = phoneTimeLeft(d, lang);
   return (
-    <Link href={href(`/deal/${d.id}/`)} className="block w-[252px] shrink-0">
+    <Link prefetch={false} href={href(`/deal/${d.id}/`)} className="block w-[252px] shrink-0">
       <div className="relative h-[140px]">
         <Photo url={d.image_url ?? d.business?.cover} alt={d.name} className="size-full rounded-lg" icon={DiscountShape} iconSize={32} />
         {badge && <span className="absolute start-2.5 top-2.5"><Badge label={badge} small /></span>}

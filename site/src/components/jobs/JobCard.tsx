@@ -13,7 +13,7 @@ export function JobCard({ job, lang }: { job: Job; lang: Lang }) {
   const type = jobType(job, lang);
   const pay = jobSalary(job, lang);
   return (
-    <Link href={href(`/jobs/${job.id}/`)} className="flex gap-4 rounded-2xl border border-line bg-white p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
+    <Link prefetch={false} href={href(`/jobs/${job.id}/`)} className="flex gap-4 rounded-2xl border border-line bg-white p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]">
       <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#E7ECF7]">
         {logo ? <img src={ownPhoto(logo, 200) ?? logo} alt="" loading="lazy" className="size-full object-cover" /> : <Briefcase size={26} color="#123A72" />}
       </span>

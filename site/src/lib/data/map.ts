@@ -43,12 +43,25 @@ export function shekels(amount: number): string {
 /** 3.5 rooms stays 3.5; 3.0 prints as 3. */
 const roomsText = (v: number) => String(Number(v));
 
+/** Every business-to-category link, a thousand at a time: the API answers
+ *  at most a thousand rows whatever the limit asks (it said 10000). */
+async function allLinks(): Promise<{ entity_id: string; category_id: string }[]> {
+  const out: { entity_id: string; category_id: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await db.from('entity_categories').select('entity_id,category_id')
+      .eq('entity_type', 'business').range(from, from + 999);
+    out.push(...((data ?? []) as typeof out));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
+
 /** The category each business is filed under — its most specific one shown
  *  in the menus (businessPrimaryCategoryProvider). */
 async function businessKinds(lang: Lang): Promise<Record<string, string>> {
-  const [{ data: cats }, { data: links }] = await Promise.all([
+  const [{ data: cats }, links] = await Promise.all([
     db.from('categories').select('id,name,name_en,parent_id,in_menus').eq('scope', 'business').eq('is_active', true),
-    db.from('entity_categories').select('entity_id,category_id').eq('entity_type', 'business').limit(10000),
+    allLinks(),
   ]);
   const byId = new Map(((cats ?? []) as Cat[]).map((c) => [c.id, c]));
   const chosen = new Map<string, Cat>();

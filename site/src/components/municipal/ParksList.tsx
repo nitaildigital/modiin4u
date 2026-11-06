@@ -111,7 +111,7 @@ export function ParksList({ parks, lang, title }: { parks: ParkItem[]; lang: Lan
       <ul className="mt-4 grid grid-cols-1 gap-6 desk:mt-0 desk:grid-cols-3 min-[1250px]:grid-cols-4">
         {list.map((p, i) => (
           <li key={p.id} className={`min-w-0 ${i >= shown ? 'desk:hidden' : ''}`}>
-            <Link href={p.href} className="block desk:h-[404px] desk:overflow-hidden desk:rounded-xl desk:border desk:border-line desk:bg-white">
+            <Link prefetch={false} href={p.href} className="block desk:h-[404px] desk:overflow-hidden desk:rounded-xl desk:border desk:border-line desk:bg-white">
               {p.photo
                 ? <img src={p.photo} alt={p.name} loading="lazy" className="h-[200px] w-full rounded-xl object-cover desk:rounded-none" />
                 : <span className="flex h-[200px] items-center justify-center rounded-xl bg-[linear-gradient(135deg,#123A7214,#123A720A)] desk:rounded-none"><Tree size={40} color="#123A72" /></span>}

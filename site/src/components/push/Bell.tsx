@@ -9,7 +9,7 @@ export function Bell({ lang }: { lang: 'he' | 'en' }) {
   const { unread } = usePush();
   const label = lang === 'he' ? 'התראות' : 'Notifications';
   return (
-    <Link href="/notifications/" aria-label={unread ? `${label} (${unread})` : label}
+    <Link prefetch={false} href="/notifications/" aria-label={unread ? `${label} (${unread})` : label}
       className="relative flex size-[38px] items-center justify-center rounded-full border border-line bg-white text-ink hover:bg-surface">
       <Notification size={20} color="currentColor" />
       {unread > 0 && (

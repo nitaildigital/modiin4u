@@ -23,6 +23,7 @@ export function NavLinks({ items, menus, floating }: {
           // centred on the page, as the client's site does.
           <li key={item.id} className={`group ${item.menu === 'news' ? 'relative' : ''}`}>
             <Link
+              prefetch={false}
               href={item.href}
               className={`flex h-20 items-center border-b-[3px] ${active ? 'border-midblue' : 'border-transparent'}`}
             >

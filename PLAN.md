@@ -5847,6 +5847,112 @@ loads:
 The website's resident profile (`/u/<name>`) said "This profile is private"
 when the read failed; it now says it could not be loaded, with Try again.
 
+### What the panel reads — 6 Nov
+
+A read-through of what the panel asks the database for (the other session's
+audit, the same day) found it reading far more than it shows:
+
+- **Articles** read every column, the whole body of 500 articles among them,
+  to draw a table of titles. The list now reads the twelve columns it shows;
+  the editor reads the article whole when it is opened, because an editor
+  opened on the list's row would have saved an empty body over the real one.
+- **Promotions** made one `promotion_target` call per request, up to 200 at
+  once. It now reads the businesses, deals and jobs named, one query per
+  kind, and picks the title and picture as that function does.
+- **Users**: "Banned" and "Verified" picked from the newest 500 profiles in
+  the browser; the database is now asked (`setColumnFilters`, new on
+  AdminTableNotifier, sets several column filters in one load).
+- **Media** counted every row for its totals on every load, each search
+  included, and ran `media_usage` — which searches every text column of
+  every table — each time a file's details were opened. The totals are
+  counted once a visit and after an upload or a removal; usage is kept per
+  file for the visit, while a removal still asks afresh before it deletes.
+- **Thumbnails** in Articles, Businesses and Push loaded the full upload for
+  a 40-pixel picture; they use NetworkPhoto, the website's resizer at the
+  panel's address (no Supabase resizing).
+- **Overview → content**: the totals were summed from one read, which stops
+  at 1000 rows (695 articles today). Every row is now read, a page at a
+  time; the database's own sums are switched off (PGRST123).
+
+Also: Reviews kept a debouncer whose `ignore()` cancelled nothing, so its
+search went out once per letter; it now uses the list's own. Trash and the
+activity log read their list twice on opening (the reload added this
+morning came on top of the first read); they are `autoDispose` like the
+other sections, which makes the reload unneeded. The resident profile page
+shows the sign-in prompt again when the person signs out after a failed read.
+
+Checked on a local build against the live database: the Articles request
+names its columns and an opened article has its body; "Verified" asks for
+`is_verified=eq.true` and shows the 4; Reviews sends one search for a word;
+Trash reads once on opening; Media counts its totals once and opening a
+file's details twice asks `media_usage` once; the content totals read in
+pages and show 598 of 695 articles with views. Promotions has no requests
+today, so its new lookup was not exercised.
+
+### What the app and the website load — 6 Nov
+
+A check of what each part asks of the database and of a visitor's phone
+found the app doing the most needless work, and the website sending more
+than its pages need.
+
+The app:
+- Every launch fetched the businesses, all the articles, the listings and
+  the jobs twice. The items a person has hidden were read after the lists
+  had started, always as a new set, and each list threw away its first
+  fetch and sent it again. They are read before the app starts now, and
+  set only when they differ.
+- Home's news row read every published article (693, about 830 KB) to show
+  the first few. It reads twelve, as the website's phone home does, with
+  "See all" for the rest. The business list keeps all its columns: search
+  and the bar filter read the full description, so leaving it out would
+  change what people see, for a saving of about a fifth.
+- The hourly renewal of the sign-in token read the profile again with three
+  queries and set a new user, and every screen watching the account
+  reloaded its own data. A renewal for the person already loaded is
+  ignored.
+- A return after two minutes refetched every list ever opened, because the
+  News lists, the map's pins and the nearest car park held on to them. They
+  are let go when their screen closes, so a return reads what is on screen.
+- News kept its category links for the whole session, so a new article
+  never reached its category until a restart. They are read again when News
+  opens, on pull-to-refresh and on a return. Home and Events had no
+  pull-to-refresh and have one now, and Events' Retry fetches again rather
+  than handing back the same failure.
+- Business thumbnails, deal logos, the restaurant map's covers, comment
+  avatars, article photos and banners are kept on the phone and decoded at
+  the size drawn. Several were fetched again on every visit, and the
+  thumbnails were decoded at full size. The originals are still what is
+  downloaded (9 Oct): small copies are for when they are stored at upload.
+
+The website:
+- Every page loaded supabase-js, about a quarter of its JavaScript, for the
+  header's Messages icon and the bell. The bell's calls are now plain
+  requests, and the header loads the library only for a browser that has
+  signed in.
+- The directory drew all 228 cards and hid most of them. It draws the ones
+  shown and keeps the rest as plain links for search engines, which takes
+  the page from 1.2 MB to 0.7 MB.
+- Cards, the nav and the footer no longer prefetch. Every page is drawn on
+  request, so a prefetch only reached the server past its cache.
+- Search stops at a hundred businesses and a hundred articles, as listings
+  did.
+- The category links are read a thousand at a time, because a single read
+  stops at a thousand (627 today).
+
+Not done here: nginx sends the page data for in-site navigation
+(`text/x-component`) uncompressed, at 360–380 KB a click. That needs one
+line in `gzip_types` on the server, and is the client's to approve.
+
+Checked on the iPhone simulator against the live database, with a
+temporary request log since removed. A cold launch sends each list once,
+fourteen requests in all, and the news row asks for twelve. After News was
+opened and closed, a return after two minutes read only Home's rows, not
+the 693 articles. Reopening News read its category links again. The
+website was checked on a local production build in one browser: the
+directory, search, the bell, and sign-in with a resident account made for
+the test and removed after. The token renewal and the pull gestures could
+not be driven in the simulator, and were checked by reading the code.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

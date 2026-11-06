@@ -111,9 +111,17 @@ const activeCategories = cache(async (): Promise<Cat[]> => {
   return (data ?? []) as Cat[];
 });
 
+/** A thousand at a time, the API's page size: one read stops there without
+ *  saying so (627 links on 6 Nov). */
 const categoryLinks = cache(async (): Promise<{ entity_id: string; category_id: string }[]> => {
-  const { data } = await db.from('entity_categories').select('entity_id,category_id').eq('entity_type', 'business');
-  return (data ?? []) as { entity_id: string; category_id: string }[];
+  const out: { entity_id: string; category_id: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await db.from('entity_categories').select('entity_id,category_id')
+      .eq('entity_type', 'business').range(from, from + 999);
+    out.push(...((data ?? []) as typeof out));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
 });
 
 /** The category each business is named by, keyed by business id, and the

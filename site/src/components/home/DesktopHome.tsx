@@ -32,7 +32,7 @@ function Heading({ title, subtitle, action }: { title: string; subtitle: string;
 /** "View all ›" filled Mid blue, 36 high. */
 function ViewAll({ to, label, lang }: { to: string; label: string; lang: Lang }) {
   return (
-    <Link href={to} className="flex shrink-0 items-center gap-1 rounded-[60px] bg-midblue px-4 py-1.5 text-sm font-medium leading-6 text-white hover:bg-midblue/90">
+    <Link prefetch={false} href={to} className="flex shrink-0 items-center gap-1 rounded-[60px] bg-midblue px-4 py-1.5 text-sm font-medium leading-6 text-white hover:bg-midblue/90">
       {label}
       <img src="/web/home/chevron_right_white.svg" alt="" width={16} height={16} className={`size-4 ${lang === 'he' ? '-scale-x-100' : ''}`} />
     </Link>
@@ -129,7 +129,7 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
         <ul className="grid grid-cols-4 gap-4 min-[1320px]:grid-cols-8">
           {cards.map(([title, icon, sub, to]) => (
             <li key={icon}>
-              <Link href={to} className="flex h-full flex-col items-center rounded-xl border border-line bg-white px-4 py-5 text-center transition-transform hover:scale-[1.008]">
+              <Link prefetch={false} href={to} className="flex h-full flex-col items-center rounded-xl border border-line bg-white px-4 py-5 text-center transition-transform hover:scale-[1.008]">
                 <img src={`/web/home/card_${icon}.svg`} alt="" width={32} height={32} className="size-8" />
                 <span className="mt-[19px] text-base font-medium leading-[1.21] text-black">{title}</span>
                 {/* One line, as drawn: a line too long for the card gives
@@ -173,7 +173,7 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
             <ul className="flex min-w-0 flex-[812] flex-col gap-5">
               {lead.map((a) => (
                 <li key={a.id}>
-                  <Link href={href(`/news/${a.slug}/`)} className="flex items-start gap-[21px] rounded-xl border border-line bg-white p-5 transition-transform hover:scale-[1.008]">
+                  <Link prefetch={false} href={href(`/news/${a.slug}/`)} className="flex items-start gap-[21px] rounded-xl border border-line bg-white p-5 transition-transform hover:scale-[1.008]">
                     <span className="min-w-0 flex-1" dir="rtl">
                       <span className="line-clamp-2 text-right font-nunito text-[22px] font-semibold leading-[1.24] text-black">{a.title}</span>
                       {a.excerpt && <span className="mt-3 line-clamp-2 text-right text-sm leading-[1.4] text-gray-text">{a.excerpt}</span>}
@@ -188,7 +188,7 @@ export async function DesktopHome({ lang }: { lang: Lang }) {
               <ul className="min-w-0 flex-[762] rounded-xl border border-line bg-white px-5 pb-[15px] pt-1">
                 {rest.map((a) => (
                   <li key={a.id} className="border-b border-line">
-                    <Link href={href(`/news/${a.slug}/`)} className="flex items-center gap-[21px] py-5 transition-transform hover:scale-[1.008]">
+                    <Link prefetch={false} href={href(`/news/${a.slug}/`)} className="flex items-center gap-[21px] py-5 transition-transform hover:scale-[1.008]">
                       <span className="min-w-0 flex-1" dir="rtl">
                         <span className="line-clamp-2 text-right font-nunito text-[22px] font-semibold leading-[1.24] text-black">{a.title}</span>
                         {a.excerpt && <span className="mt-3 line-clamp-1 text-right text-sm leading-[1.4] text-gray-text">{a.excerpt}</span>}

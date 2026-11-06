@@ -44,11 +44,19 @@ export async function businessCategoryBySlug(slug: string): Promise<BizCategory 
 }
 
 /** Every business-to-category link (fetchCategoryLinks): one read for the
- *  whole directory — a couple of hundred rows — rather than one per list. */
+ *  whole directory rather than one per list, a thousand at a time (the
+ *  API's page size, as home.ts reads them) — a single read stops at a
+ *  thousand without saying so, and there were 627 links on 6 Nov. */
 export const categoryLinks = cache(async (): Promise<{ entity_id: string; category_id: string }[]> => {
-  const { data, error } = await db.from('entity_categories').select('entity_id,category_id').eq('entity_type', 'business');
-  if (error) throw new Error(`entity_categories: ${error.message}`);
-  return (data ?? []) as { entity_id: string; category_id: string }[];
+  const out: { entity_id: string; category_id: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from('entity_categories').select('entity_id,category_id')
+      .eq('entity_type', 'business').range(from, from + 999);
+    if (error) throw new Error(`entity_categories: ${error.message}`);
+    out.push(...((data ?? []) as typeof out));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
 });
 
 /** Whether an approved promotion (00069) is running now. */

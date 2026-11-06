@@ -70,7 +70,7 @@ export function DeskResults({ hits, lang }: { hits: Hit[]; lang: Lang }) {
             <ul className="mt-5 grid grid-cols-2 gap-5 min-[1484px]:grid-cols-3">
               {rows.map((h) => (
                 <li key={h.kind + h.href}>
-                  <Link href={h.href} className="group flex h-[132px] items-center gap-4 rounded-xl border border-line bg-white p-4 transition-colors hover:border-midblue">
+                  <Link prefetch={false} href={h.href} className="group flex h-[132px] items-center gap-4 rounded-xl border border-line bg-white p-4 transition-colors hover:border-midblue">
                     <HitImage hit={h} size={96} radius={10} iconSize={32} />
                     <span className="flex min-w-0 flex-1 flex-col justify-center">
                       <span className="w-fit rounded-md bg-midblue/[.06] px-2 py-[3px] text-[11px] font-medium text-midblue">{kindLabel(kind, lang)}</span>
@@ -97,7 +97,7 @@ export function PhoneResults({ hits, lang }: { hits: Hit[]; lang: Lang }) {
     <ul className="divide-y divide-line px-5">
       {hits.map((h) => (
         <li key={h.kind + h.href}>
-          <Link href={h.href} className="flex items-center gap-4 py-3.5">
+          <Link prefetch={false} href={h.href} className="flex items-center gap-4 py-3.5">
             <HitImage hit={h} size={44} radius={12} iconSize={22} />
             <span className="min-w-0 flex-1">
               <span dir="auto" className={`block truncate ${align} font-rubik text-[15px] font-medium text-ink`}>{h.title}</span>

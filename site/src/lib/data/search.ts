@@ -28,14 +28,17 @@ export async function search(query: string, lang: Lang): Promise<Hit[]> {
   if (!q) return [];
   const like = `%${q}%`;
 
+  // Businesses and articles stop at a hundred each, as listings do: one
+  // common letter matched 645 articles and 215 businesses (6 Nov), every one
+  // drawn as a card on an address nginx never caches.
   const [biz, arts, evs, lists, offs] = await Promise.all([
     db.from('businesses')
       .select('id,slug,name,name_en,short_description,full_description,cover_url,og_image_url,neighborhoods!businesses_neighborhood_id_fkey(name,name_en)')
       .eq('status', 'active').or(`name.ilike.${like},name_en.ilike.${like},short_description.ilike.${like}`)
-      .order('promoted_until', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }),
+      .order('promoted_until', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(100),
     db.from('articles').select('id,slug,title,subtitle,excerpt,featured_image,mobile_image,og_image')
       .eq('status', 'published').or(`title.ilike.${like},slug.ilike.${like}`)
-      .order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }),
+      .order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(100),
     db.from('events').select('id,title,venue_name,start_date,start_time,end_date,is_all_day,image_url,og_image')
       .eq('status', 'published').or(`title.ilike.${like},short_description.ilike.${like}`)
       .order('start_date', { ascending: true }),

@@ -83,7 +83,7 @@ export async function DirectoryPage({ path }: { path: string }) {
           </ul>
         )}
 
-        <DirectoryResults items={items} lang={lang} />
+        <DirectoryResults items={items.map(({ card }) => card)} lang={lang} />
       </DirectorySearchProvider>
 
       {professionals.length > 0 && (
@@ -145,7 +145,7 @@ function PhoneCategory({ c, count, lang }: { c: BizCategory; count: number; lang
   const color = PHONE_COLORS[Math.abs(c.sort_order ?? 0) % PHONE_COLORS.length];
   const image = sizedPhoto(c.image_url, 400);
   return (
-    <Link href={href(categoryPath(c.slug))} className="relative flex aspect-[174/170] flex-col overflow-hidden rounded-xl p-4 text-white"
+    <Link prefetch={false} href={href(categoryPath(c.slug))} className="relative flex aspect-[174/170] flex-col overflow-hidden rounded-xl p-4 text-white"
       style={image ? undefined : { backgroundImage: `linear-gradient(to bottom right, ${color}, ${darken(color, 0.55)})` }}>
       {image && (
         <>
@@ -175,7 +175,7 @@ function ProfessionalCard({ b, cats, index, lang }: { b: BizRow; cats: BizCatego
       <Photo src={sizedPhoto(b.logo_url || bizPhoto(b), 200)} alt={bizName(b, lang)} icon={24} glyph="image" iconClass="text-white/35"
         style={{ backgroundImage: `linear-gradient(to bottom right, ${base}, ${darken(base, 0.22)})` }} className="size-[88px] shrink-0 rounded-full" />
       <h3 className="mt-4 w-full truncate text-base font-semibold text-[#1C1C1E]">
-        <Link href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
+        <Link prefetch={false} href={href(`/business/${b.slug}/`)} className="after:absolute after:inset-0">{bizName(b, lang)}</Link>
       </h3>
       <p className="mt-1 w-full truncate text-[13px] text-gray-text">{cat ? catName(cat, lang) : t('עסק', 'Business')}</p>
       <p className="mt-2.5 line-clamp-2 h-8 text-xs leading-[1.35] text-gray-text">{bizDescription(b)}</p>

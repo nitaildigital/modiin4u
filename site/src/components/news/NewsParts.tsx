@@ -87,7 +87,7 @@ function Badges({ card, chip, lang, lead }: { card: NewsCard; chip?: NewsCategor
 export function DeskHero({ lead, side, chips, lang }: { lead: NewsCard; side: NewsCard[]; chips: Map<string, NewsCategory>; lang: Lang }) {
   return (
     <div className={`grid h-[552px] gap-[10px] ${side.length ? 'grid-cols-[1014fr_576fr]' : ''}`}>
-      <Link href={storyHref(lead)} className="group relative block overflow-hidden rounded-xl">
+      <Link prefetch={false} href={storyHref(lead)} className="group relative block overflow-hidden rounded-xl">
         <Photo card={lead} glyph={null} eager className="absolute inset-0 size-full transition-transform duration-150 group-hover:scale-[1.008]" />
         <span className="absolute inset-x-0 bottom-0 top-[39px]" style={{ background: 'linear-gradient(to bottom, transparent 55.43%, #000 100%)' }} />
         <Badges card={lead} chip={chips.get(lead.id)} lang={lang} lead />
@@ -99,7 +99,7 @@ export function DeskHero({ lead, side, chips, lang }: { lead: NewsCard; side: Ne
       {side.length > 0 && (
         <div className="grid min-h-0 gap-[10px]" style={{ gridTemplateRows: `repeat(${side.length}, minmax(0, 1fr))` }}>
           {side.map((s, i) => (
-            <Link key={s.id} href={storyHref(s)} className="group relative block overflow-hidden rounded-xl">
+            <Link prefetch={false} key={s.id} href={storyHref(s)} className="group relative block overflow-hidden rounded-xl">
               <Photo card={s} glyph={48} className="absolute inset-0 size-full transition-transform duration-150 group-hover:scale-[1.008]" />
               <span className="absolute inset-x-0 bottom-0" style={{ top: i === 0 ? 0 : 27, background: 'linear-gradient(to bottom, transparent 31.37%, #000 100%)' }} />
               <Badges card={s} chip={chips.get(s.id)} lang={lang} lead={false} />
@@ -120,7 +120,7 @@ export function DeskHero({ lead, side, chips, lang }: { lead: NewsCard; side: Ne
 export function DeskCard({ card, lang }: { card: NewsCard; lang: Lang }) {
   const excerpt = plain(card.excerpt);
   return (
-    <Link href={storyHref(card)} className="group block">
+    <Link prefetch={false} href={storyHref(card)} className="group block">
       <span className="block h-[270px] overflow-hidden rounded-xl">
         <Photo card={card} className="size-full transition-transform duration-150 group-hover:scale-[1.015]" />
       </span>
@@ -153,7 +153,7 @@ export function DeskHeading({ title, link }: { title: string; link?: string }) {
 export function PhoneFeatured({ card, lang }: { card: NewsCard; lang: Lang }) {
   const t = tr(lang);
   return (
-    <Link href={storyHref(card)} className="mx-4 block border-b border-line pb-5">
+    <Link prefetch={false} href={storyHref(card)} className="mx-4 block border-b border-line pb-5">
       <span className="relative block h-[200px] overflow-hidden rounded-xl">
         <Photo card={card} eager className="size-full" />
         {card.is_featured && (
@@ -182,7 +182,7 @@ function PhoneDate({ card, lang, className = '' }: { card: NewsCard; lang: Lang;
  *  150 picture in the sideways rows, the full width and 200 in a list. */
 export function PhoneCard({ card, lang, wide = false }: { card: NewsCard; lang: Lang; wide?: boolean }) {
   return (
-    <Link href={storyHref(card)} className={`block ${wide ? 'w-full' : 'w-[250px] shrink-0 snap-start'}`}>
+    <Link prefetch={false} href={storyHref(card)} className={`block ${wide ? 'w-full' : 'w-[250px] shrink-0 snap-start'}`}>
       <span className={`block overflow-hidden rounded-xl ${wide ? 'h-[200px]' : 'h-[150px]'}`}>
         <Photo card={card} className="size-full" />
       </span>

@@ -1,5 +1,5 @@
 'use client';
-import { browserDb } from './supabase';
+import { anonRpc } from './rest';
 
 // Web push, as the Flutter site does it (lib/core/push/): Firebase gives the
 // browser a token, `register_push_device` files it with the default
@@ -48,9 +48,6 @@ function write(key: string, value: unknown) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage refused */ }
 }
 const changed = () => window.dispatchEvent(new Event(PUSH_EVENT));
-
-let db: ReturnType<typeof browserDb> | null = null;
-const client = () => (db ??= browserDb());
 
 /** Whether this browser can take web push at all (a secure page with a
  *  service worker and the Push API — not iOS Safari outside a home-screen
@@ -113,7 +110,7 @@ async function firebaseToken(): Promise<string | null> {
 /** Files the token with the app's default switches (PushSettings): all on
  *  but real estate, as a new phone starts. */
 async function register(token: string, lang: 'he' | 'en') {
-  await client().rpc('register_push_device', {
+  await anonRpc('register_push_device', {
     p_token: token, p_platform: 'web', p_locale: lang, p_enabled: true,
     p_news: true, p_events: true, p_businesses: true, p_deals: true, p_realestate: false,
     p_neighborhood: true, p_neighborhood_id: null, p_app_version: null, p_replies: true, p_jobs: true,
@@ -164,7 +161,7 @@ export async function pushFeed(): Promise<PushItem[]> {
     const kept = JSON.parse(sessionStorage.getItem(FEED) ?? 'null') as { at: number; token: string | null; items: PushItem[] } | null;
     if (kept && kept.token === token && Date.now() - kept.at < FEED_FOR_MS) return kept.items;
   } catch { /* read it */ }
-  const { data, error } = await client().rpc('push_feed', { p_token: token, p_limit: 50 });
+  const { data, error } = await anonRpc<PushItem[]>('push_feed', { p_token: token, p_limit: 50 });
   if (error) throw error;
   const items = (data ?? []) as PushItem[];
   try { sessionStorage.setItem(FEED, JSON.stringify({ at: Date.now(), token, items })); } catch { /* not kept */ }
@@ -212,6 +209,5 @@ export function recordOpen(campaignId: string) {
   }
   const token = savedToken();
   if (!token) return;
-  void client().rpc('record_push_event', { p_campaign: campaignId, p_token: token, p_kind: 'open' })
-    .then(() => undefined, () => undefined);
+  void anonRpc('record_push_event', { p_campaign: campaignId, p_token: token, p_kind: 'open' });
 }

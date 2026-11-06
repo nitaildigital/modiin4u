@@ -62,7 +62,7 @@ function Grid({ tiles, hidden, lang }: { tiles: Tile[]; hidden: boolean; lang: '
         const [start, end] = PALETTE[i % PALETTE.length];
         return (
           <li key={c.id}>
-            <Link href={c.href} style={{ backgroundImage: `linear-gradient(to bottom, ${end}, ${start})` }}
+            <Link prefetch={false} href={c.href} style={{ backgroundImage: `linear-gradient(to bottom, ${end}, ${start})` }}
               className="relative block h-[200px] overflow-hidden rounded-xl border-[3px] border-transparent transition-shadow hover:shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
               <span className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_52.35%,#000000BB)]" />
               <span className="absolute end-5 top-5 text-white/15"><Icon slug={c.slug} /></span>

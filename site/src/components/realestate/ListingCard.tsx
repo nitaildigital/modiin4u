@@ -103,7 +103,7 @@ export function ListingCard({ l, lang, variant, detail = false }: { l: Listing; 
     const place = l.address || hood || l.title;
     const figures = specs(l, lang, 'card', false);
     return (
-      <Link href={link} className="block">
+      <Link prefetch={false} href={link} className="block">
         <span className="relative block h-[200px] overflow-hidden rounded-xl">
           <ListingPhoto url={l.cover_url} width={400} alt={l.title} className="size-full" />
           {l.is_broker && <Badge broker className="bottom-3 left-3">{he ? 'באמצעות מתווך' : 'Via Broker'}</Badge>}
@@ -122,7 +122,7 @@ export function ListingCard({ l, lang, variant, detail = false }: { l: Listing; 
     const place = l.address ?? hood;
     const figures = specs(l, lang, 'detail', false);
     return (
-      <Link href={link} className="block h-full overflow-hidden rounded-xl border border-line bg-white transition-colors hover:border-[#CFCFCF]">
+      <Link prefetch={false} href={link} className="block h-full overflow-hidden rounded-xl border border-line bg-white transition-colors hover:border-[#CFCFCF]">
         <ListingPhoto url={l.cover_url} width={290} alt={l.title} className="h-[150px] w-full" iconSize={40} />
         <span className="flex flex-col gap-3.5 p-3">
           <PriceRow l={l} lang={lang} onRequest="muted" />
@@ -140,7 +140,7 @@ export function ListingCard({ l, lang, variant, detail = false }: { l: Listing; 
   const place = detail ? l.address ?? hood : l.address ?? hood ?? l.title;
   const figures = specs(l, lang, detail ? 'detail' : 'card', !detail);
   return (
-    <Link href={link} className="block h-full overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
+    <Link prefetch={false} href={link} className="block h-full overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]">
       <span className="relative block h-[200px]">
         <ListingPhoto url={l.cover_url} width={400} alt={l.title} className="size-full" />
         {fresh && <Badge className="end-[14px] top-[15px]">{he ? 'חדש' : 'New'}</Badge>}
