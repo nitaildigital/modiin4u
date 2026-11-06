@@ -66,86 +66,100 @@ class _MobileDealsContentState extends ConsumerState<_MobileDealsContent> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
+      // Pinned to the top and as tall as the screen. Under a plain Center the
+      // scroll view shrank to its content, so with few deals or none the page
+      // sat in the middle with white above the header; and pull-to-refresh
+      // answered only over the content.
+      body: Align(
+        alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 430),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(offersProvider);
-              ref.invalidate(activeOffersProvider);
-              ref.invalidate(offerCountsByCategoryProvider);
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // The turquoise wash runs 315 down the design's frame,
-                  // behind the heading and into the banner.
-                  Stack(
-                    children: [
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 271 + MediaQuery.paddingOf(context).top,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                const Color(0xFF17A9D0).withValues(alpha: 0.2),
-                                const Color(0xFF17A9D0).withValues(alpha: 0),
-                              ],
+          child: SizedBox(
+            height: double.infinity,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(offersProvider);
+                ref.invalidate(activeOffersProvider);
+                ref.invalidate(offerCountsByCategoryProvider);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // The turquoise wash runs 315 down the design's frame,
+                    // behind the heading and into the banner.
+                    Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 271 + MediaQuery.paddingOf(context).top,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  const Color(
+                                    0xFF17A9D0,
+                                  ).withValues(alpha: 0.2),
+                                  const Color(0xFF17A9D0).withValues(alpha: 0),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Column(
-                        children: [
-                          _buildHeader(context, l),
-                          const MDealsBanner(),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  // Categories are only worth a row when something is in
-                  // them, so an empty table shows no circles rather than a
-                  // row of zeroes.
-                  _buildCategoryRow(l),
-
-                  // The deals this resident claimed and can still use: the
-                  // way back to a code, which was shown once and then lost.
-                  _buildMyDeals(offers.valueOrNull ?? const <Offer>[]),
-
-                  Padding(
-                    key: _listKey,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(l.popularDealsInModiin, style: _sectionTitle),
-                  ),
-                  const SizedBox(height: 16),
-
-                  offers.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(child: CircularProgressIndicator()),
+                        Column(
+                          children: [
+                            _buildHeader(context, l),
+                            const MDealsBanner(),
+                          ],
+                        ),
+                      ],
                     ),
-                    error: (_, _) => _empty(l),
-                    data: (list) {
-                      // A deal stays 'active' after its end date until the
-                      // panel changes it; one that has ended is not offered.
-                      final live = list.where((o) => !o.hasExpired).toList();
-                      final shown = _business == null
-                          ? live
-                          : live.where((o) => o.businessId == _business).toList();
-                      return shown.isEmpty ? _empty(l) : _buildDealCards(shown, l);
-                    },
-                  ),
-                  _buildBrands(context),
-                  const SizedBox(height: 40),
-                ],
+
+                    // Categories are only worth a row when something is in
+                    // them, so an empty table shows no circles rather than a
+                    // row of zeroes.
+                    _buildCategoryRow(l),
+
+                    // The deals this resident claimed and can still use: the
+                    // way back to a code, which was shown once and then lost.
+                    _buildMyDeals(offers.valueOrNull ?? const <Offer>[]),
+
+                    Padding(
+                      key: _listKey,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(l.popularDealsInModiin, style: _sectionTitle),
+                    ),
+                    const SizedBox(height: 16),
+
+                    offers.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 60),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (_, _) => _empty(l),
+                      data: (list) {
+                        // A deal stays 'active' after its end date until the
+                        // panel changes it; one that has ended is not offered.
+                        final live = list.where((o) => !o.hasExpired).toList();
+                        final shown = _business == null
+                            ? live
+                            : live
+                                  .where((o) => o.businessId == _business)
+                                  .toList();
+                        return shown.isEmpty
+                            ? _empty(l)
+                            : _buildDealCards(shown, l);
+                      },
+                    ),
+                    _buildBrands(context),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
