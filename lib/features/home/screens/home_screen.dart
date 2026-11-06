@@ -118,6 +118,32 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     context.push('/search?q=${Uri.encodeComponent(query)}');
   }
 
+  /// Reads every row on the page again. Home had no pull-to-refresh, so
+  /// something published while the app was open appeared only after two
+  /// minutes away from it or a restart (6 Nov).
+  Future<void> _refresh() async {
+    ref
+      ..invalidate(homeNoticeProvider)
+      ..invalidate(businessesProvider)
+      ..invalidate(businessPrimaryCategoryProvider)
+      ..invalidate(offersProvider)
+      ..invalidate(activeOffersProvider)
+      ..invalidate(eventsProvider)
+      ..invalidate(eventCategoriesProvider)
+      ..invalidate(listingsProvider)
+      ..invalidate(latestArticlesProvider);
+    try {
+      await Future.wait([
+        // Not the restaurants row itself: it can wait seconds for a
+        // location fix, and the spinner would wait with it.
+        ref.read(businessesProvider.future),
+        ref.read(latestArticlesProvider.future),
+      ]);
+    } catch (_) {
+      // Each row shows its own failure and Retry.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
@@ -131,7 +157,11 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     return StatusBarScrim(
       hero: topPadding + 176,
       shade: false,
+      child: RefreshIndicator(
+      onRefresh: _refresh,
+      edgeOffset: topPadding,
       child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       children: [
         // ── Gradient header ──
@@ -235,6 +265,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
 
         const SizedBox(height: 32),
       ],
+      ),
       ),
     );
   }
@@ -729,7 +760,7 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
   // Latest News — horizontal news cards
   // ─────────────────────────────────────────────
   Widget _buildNewsCards(L l) => _ProviderRow<Article>(
-    provider: publishedArticlesProvider,
+    provider: latestArticlesProvider,
     height: 240,
     gap: 20,
     card: (a) => _newsCard(a, l),

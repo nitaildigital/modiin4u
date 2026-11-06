@@ -4,6 +4,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/network_photo.dart' show decodeWidth;
 
 class BusinessCard extends StatelessWidget {
   final String name;
@@ -266,6 +267,9 @@ class _Thumbnail extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.cover,
+      // Decoded at the size drawn. The phone loads the original, often a few
+      // MB, and decoded whole for each card it made long lists stutter.
+      memCacheWidth: decodeWidth(size, MediaQuery.devicePixelRatioOf(context)),
       fadeInDuration: const Duration(milliseconds: 250),
       placeholder: (_, _) => fallback,
       errorWidget: (_, _, _) => fallback,

@@ -42,7 +42,7 @@ final communitySettingsProvider = FutureProvider<CommunitySettings>((ref) async 
 /// The chosen news category — its id, for "See all" — and its newest
 /// stories. Null when no category is set or the slug matches none.
 final communityNewsProvider =
-    FutureProvider<({String categoryId, List<Article> articles})?>((ref) async {
+    FutureProvider.autoDispose<({String categoryId, List<Article> articles})?>((ref) async {
       final slug = (await ref.watch(communitySettingsProvider.future))
           .newsCategorySlug;
       if (slug == null) return null;

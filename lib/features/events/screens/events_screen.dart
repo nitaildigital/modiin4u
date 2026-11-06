@@ -75,6 +75,20 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
     });
   }
 
+  /// Reads the events and their categories again. The list had no way to
+  /// be refreshed, and Retry renewed only the filtered view, which handed
+  /// back the same failed answer (6 Nov).
+  Future<void> _refresh() async {
+    ref
+      ..invalidate(eventsProvider)
+      ..invalidate(eventCategoriesProvider);
+    try {
+      await ref.read(filteredEventsProvider.future);
+    } catch (_) {
+      // The list shows the failure with its own Retry.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = L.of(context);
@@ -108,7 +122,10 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                   children: [
                     _buildHeader(context, labels),
                     Expanded(
-                      child: SingleChildScrollView(
+                      child: RefreshIndicator(
+                        onRefresh: _refresh,
+                        child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -146,10 +163,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                                   const EdgeInsets.symmetric(horizontal: 16),
                               child: events.when(
                                 loading: () => const _EventListSkeleton(),
-                                error: (_, _) => ErrorRetry(
-                                  onRetry: () =>
-                                      ref.invalidate(filteredEventsProvider),
-                                ),
+                                error: (_, _) => ErrorRetry(onRetry: _refresh),
                                 data: (all) {
                                   final list = active == null
                                       ? all
@@ -188,6 +202,7 @@ class _MobileEventsContentState extends ConsumerState<_MobileEventsContent> {
                             const SizedBox(height: 80),
                           ],
                         ),
+                      ),
                       ),
                     ),
                   ],

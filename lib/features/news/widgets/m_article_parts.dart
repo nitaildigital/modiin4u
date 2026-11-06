@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -313,14 +314,25 @@ class _MInlinePhoto extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, c) {
         final width = c.maxWidth;
-        Widget image(String url, {Widget Function()? onError}) => Image.network(
-              url,
-              width: width,
-              height: ratio == null ? null : width / ratio,
-              fit: BoxFit.cover,
-              webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-              errorBuilder: (_, _, _) => onError?.call() ?? const SizedBox.shrink(),
-            );
+        // On the phone, kept on disk and decoded at the width drawn: an
+        // article opened again fetched its photos again, at full size.
+        Widget image(String url, {Widget Function()? onError}) => kIsWeb
+            ? Image.network(
+                url,
+                width: width,
+                height: ratio == null ? null : width / ratio,
+                fit: BoxFit.cover,
+                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                errorBuilder: (_, _, _) => onError?.call() ?? const SizedBox.shrink(),
+              )
+            : CachedNetworkImage(
+                imageUrl: url,
+                width: width,
+                height: ratio == null ? null : width / ratio,
+                fit: BoxFit.cover,
+                memCacheWidth: decodeWidth(width, MediaQuery.devicePixelRatioOf(context)),
+                errorWidget: (_, _, _) => onError?.call() ?? const SizedBox.shrink(),
+              );
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: full == src ? image(src) : image(full, onError: () => image(src)),

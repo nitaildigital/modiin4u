@@ -71,12 +71,15 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
       ..invalidate(listingsProvider)
       ..invalidate(allActiveListingsProvider)
       ..invalidate(publishedArticlesProvider)
+      ..invalidate(latestArticlesProvider)
       ..invalidate(featuredArticleProvider)
       ..invalidate(restOfArticlesProvider)
+      ..invalidate(eventCategoriesProvider)
       ..invalidate(activeChallengeProvider)
       ..invalidate(homeNoticeProvider)
       ..invalidate(parkingLotsProvider)
       ..invalidate(liveJobsProvider);
+    refreshArticleFiling(ref.invalidate);
   }
 
   @override

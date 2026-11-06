@@ -17,6 +17,7 @@ import 'core/push/push_host.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/page_title/page_title.dart';
+import 'shared/providers/hidden_content_provider.dart';
 import 'shared/web_asset_precache.dart';
 import 'core/providers/content_language.dart';
 import 'core/providers/resume_refresh.dart';
@@ -76,6 +77,13 @@ void main() async {
     await pictures.timeout(const Duration(milliseconds: 1500), onTimeout: () {});
   }
   if (kIsWeb) _keepServedTitle();
+  // The items this person hid, read from the phone before any list is
+  // fetched: each list leaves them out, and one fetched before they were
+  // read was fetched again as soon as they were (hidden_content_provider).
+  await container
+      .read(hiddenContentProvider.notifier)
+      .ready
+      .timeout(const Duration(milliseconds: 500), onTimeout: () {});
   runApp(UncontrolledProviderScope(container: container, child: const Modiin4uApp()));
 }
 

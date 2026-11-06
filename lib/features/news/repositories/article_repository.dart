@@ -32,6 +32,20 @@ class ArticleRepository {
     return out;
   }
 
+  /// The newest [limit] published articles, in the list's order, for a row
+  /// that shows only the first few.
+  Future<List<Map<String, dynamic>>> fetchLatest(int limit) async {
+    final data = await _client
+        .from('articles')
+        .select(listColumns)
+        .eq('status', 'published')
+        .order('published_at', ascending: false, nullsFirst: false)
+        .order('created_at', ascending: false)
+        .order('id')
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
   /// The search's article hits: the card columns, the newest [limit].
   Future<List<Map<String, dynamic>>> search(String q, {int limit = 30}) async {
     final data = await _client

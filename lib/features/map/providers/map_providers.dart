@@ -24,7 +24,11 @@ final parkingLotOfPoi = Expando<ParkingLot>('parkingLot');
 ///
 /// Four layers, all live. The website draws the first three; parking is the
 /// phone map's for now — see `parkingLayer`.
-final mapPoisProvider = FutureProvider<List<MapPoi>>((ref) async {
+///
+/// Let go when the map closes. Kept, it held on to the lists it is built
+/// from, and every return to the app after two minutes fetched the car
+/// parks again though no map was open (resume_refresh, 6 Nov).
+final mapPoisProvider = FutureProvider.autoDispose<List<MapPoi>>((ref) async {
   final businesses = await ref.watch(businessesProvider.future);
   // Only events still to come, as the events list shows them: every event
   // put past ones on the map, as if they were on (found 21 Oct).

@@ -1,3 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,14 +61,23 @@ class ArticleBanner extends StatelessWidget {
       link: link != null,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.network(
-          url,
-          width: double.infinity,
-          fit: BoxFit.fitWidth,
-          webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-          // A banner that cannot be fetched takes no room.
-          errorBuilder: (_, _, _) => const SizedBox.shrink(),
-        ),
+        // On the phone, kept on disk: the same banner shows in article after
+        // article, and was fetched again for each.
+        child: kIsWeb
+            ? Image.network(
+                url,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                // A banner that cannot be fetched takes no room.
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              )
+            : CachedNetworkImage(
+                imageUrl: url,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
+              ),
       ),
     );
     if (link == null) return picture;

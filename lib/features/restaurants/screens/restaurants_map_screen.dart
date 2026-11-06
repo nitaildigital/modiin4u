@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/router/app_router.dart' show AppNavigation;
 import '../../../core/theme/app_fonts.dart';
@@ -14,6 +15,7 @@ import '../../auth/widgets/m_account_widgets.dart' show MBackArrow;
 import '../providers/restaurant_providers.dart';
 import 'web_restaurants_map_screen.dart';
 import '../../../shared/widgets/app_map.dart';
+import '../../../shared/widgets/network_photo.dart' show decodeWidth, photoTargetWidth;
 
 /// Restaurants map view — responsive wrapper.
 /// Desktop (> 1100px) renders the web search + map layout; mobile keeps the app UI.
@@ -530,12 +532,21 @@ class _CoverImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final src = url;
     if (src == null || src.isEmpty) return _fallback;
-    return Image.network(
-      src,
-      fit: BoxFit.cover,
-      // A broken link should look like a place with no photo, not like an
-      // error.
-      errorBuilder: (_, _, _) => _fallback,
+    // Kept on the phone and decoded at the size drawn, as NetworkPhoto
+    // does; it was the original, fetched again on each visit.
+    return LayoutBuilder(
+      builder: (context, c) => CachedNetworkImage(
+        imageUrl: src,
+        fit: BoxFit.cover,
+        memCacheWidth: decodeWidth(
+          photoTargetWidth(c.maxWidth, c.maxHeight),
+          MediaQuery.devicePixelRatioOf(context),
+        ),
+        placeholder: (_, _) => _fallback,
+        // A broken link should look like a place with no photo, not like an
+        // error.
+        errorWidget: (_, _, _) => _fallback,
+      ),
     );
   }
 }

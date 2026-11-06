@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -266,14 +267,17 @@ class MBrandTile extends StatelessWidget {
                                   maxWidth: 120,
                                   maxHeight: 56,
                                 ),
-                                child: Image.network(
-                                  sizedPhotoUrl(
+                                // Kept on the phone and decoded at the size
+                                // drawn; it was fetched again each time.
+                                child: CachedNetworkImage(
+                                  imageUrl: sizedPhotoUrl(
                                     logo,
                                     120,
                                     MediaQuery.devicePixelRatioOf(context),
                                   ),
+                                  memCacheWidth: decodeWidth(120, MediaQuery.devicePixelRatioOf(context)),
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) => wordmark,
+                                  errorWidget: (_, _, _) => wordmark,
                                 ),
                               )
                             // No logo on file: the name stands in for one.

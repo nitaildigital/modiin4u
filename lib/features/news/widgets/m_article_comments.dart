@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ import '../providers/article_comments_provider.dart';
 import 'm_article_parts.dart';
 import '../../../shared/providers/blocked_users_provider.dart';
 import '../../../shared/providers/hidden_content_provider.dart';
+import '../../../shared/widgets/network_photo.dart' show decodeWidth;
 
 // ═══════════════════════════════════════════════════════════
 // Comments under an article, on the phone layout (00071).
@@ -637,12 +639,13 @@ class _Avatar extends StatelessWidget {
     final url = comment.avatarUrl;
     if (url == null) return letter;
     return ClipOval(
-      child: Image.network(
-        url,
+      child: CachedNetworkImage(
+        imageUrl: url,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => letter,
+        memCacheWidth: decodeWidth(size, MediaQuery.devicePixelRatioOf(context)),
+        errorWidget: (_, _, _) => letter,
       ),
     );
   }

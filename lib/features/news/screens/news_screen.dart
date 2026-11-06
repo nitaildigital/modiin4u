@@ -60,6 +60,7 @@ class _MobileNewsContent extends ConsumerWidget {
         : (ref.watch(categoryNameProvider(catId)).valueOrNull?.name ?? L.of(context).news);
 
     Future<void> refresh() async {
+      refreshArticleFiling(ref.invalidate);
       if (catId == null) {
         ref.invalidate(publishedArticlesProvider);
         await ref.read(publishedArticlesProvider.future);

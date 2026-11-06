@@ -20,6 +20,33 @@ final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
   return list.where((a) => !hiddenIds.contains(a.id)).toList();
 });
 
+/// The newest published articles for the home screen's row: twelve, as the
+/// website's phone home shows, with "See all" for the rest. The row read
+/// every published article — 693, about 830 KB — on every launch to show
+/// the first few (6 Nov). Hidden ones are left out, so as many more are read.
+final latestArticlesProvider = FutureProvider<List<Article>>((ref) async {
+  const shown = 12;
+  final hiddenIds = ref.watch(hiddenContentProvider);
+  final rows = await ref
+      .watch(articleRepositoryProvider)
+      .fetchLatest(shown + hiddenIds.length);
+  return rows
+      .map(Article.fromJson)
+      .where((a) => !hiddenIds.contains(a.id))
+      .take(shown)
+      .toList();
+});
+
+/// Reads again where the articles are filed: the links under each category,
+/// each article's category, and the categories themselves. Nothing read
+/// them again in a session, so pull-to-refresh and a return to the app
+/// brought new stories into the list but not into their category (6 Nov).
+void refreshArticleFiling(void Function(ProviderOrFamily) invalidate) {
+  invalidate(_articleIdsInCategoryProvider);
+  invalidate(articleFilingProvider);
+  invalidate(navCategoriesProvider);
+}
+
 /// The articles filed under one category.
 ///
 /// `entity_categories` is a polymorphic link table: `entity_id` carries an
@@ -28,8 +55,14 @@ final publishedArticlesProvider = FutureProvider<List<Article>>((ref) async {
 /// PGRST200 if asked. So the ids are fetched on their own and matched against
 /// the articles the page has already loaded — which costs one small query
 /// rather than a second copy of 667 rows.
+///
+/// This and the lists built from [publishedArticlesProvider] below are let
+/// go when no screen shows them. Kept, they read the links once a session —
+/// an article filed after that never reached its category (6 Nov) — and
+/// held every article in memory, fetched again on each return to the app
+/// though News was closed.
 final _articleIdsInCategoryProvider =
-    FutureProvider.family<Set<String>, String>((ref, categoryId) async {
+    FutureProvider.autoDispose.family<Set<String>, String>((ref, categoryId) async {
       final rows = await SupabaseConfig.client
           .from('entity_categories')
           .select('entity_id')
@@ -47,7 +80,7 @@ final _articleIdsInCategoryProvider =
 /// nothing to read until the categories were brought across from the client's
 /// site. See `tool/import_article_categories.py`.
 final articlesByCategoryProvider =
-    FutureProvider.family<List<Article>, String>((ref, categoryId) async {
+    FutureProvider.autoDispose.family<List<Article>, String>((ref, categoryId) async {
       final ids = await ref.watch(
         _articleIdsInCategoryProvider(categoryId).future,
       );
@@ -102,7 +135,7 @@ final articleFilingProvider =
 /// Newest by `published_at`: every imported row carries the same
 /// `created_at`, so the order the rows come back in says nothing.
 final relatedArticlesProvider =
-    FutureProvider.family<List<Article>, String>((ref, articleId) async {
+    FutureProvider.autoDispose.family<List<Article>, String>((ref, articleId) async {
       const count = 4;
       final all = [...await ref.watch(publishedArticlesProvider.future)]
         ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
@@ -137,7 +170,7 @@ final relatedArticlesProvider =
 /// this does not override him: it prefers a featured article that can
 /// actually fill the slot, and only falls back to a featured one without a
 /// picture if that is all there is.
-final featuredArticleProvider = FutureProvider<Article?>((ref) async {
+final featuredArticleProvider = FutureProvider.autoDispose<Article?>((ref) async {
   final articles = await ref.watch(publishedArticlesProvider.future);
   return articles.isEmpty ? null : pickHeroArticle(articles);
 });
@@ -154,7 +187,7 @@ Article pickHeroArticle(List<Article> articles) =>
     articles.reduce((x, y) => y.publishedAt.isAfter(x.publishedAt) ? y : x);
 
 /// Every published article except the one in the hero slot.
-final restOfArticlesProvider = FutureProvider<List<Article>>((ref) async {
+final restOfArticlesProvider = FutureProvider.autoDispose<List<Article>>((ref) async {
   final articles = await ref.watch(publishedArticlesProvider.future);
   final featured = await ref.watch(featuredArticleProvider.future);
   return articles.where((a) => a.id != featured?.id).toList();

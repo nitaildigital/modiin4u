@@ -120,8 +120,11 @@ final parkingLotsProvider = FutureProvider<List<ParkingLot>>((ref) async {
 ///
 /// Permission is checked, never asked for, as on the home page's "near you"
 /// row: nobody gets a location prompt for opening a page.
+///
+/// Let go when the page closes, so the car parks are not fetched again on a
+/// return to the app while it is not open (as [mapPoisProvider]).
 final nearestParkingProvider =
-    FutureProvider<({ParkingLot lot, double metres})?>((ref) async {
+    FutureProvider.autoDispose<({ParkingLot lot, double metres})?>((ref) async {
       final lots = await ref.watch(parkingLotsProvider.future);
       if (lots.isEmpty || !locationIsAskable) return null;
       try {

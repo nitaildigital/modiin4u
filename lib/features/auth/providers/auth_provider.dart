@@ -95,6 +95,12 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       final user = event.session?.user;
       if (user == null) {
         if (mounted) state = null;
+      } else if (event.event == AuthChangeEvent.tokenRefreshed && state?.id == user.id) {
+        // The hourly renewal of the same person's token, also sent on a
+        // return after more than an hour. It read the profile again with
+        // three queries and set a new user, which every screen watching the
+        // account took as a change and reloaded its own data (6 Nov). The
+        // profile has not changed, so nothing is read.
       } else {
         await _loadProfile(user);
       }
