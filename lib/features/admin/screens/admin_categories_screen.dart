@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,7 @@ class _AdminCategoriesScreenState extends ConsumerState<AdminCategoriesScreen> {
 
   @override
   void dispose() {
+    _debouncer.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -917,16 +919,18 @@ class _Col extends StatelessWidget {
   }
 }
 
+/// Runs the search once typing pauses. The previous one fired a query for
+/// every keystroke, each 400ms late, and the answers could land out of order:
+/// the first letter's, slowest because it matches the most, often came last
+/// and replaced the real result (typing "פאנל" listed 480 articles, 6 Nov).
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
-
-  Future<void>? _pending;
-
+  Timer? _timer;
   void run(VoidCallback action) {
-    _pending?.ignore();
-    _pending = Future.delayed(
-      Duration(milliseconds: milliseconds),
-    ).then((_) => action());
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
+
+  void cancel() => _timer?.cancel();
 }

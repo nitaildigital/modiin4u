@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../core/time/israel_time.dart';
 import '../../../core/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class _AdminCampaignsScreenState extends ConsumerState<AdminCampaignsScreen> {
 
   @override
   void dispose() {
+    _debouncer.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -1444,12 +1446,20 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
+/// Runs the search once typing pauses. The previous one fired a query for
+/// every keystroke, each 400ms late, and the answers could land out of order:
+/// the first letter's, slowest because it matches the most, often came last
+/// and replaced the real result (typing "פאנל" listed 480 articles, 6 Nov).
 class _Debouncer {
   final int milliseconds;
   _Debouncer({required this.milliseconds});
+  Timer? _timer;
   void run(VoidCallback action) {
-    Future.delayed(Duration(milliseconds: milliseconds), action);
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
+
+  void cancel() => _timer?.cancel();
 }
 
 /// What went wrong, in the database's own words rather than the exception's

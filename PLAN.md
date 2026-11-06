@@ -5768,6 +5768,31 @@ gives; an SVG, another host and the metadata address are refused (400).
 `npm audit` still names the postcss that Next bundles (high): it runs only
 while the site is built, on our CSS, not on anything a visitor sends.
 
+### The panel's searches and its trash and activity log — 6 Nov
+
+The panel's end-to-end test (6 Nov) found typed searches answering wrongly
+in eight sections — articles, businesses, real estate, neighbourhoods,
+municipal places, categories, car parks and campaigns. Their debouncer's
+`_pending?.ignore()` cancels nothing (it only silences errors), so every
+letter still sent its own query 400 ms later and whichever came back last
+won: usually the first letter's, slowest because it matches the most.
+Typing "פאנל" in Articles listed 480 articles; pasted, the same word found
+the one it should. Those eight now use the debouncer events, deals and push
+already had: a timer cancelled by the next letter, and when the screen
+closes.
+
+The trash and the activity log are kept for the whole session, so an
+article archived after the first visit was missing from the trash until
+Refresh was pressed, and four new actions left the log at "193 records".
+Each now reads its list again when it is opened, with the filter back on
+"All" as its chips show.
+
+Checked on a local build against the live database: in all eight sections
+a word typed letter by letter and the same word pasted give the same count;
+a row archived and a log entry added while the screens were closed appear
+when they are opened (13 → 14 items, 193 → 194 records). The test rows and
+the temporary admin were removed after.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.

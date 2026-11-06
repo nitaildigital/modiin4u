@@ -20,6 +20,16 @@ class _AdminTrashScreenState extends ConsumerState<AdminTrashScreen> {
   /// twice.
   String? _restoring;
 
+  /// Read again each time the trash is opened. The list is kept for the
+  /// whole session, so an article archived after the first visit was missing
+  /// until Refresh was pressed (6 Nov). The filter starts at "All", as the
+  /// chips do.
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(adminTrashListProvider.notifier).setTableFilter(null));
+  }
+
   void _setTable(String table) {
     setState(() => _tableFilter = table);
     ref.read(adminTrashListProvider.notifier).setTableFilter(table);
