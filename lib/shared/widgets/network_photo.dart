@@ -43,6 +43,14 @@ int? decodeWidth(double logicalWidth, double devicePixelRatio) {
   return steps.firstWhere((s) => s >= px, orElse: () => 2500);
 }
 
+/// [decodeWidth] in the app, null on the web: what an `Image.network`'s
+/// `cacheWidth` takes in the wide (tablet and desktop) layouts. The web asks
+/// the server for a sized copy instead and keeps its own decoding, so it is
+/// left exactly as it was; on a tablet the originals — some several MB —
+/// were decoded whole for a card (24 Nov).
+int? nativeDecodeWidth(double logicalWidth, double devicePixelRatio) =>
+    kIsWeb ? null : decodeWidth(logicalWidth, devicePixelRatio);
+
 /// The width to ask for, for a photo covering a box of [width] × [height]:
 /// the box's width, or more when a wide photo scaled to a tall box's height
 /// needs it. 800 when neither is known.

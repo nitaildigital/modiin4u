@@ -5514,6 +5514,56 @@ further to do here; revisit only if a current device shows jank.
       timing through `dumpsys gfxinfo` and SurfaceFlinger returned nothing
       usable on this handset, because Flutter renders to its own surface.
 
+### App performance, measured — 24 Nov
+
+Audited first (startup, requests, the database's own statistics), then only
+the app-code changes approved; the database's access rules and the large
+category images are measured and waiting for a separate decision.
+
+**Measured on the OnePlus 6T, profile build, signed out** — requests counted
+from production's `pg_stat_statements` (PostgREST's per-request statement,
+net of an idle window), data from the phone's per-app counters, "row ready"
+by screenshots until Home's first row stops changing. Results are in the
+report of 24 Nov; the method is repeatable.
+
+**Changed (app code only):**
+- Splash: Home's reads start while the logo shows (the same requests,
+  earlier — none extra; no location prompt).
+- Sign-in: the profile was read twice on a launch with an expired token (the
+  stored session, then its renewal); the admin and owner checks run
+  together; favourites and preferences reload on a change of account, not on
+  any change to the profile.
+- Business categories and their links: one shared read each (Home, the
+  Businesses tab, Restaurants, the directory each read them themselves);
+  Home's restaurant row starts its reads together; the links are read a
+  thousand at a time (the server stops at 1000 rows without saying so).
+- News: one read of every article link instead of one per category (9 per
+  open), kept two minutes after News closes; article filing reads only the
+  category's names, a thousand at a time.
+- Events: only from today on (the list read every event ever published, and
+  its one reader dropped the past ones).
+- A return to the app: the forced-update and deleted-account checks run after
+  two minutes away, as the rest of the refresh (they ran on every return).
+- Home's badges (bell, messages): kept 60 s across tab switches; a new
+  message or a return still refreshes them at once.
+- Keyboard: the business and event pages no longer rebuild whole on every
+  frame of the keyboard (`MediaQuery.paddingOf`); the comment box rebuilds
+  only its Send button while typing.
+- Images: the business page's cover is decoded at the size drawn; the wide
+  (tablet) layouts decode at the size drawn in the app (`nativeDecodeWidth`;
+  the web is unchanged); Urban Profile place photos (at least 3x, for the
+  saved card), review avatars, the blurred profile header.
+- Smaller: the voucher clock ticks in its own widget; the theme is built
+  once; article links keep one recognizer each; event categories and the
+  map's four lists are read together; providers watch the account's id, not
+  the whole account.
+
+**Not changed, waiting for a decision:** the database's access rules
+(`is_admin()` per row — 14 ms against 1.2 ms on the article list),
+re-compressing the 26 category images (3.5 MB each), keeping Google Places
+answers for the session (Google's terms), disk caching for the tablet
+layouts' images.
+
 ### Alt text for gallery photos — 19 October
 
 The Media library already had an alt-text field, and the business page reads
@@ -5984,6 +6034,96 @@ answering writes itself so nothing reached the table: a step group's Hide
 answered with no rows showed "the change was not saved" and left the group
 active; answered with its row, it went through without an error. The group
 was unchanged in the database after.
+
+### iPhone steps without HealthKit; a competition counts only its hours — 24 Nov
+
+**Why.** App Review turned the iPhone app 1.0 (4) down on 15 Oct under
+Guideline 5.1.1(ix): apps in regulated fields "or that require sensitive user
+information" must come from an organisation account, and the client has no
+legal entity. HealthKit was the app's only health element. Removing it does
+not by itself satisfy the guideline — 5.1.3 lists Core Motion's "Motion and
+Fitness" among the especially sensitive data too — so App Review is to be
+asked before or with the resubmission. The step counter stays, daily, as the
+client asked for it (handover point 1, the daily goal, 5 Oct points 12–15).
+
+**iPhone: Core Motion instead of Apple Health.**
+- `MotionSteps` (ios/Runner/AppDelegate.swift, channels `modiin4u/motion`
+  and `modiin4u/motion/today`) reads `CMPedometer`: steps and distance
+  between any two moments of the last seven days, and today's live count
+  from midnight. The motion coprocessor counts whether or not the app runs,
+  so nothing resets when the app or the phone restarts.
+  `motion_steps.dart` is its Dart side.
+- The day's figure, the week (seven days instead of thirty), the distance
+  and the live count come from it. Lost on the iPhone: calories, a watch's
+  steps, anything older than a week (days already saved stay saved).
+- The HealthKit entitlement, both Health usage descriptions (Info.plist and
+  both InfoPlist.strings) are gone; the Motion description now names steps
+  and walking distance. The `health` plugin is used through
+  `dependency_overrides` from `packages/health_android_only` — 13.3.1 as
+  published, declared for Android only — so the iPhone build contains no
+  HealthKit at all.
+- Found on the way: the iPhone's step sensor never ran. The app asked for
+  `Permission.activityRecognition`, which permission_handler answers
+  "permanently denied" on iOS, so an iPhone without Apple Health counted
+  nothing. Core Motion asks its own Motion & Fitness question; once refused
+  (iOS asks only once) the Steps screen's card opens Settings.
+- Android is unchanged: Health Connect and the sensor as before.
+
+**A competition counts only its hours (00088).** It added up whole days of
+`daily_steps` from its start date to its end date, so the morning before it
+opened and the evening after it closed counted, and nothing refused a date
+outside it. Now:
+- `challenge_steps` keeps, per competition, person and date, the steps
+  inside the competition's hours. The phone reads each date's part of it for
+  exactly those hours — Core Motion on an iPhone, Health Connect on Android
+  (`stepsBetween`); with the sensor alone, today only, from the moment the
+  app first saw it running — and between readings the part grows with the
+  live count. It is saved on the same occasions as the day.
+- `record_challenge_steps` is the only way in: nothing before the start,
+  nothing for a switched-off competition, nothing more than two hours after
+  the end, no date outside it; each date keeps its highest, so a repeat or a
+  second phone never adds to it. The phone's count itself cannot be checked.
+- **Winner: the most steps when it ends** (Harshit, 24 Nov — the client's
+  "the most steps wins", 5 Oct point 15), no longer the first to the goal.
+  `settle_challenge_winners` (pg_cron, every 10 minutes) names it two hours
+  after the end: the total, or with "goal in a single day" the best day; a
+  tie goes to whoever got there first. The old trigger on `daily_steps` is
+  dropped; the two notifications are the same. The win message reads the
+  competitions the person won in the last two weeks (`myRecentWinProvider`),
+  since the winner is named after it stopped being the running one.
+- While one runs, both leaderboards are the competition's
+  (`challenge_leaderboard_people` / `_neighborhoods`), counted the way the
+  winner is chosen; otherwise the last seven days, as before. The daily
+  goal, week, month and step groups still read `daily_steps`.
+- Panel: **End now** on a running competition sets its end to this moment
+  (Disable still takes it away without a winner). The participant count is
+  the people with steps in it.
+
+**After an independent review (24 Nov), before anything was applied:**
+- Only exact readings of the competition's hours are saved (Core Motion's
+  or Health Connect's own figure for those hours, read again just before
+  each save). The live count between readings is only shown, and it grows
+  with the phone's step count — not Health Connect's total, which jumps
+  when a watch syncs earlier steps; saved, a jump would have stayed for
+  good. Android without Health Connect is unchanged: its sensor figure is
+  the only one, shown and saved.
+- A competition that ended within two hours gets a last exact reading,
+  saved at once, even when the next one has already begun (the phone asks
+  for up to three competitions, every ten minutes at most).
+- iPhone at midnight: the live count starts again at zero at once
+  (`NSCalendarDayChanged`), and the day's figure is not saved while it
+  still belongs to yesterday.
+- Android starts its sensor before the competition is read, as before.
+- One refresh at a time; past dates already read are not read again; only
+  changed dates are sent, and the database writes a date only when it grows.
+- Database: a date is bounded by the competition's hours that date (12,000
+  steps an hour) and by the person's saved day; at most 120 dates per call;
+  ties on a best-day competition go to whoever's best day came first;
+  figures from dates a moved competition no longer covers do not count;
+  the panel's participant count (`challenge_participant_counts`) and End
+  now (`end_challenge_now`, the database's clock) are admin-only functions.
+- The win check on returning to the app runs at most every half hour.
+- Version 1.0.0+10: a new upload needs a build number above anything sent.
 
 ## 9. How the data layer is built
 

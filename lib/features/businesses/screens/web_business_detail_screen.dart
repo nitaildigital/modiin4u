@@ -1651,7 +1651,13 @@ class _PhotoViewerState extends State<_PhotoViewer> {
             onPageChanged: (i) => setState(() => _index = i),
             itemBuilder: (context, i) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 96, vertical: 64),
-              child: Image.network(widget.photos[i], fit: BoxFit.contain),
+              // Decoded at the screen's width in the app, not at the
+              // original's (a lightbox on a tablet, 24 Nov).
+              child: Image.network(
+                widget.photos[i],
+                cacheWidth: nativeDecodeWidth(MediaQuery.sizeOf(context).width, MediaQuery.devicePixelRatioOf(context)),
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           Positioned(

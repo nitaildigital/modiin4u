@@ -24,6 +24,20 @@ final businessRepositoryProvider = Provider<BusinessRepository>(
 int promotedFirst(Business a, Business b) =>
     (b.isPromoted ? 1 : 0).compareTo(a.isPromoted ? 1 : 0);
 
+/// Every business category row, read once and shared: Home's restaurant row
+/// and category labels, the Businesses tab, Restaurants and the directory all
+/// read the same table, and each read it for itself (24 Nov — up to three
+/// times on Home and the Businesses tab). Read again when invalidated: pull
+/// to refresh, a retry, or a return after two minutes away.
+final businessCategoryRowsProvider = FutureProvider<List<Map<String, dynamic>>>(
+  (ref) => ref.watch(businessRepositoryProvider).fetchCategories(),
+);
+
+/// Every business-to-category link, read once and shared, like the rows.
+final businessCategoryLinksProvider = FutureProvider<List<Map<String, dynamic>>>(
+  (ref) => ref.watch(businessRepositoryProvider).fetchCategoryLinks(),
+);
+
 /// Every active business, newest first.
 final businessesProvider = FutureProvider<List<Business>>((ref) async {
   final hiddenIds = ref.watch(hiddenContentProvider);
@@ -81,12 +95,20 @@ final nearbyBusinessesProvider =
         final allowed = await Geolocator.checkPermission();
         if (allowed == LocationPermission.always ||
             allowed == LocationPermission.whileInUse) {
-          here = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.medium,
-              timeLimit: Duration(seconds: 8),
-            ),
-          );
+          // Where the phone last knew it was, when that is recent: a fresh
+          // fix indoors took up to the 8 s limit, and the row waited on it
+          // blank — first cards a median 12.7 s after launch (24 Nov).
+          final last = await Geolocator.getLastKnownPosition();
+          final recent = last != null &&
+              DateTime.now().difference(last.timestamp) < const Duration(minutes: 30);
+          here = recent
+              ? last
+              : await Geolocator.getCurrentPosition(
+                  locationSettings: const LocationSettings(
+                    accuracy: LocationAccuracy.medium,
+                    timeLimit: Duration(seconds: 8),
+                  ),
+                );
         }
       } catch (_) {
         // No fix in time, or services off. Fall through to the plain list.
@@ -126,8 +148,12 @@ final nearbyBusinessListProvider = FutureProvider<List<Business>>(
 /// once this device has allowed location, as [nearbyBusinessesProvider].
 final nearbyRestaurantsProvider =
     FutureProvider<({List<Business> businesses, bool byDistance})>((ref) async {
-      final food = await ref.watch(foodPlaceBusinessesProvider.future);
-      final near = await ref.watch(nearbyBusinessesProvider.future);
+      // Both started before either is awaited: the location fix runs while
+      // the food places load, not after.
+      final foodF = ref.watch(foodPlaceBusinessesProvider.future);
+      final nearF = ref.watch(nearbyBusinessesProvider.future);
+      final food = await foodF;
+      final near = await nearF;
       final ids = {for (final b in food) b.id};
       if (near.byDistance) {
         return (
@@ -156,9 +182,12 @@ final nearbyRestaurantListProvider = FutureProvider<List<Business>>(
 /// The businesses filed under a food category — restaurants, its cuisines,
 /// or cafés — read through the same links the Restaurants page uses.
 final foodPlaceBusinessesProvider = FutureProvider<List<Business>>((ref) async {
-  final repo = ref.watch(businessRepositoryProvider);
-  final all = await ref.watch(businessesProvider.future);
-  final categories = await repo.fetchCategories();
+  // The three reads at once — they were one after the other.
+  final (all, categories, links) = await (
+    ref.watch(businessesProvider.future),
+    ref.watch(businessCategoryRowsProvider.future),
+    ref.watch(businessCategoryLinksProvider.future),
+  ).wait;
   final restaurants =
       categories.where((c) => c['slug'] == 'restaurants').firstOrNull?['id'];
   final food = {
@@ -168,7 +197,6 @@ final foodPlaceBusinessesProvider = FutureProvider<List<Business>>((ref) async {
           (restaurants != null && c['parent_id'] == restaurants))
         c['id'],
   };
-  final links = await repo.fetchCategoryLinks();
   final ids = {
     for (final l in links)
       if (food.contains(l['category_id'])) l['entity_id'],
@@ -203,7 +231,7 @@ Future<bool> enableLocation(WidgetRef ref) async {
 final businessCategoriesProvider = FutureProvider<List<BusinessCategory>>((
   ref,
 ) async {
-  final rows = await ref.watch(businessRepositoryProvider).fetchCategories();
+  final rows = await ref.watch(businessCategoryRowsProvider.future);
   return rows
       .where((r) => r['parent_id'] == null && r['in_menus'] != false)
       .map(BusinessCategory.fromJson)
@@ -250,13 +278,14 @@ final businessByIdProvider = FutureProvider.family<Business, String>((
 final businessPrimaryCategoryProvider =
     FutureProvider<Map<String, ({BusinessCategory category, String rootSlug})>>(
       (ref) async {
-        final repo = ref.watch(businessRepositoryProvider);
-        final rows = await repo.fetchCategories();
+        final (rows, links) = await (
+          ref.watch(businessCategoryRowsProvider.future),
+          ref.watch(businessCategoryLinksProvider.future),
+        ).wait;
         final byId = {
           for (final r in rows)
             r['id'] as String: BusinessCategory.fromJson(r),
         };
-        final links = await repo.fetchCategoryLinks();
 
         final chosen = <String, BusinessCategory>{};
         for (final link in links) {
@@ -366,7 +395,7 @@ final businessReviewsProvider =
       // state, so a review just sent shows as waiting instead of the page
       // saying "No reviews yet". Row security would also hand an admin
       // everyone's pending ones, hence the filter rather than none.
-      final me = ref.watch(authProvider)?.id;
+      final me = ref.watch(authProvider.select((u) => u?.id));
       final query = SupabaseConfig.client
           .from('reviews')
           // Two foreign keys run from `reviews` to `profiles` — the author and
@@ -392,7 +421,7 @@ final reviewRepliesProvider =
       ref,
       businessId,
     ) async {
-      final me = ref.watch(authProvider)?.id;
+      final me = ref.watch(authProvider.select((u) => u?.id));
       final reviews = await ref.watch(
         businessReviewsProvider(businessId).future,
       );
@@ -476,8 +505,8 @@ final hasReviewedProvider = FutureProvider.autoDispose.family<bool, String>((
   ref,
   businessId,
 ) async {
-  final user = ref.watch(authProvider);
-  if (user == null) return false;
+  final userId = ref.watch(authProvider.select((u) => u?.id));
+  if (userId == null) return false;
   return ref.watch(businessRepositoryProvider).hasReviewed(businessId);
 });
 
@@ -510,8 +539,8 @@ final businessGalleryProvider =
 /// signed out; read again when the account changes.
 final myPendingPhotosProvider = FutureProvider.autoDispose
     .family<List<PhotoSubmission>, String>((ref, businessId) async {
-      final user = ref.watch(authProvider);
-      if (user == null) return const [];
+      final userId = ref.watch(authProvider.select((u) => u?.id));
+      if (userId == null) return const [];
       return PhotoSubmissions.pendingOf(businessId);
     });
 

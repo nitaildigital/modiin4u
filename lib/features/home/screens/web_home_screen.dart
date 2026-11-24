@@ -1754,6 +1754,7 @@ class _Banner extends StatelessWidget {
           foregroundDecoration: bordered ? BoxDecoration(border: Border.all(color: _kLine)) : null,
           child: Image.network(
             sizedPhotoUrl(banner.imageUrl, width, dpr),
+            cacheWidth: nativeDecodeWidth(width, dpr),
             width: width,
             height: height,
             fit: BoxFit.cover,

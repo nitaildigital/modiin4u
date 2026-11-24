@@ -38,23 +38,7 @@ class DealVoucherScreen extends ConsumerStatefulWidget {
 }
 
 class _DealVoucherScreenState extends ConsumerState<DealVoucherScreen> {
-  late final Timer _tick;
-  DateTime _now = DateTime.now();
   bool _busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
-    });
-  }
-
-  @override
-  void dispose() {
-    _tick.cancel();
-    super.dispose();
-  }
 
   String _two(int n) => n.toString().padLeft(2, '0');
   String _date(DateTime d) => '${d.day}.${d.month}.${d.year}';
@@ -188,8 +172,7 @@ class _DealVoucherScreenState extends ConsumerState<DealVoucherScreen> {
                             children: [
                               const _Pulse(),
                               const SizedBox(width: 8),
-                              Text('${_time(_now)}:${_two(_now.second)}',
-                                  style: mDealsInter(15, weight: FontWeight.w600, color: kMDealsNavy)),
+                              const _LiveClock(),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -349,4 +332,40 @@ class _SlideToUseState extends State<_SlideToUse> {
     // A failed attempt puts the thumb back.
     if (old.busy && !widget.busy) _x = 0;
   }
+}
+
+/// The voucher's running clock, ticking on its own: the whole screen was
+/// rebuilt every second for it, the slider included (24 Nov).
+class _LiveClock extends StatefulWidget {
+  const _LiveClock();
+
+  @override
+  State<_LiveClock> createState() => _LiveClockState();
+}
+
+class _LiveClockState extends State<_LiveClock> {
+  late final Timer _tick;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick.cancel();
+    super.dispose();
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  @override
+  Widget build(BuildContext context) => Text(
+    '${_two(_now.hour)}:${_two(_now.minute)}:${_two(_now.second)}',
+    style: mDealsInter(15, weight: FontWeight.w600, color: kMDealsNavy),
+  );
 }

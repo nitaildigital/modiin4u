@@ -28,9 +28,11 @@ class FavoritesNotifier extends StateNotifier<Set<String>> {
   FavoritesNotifier(this._ref) : super(const {}) {
     // Reload whenever the person changes, and empty out on sign-out so one
     // account's saved items never show under another.
+    // On the id alone: a profile edit or a renewed session is the same
+    // person, and read the saved items again for nothing.
     _ref.listen(
-      authProvider,
-      (_, next) => _load(next?.id),
+      authProvider.select((u) => u?.id),
+      (_, id) => _load(id),
       fireImmediately: true,
     );
   }

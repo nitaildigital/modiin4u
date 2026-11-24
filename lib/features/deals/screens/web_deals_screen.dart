@@ -980,6 +980,7 @@ class _BrandTileState extends State<_BrandTile> {
                                   constraints: const BoxConstraints(maxWidth: 204, maxHeight: 96),
                                   child: Image.network(
                                     sizedPhotoUrl(logo, 204, MediaQuery.devicePixelRatioOf(context)),
+                                    cacheWidth: nativeDecodeWidth(204, MediaQuery.devicePixelRatioOf(context)),
                                     fit: BoxFit.contain,
                                     errorBuilder: (_, _, _) => _Wordmark(name: name),
                                   ),

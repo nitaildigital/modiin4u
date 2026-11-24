@@ -125,7 +125,8 @@ class _MobileHomeContentState extends ConsumerState<_MobileHomeContent> {
     ref
       ..invalidate(homeNoticeProvider)
       ..invalidate(businessesProvider)
-      ..invalidate(businessPrimaryCategoryProvider)
+      ..invalidate(businessCategoryRowsProvider)
+      ..invalidate(businessCategoryLinksProvider)
       ..invalidate(offersProvider)
       ..invalidate(activeOffersProvider)
       ..invalidate(eventsProvider)

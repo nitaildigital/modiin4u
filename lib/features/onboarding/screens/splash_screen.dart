@@ -1,19 +1,27 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/keep_signed_in.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../businesses/providers/business_providers.dart';
+import '../../deals/providers/offer_providers.dart';
+import '../../events/providers/event_providers.dart';
+import '../../home/providers/home_web_providers.dart';
+import '../../news/providers/news_providers.dart';
+import '../../realestate/providers/listing_providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeIn;
@@ -32,7 +40,33 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
+    _prefetchHome();
     _navigateAfterDelay();
+  }
+
+  /// Starts Home's reads while the logo shows, so Home opens with its rows
+  /// rather than skeletons. Nothing loaded during the 2.2 s (24 Nov: the
+  /// first row was ready a median 5.1 s after launch). The same requests
+  /// Home makes, only earlier — none extra — and all of them providers kept
+  /// for the session, so what is read here is what Home shows. The
+  /// restaurant row's nearest-first order starts here too: it only checks
+  /// whether location is allowed and never asks, so no prompt comes up.
+  void _prefetchHome() {
+    if (kIsWeb) return;
+    for (final future in <Future<Object?>>[
+      ref.read(businessesProvider.future),
+      ref.read(nearbyRestaurantsProvider.future),
+      ref.read(businessPrimaryCategoryProvider.future),
+      ref.read(activeOffersProvider.future),
+      ref.read(upcomingEventsProvider.future),
+      ref.read(eventCategoriesByEventProvider.future),
+      ref.read(listingsProvider.future),
+      ref.read(latestArticlesProvider.future),
+      ref.read(homeNoticeProvider.future),
+    ]) {
+      // A failure shows on Home, with its retry, as before.
+      future.ignore();
+    }
   }
 
   Future<void> _navigateAfterDelay() async {

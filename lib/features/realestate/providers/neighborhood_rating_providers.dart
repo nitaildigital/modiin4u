@@ -42,7 +42,7 @@ final myNeighborhoodRatingProvider =
       ref,
       neighborhoodId,
     ) async {
-      final me = ref.watch(authProvider)?.id;
+      final me = ref.watch(authProvider.select((u) => u?.id));
       if (me == null) return null;
       final row = await SupabaseConfig.client
           .from('neighborhood_ratings')

@@ -63,7 +63,8 @@ class _ResumeRefreshState extends ConsumerState<ResumeRefresh> {
   void _refresh() {
     ref
       ..invalidate(businessesProvider)
-      ..invalidate(businessPrimaryCategoryProvider)
+      ..invalidate(businessCategoryRowsProvider)
+      ..invalidate(businessCategoryLinksProvider)
       ..invalidate(offersProvider)
       ..invalidate(activeOffersProvider)
       ..invalidate(myClaimsProvider)

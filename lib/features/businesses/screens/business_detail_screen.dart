@@ -189,7 +189,10 @@ class _BusinessDetailContentState
       WebBusinessDetailContent(business: business);
 
   Widget _buildMobile(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
+    // paddingOf, not of(): this context sits above the page's Scaffold and
+    // sees the keyboard, so the whole page rebuilt on every frame of the
+    // keyboard opening for a review, a reply or a report (24 Nov).
+    final topPadding = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -316,6 +319,13 @@ class _BusinessDetailContentState
                   CachedNetworkImage(
                     imageUrl: business.imageUrl!,
                     fit: BoxFit.cover,
+                    // Decoded at the size it is drawn, like every other
+                    // detail page's photo: the originals run to 1536 px and
+                    // several MB, decoded whole for a 260-high box (24 Nov).
+                    memCacheWidth: decodeWidth(
+                      photoTargetWidth(MediaQuery.sizeOf(context).width, 260),
+                      MediaQuery.devicePixelRatioOf(context),
+                    ),
                     placeholder: (_, _) => const SizedBox.shrink(),
                     errorWidget: (_, _, _) => const SizedBox.shrink(),
                   ),
@@ -2260,6 +2270,9 @@ class _ReviewCardState extends State<_ReviewCard> {
                 ? CachedNetworkImage(
                     imageUrl: widget.avatarUrl!,
                     fit: BoxFit.cover,
+                    // 32 across, one per review: decoded small, not at the
+                    // upload's 512 (24 Nov).
+                    memCacheWidth: decodeWidth(32, MediaQuery.devicePixelRatioOf(context)),
                     errorWidget: (_, _, _) => _initials(),
                   )
                 : _initials(),

@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../../../shared/widgets/network_photo.dart' show nativeDecodeWidth, sizedPhotoUrl;
 import '../providers/restaurant_providers.dart' show FoodKind;
 import '../../../shared/widgets/web_contact_menu.dart';
 
@@ -240,6 +240,7 @@ class RestaurantCardState extends State<RestaurantCard> {
     // The card is about 380 wide; a sharp screen wants twice that.
     return Image.network(
       sizedPhotoUrl(p.imageUrl, 400, 2),
+      cacheWidth: nativeDecodeWidth(400, 2),
       fit: BoxFit.cover,
       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
       errorBuilder: (_, _, _) => fallback,

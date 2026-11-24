@@ -681,7 +681,7 @@ class _WebComment extends StatelessWidget {
         url == null
             ? letter
             : ClipOval(
-                child: Image.network(url, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => letter),
+                child: Image.network(url, width: size, height: size, cacheWidth: nativeDecodeWidth(size, MediaQuery.devicePixelRatioOf(context)), fit: BoxFit.cover, errorBuilder: (_, _, _) => letter),
               ),
         const SizedBox(width: 12),
         Expanded(
@@ -795,6 +795,7 @@ class _InlinePhoto extends StatelessWidget {
         final width = c.maxWidth < 516 ? c.maxWidth : 516.0;
         Widget image(String url, {Widget Function()? onError}) => Image.network(
           url,
+          cacheWidth: nativeDecodeWidth(width, MediaQuery.devicePixelRatioOf(context)),
           width: width,
           height: ratio == null ? null : width / ratio,
           fit: BoxFit.cover,
@@ -829,6 +830,7 @@ class _Banner extends StatelessWidget {
             onTap: link == null ? null : () => launchUrl(Uri.parse(link)),
             child: Image.network(
               sizedPhotoUrl(banner.imageUrl, w, MediaQuery.devicePixelRatioOf(context)),
+              cacheWidth: nativeDecodeWidth(w, MediaQuery.devicePixelRatioOf(context)),
               width: w,
               fit: BoxFit.fitWidth,
               errorBuilder: (_, _, _) => const SizedBox.shrink(),

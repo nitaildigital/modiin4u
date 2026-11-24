@@ -10,7 +10,7 @@ import '../../restaurants/providers/restaurant_providers.dart' show categoriesBy
 import '../models/business.dart';
 import '../providers/business_providers.dart';
 import '../../../shared/widgets/web_chrome.dart';
-import '../../../shared/widgets/network_photo.dart' show NetworkPhoto, photoTargetWidth, sizedPhotoUrl;
+import '../../../shared/widgets/network_photo.dart' show NetworkPhoto, nativeDecodeWidth, photoTargetWidth, sizedPhotoUrl;
 import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -32,7 +32,7 @@ const _kPillBorder = Color(0xFFD1D1D1);
 /// the professionals row all come from one read of those 210 links rather than
 /// from a query per category.
 final _categoryLinksProvider = FutureProvider<Map<String, List<String>>>((ref) async {
-  final links = await ref.watch(businessRepositoryProvider).fetchCategoryLinks();
+  final links = await ref.watch(businessCategoryLinksProvider.future);
   final byBusiness = <String, List<String>>{};
   for (final link in links) {
     byBusiness
@@ -1068,6 +1068,7 @@ Widget _remoteImage(
     borderRadius: radius ?? BorderRadius.circular(999),
     child: Image.network(
       sizedPhotoUrl(url, photoTargetWidth(width, height), 2),
+      cacheWidth: nativeDecodeWidth(photoTargetWidth(width, height), 2),
       width: width,
       height: height,
       fit: BoxFit.cover,

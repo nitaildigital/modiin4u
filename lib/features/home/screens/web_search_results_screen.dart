@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../shared/widgets/web_chrome.dart';
 import '../providers/search_providers.dart';
-import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../../../shared/widgets/network_photo.dart' show nativeDecodeWidth, sizedPhotoUrl;
 
 // ═══════════════════════════════════════════════════════════
 // Web Search Results — desktop results page
@@ -609,6 +609,7 @@ Widget _hitImage(SearchHit hit) {
     borderRadius: BorderRadius.circular(10),
     child: Image.network(
       sizedPhotoUrl(url, 96, 2),
+      cacheWidth: nativeDecodeWidth(96, 2),
       width: 96,
       height: 96,
       fit: BoxFit.cover,

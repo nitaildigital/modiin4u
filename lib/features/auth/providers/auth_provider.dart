@@ -95,12 +95,16 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       final user = event.session?.user;
       if (user == null) {
         if (mounted) state = null;
-      } else if (event.event == AuthChangeEvent.tokenRefreshed && state?.id == user.id) {
+      } else if (event.event == AuthChangeEvent.tokenRefreshed &&
+          (state?.id == user.id || _loadingId == user.id)) {
         // The hourly renewal of the same person's token, also sent on a
         // return after more than an hour. It read the profile again with
         // three queries and set a new user, which every screen watching the
         // account took as a change and reloaded its own data (6 Nov). The
-        // profile has not changed, so nothing is read.
+        // profile has not changed, so nothing is read. Also while that
+        // person's profile is still being read: a launch with an expired
+        // token sends the stored session and then its renewal straight
+        // after, and the profile was read twice (24 Nov).
       } else {
         await _loadProfile(user);
       }
@@ -115,10 +119,27 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     // (from the panel, or by a deletion request). The check at start missed
     // that while the app stayed open, and every write then failed with
     // "Could not save" — the profile it wrote for was gone.
-    _lifecycle = AppLifecycleListener(onResume: () => signOutIfAccountGone());
+    // After two minutes away, as the app's other data: every quick look at
+    // another app asked the server (24 Nov). A write refused for a deleted
+    // account still asks at once (signOutIfAccountGone from the screen).
+    _lifecycle = AppLifecycleListener(
+      onHide: () => _hiddenAt = DateTime.now(),
+      onResume: () {
+        final hidden = _hiddenAt;
+        _hiddenAt = null;
+        if (hidden == null || DateTime.now().difference(hidden) >= const Duration(minutes: 2)) {
+          signOutIfAccountGone();
+        }
+      },
+    );
   }
 
   AppLifecycleListener? _lifecycle;
+
+  DateTime? _hiddenAt;
+
+  /// The person whose profile is being read now, if any.
+  String? _loadingId;
 
   /// Signs out when the server no longer knows this session's account, and
   /// says whether it did. Called on resume, and by a screen whose write was
@@ -241,6 +262,7 @@ class AuthNotifier extends StateNotifier<UserModel?> {
     // a session "Remember me" did not keep) must not be undone by its answer
     // arriving afterwards and putting the account back on screen.
     bool current() => mounted && _client.auth.currentUser?.id == user.id;
+    _loadingId = user.id;
     try {
       // The neighbourhood by its key, named: a table that links profiles and
       // neighbourhoods (as 00071's ratings did, until 00072) makes a bare
@@ -267,8 +289,9 @@ class AuthNotifier extends StateNotifier<UserModel?> {
         if (current()) state = _fromSession(user);
         return;
       }
-      final isAdmin = await _isAdmin(user.id);
-      final businessId = await _ownedBusinessId(user.id);
+      // Two separate questions: asked together, not one after the other.
+      final (isAdmin, businessId) =
+          await (_isAdmin(user.id), _ownedBusinessId(user.id)).wait;
       if (current()) {
         state = _fromRow(row, user, isAdmin: isAdmin, businessId: businessId);
       }
@@ -279,6 +302,8 @@ class AuthNotifier extends StateNotifier<UserModel?> {
       }
     } catch (_) {
       if (current()) state = _fromSession(user);
+    } finally {
+      if (_loadingId == user.id) _loadingId = null;
     }
   }
 

@@ -115,22 +115,20 @@ class BusinessRepository {
   /// category counts its sub-categories' businesses too, each once, so the
   /// number on its card matches the list it opens.
   Future<Map<String, int>> fetchCategoryCounts() async {
-    final data = await _client
-        .from('entity_categories')
-        .select('entity_id, category_id')
-        .eq('entity_type', 'business');
-    final categories = await _client
-        .from('categories')
-        .select('id, parent_id, is_active');
-    // Only the businesses a list shows: a category's links stay when the
-    // client closes or suspends a business, or switches a category off, and
-    // the cards counted them ("7 places" over a list of 5; Restaurants 58
-    // over 56, two from the switched-off "כשר לפסח").
-    final active = await _client
-        .from('businesses')
-        .select('id')
-        .eq('status', 'active')
-        .eq('kind', 'business');
+    // Three separate questions, asked together rather than one after the
+    // other. Only the businesses a list shows count: a category's links stay
+    // when the client closes or suspends a business, or switches a category
+    // off, and the cards counted them ("7 places" over a list of 5;
+    // Restaurants 58 over 56, two from the switched-off "כשר לפסח").
+    final (data, categories, active) = await (
+      fetchCategoryLinks(),
+      _client.from('categories').select('id, parent_id, is_active'),
+      _client
+          .from('businesses')
+          .select('id')
+          .eq('status', 'active')
+          .eq('kind', 'business'),
+    ).wait;
     final shown = {
       for (final b in List<Map<String, dynamic>>.from(active)) b['id'] as String,
     };
@@ -144,7 +142,7 @@ class BusinessRepository {
     };
 
     final members = <String, Set<String>>{};
-    for (final row in List<Map<String, dynamic>>.from(data)) {
+    for (final row in data) {
       final business = row['entity_id'] as String;
       if (!shown.contains(business)) continue;
       final id = row['category_id'] as String;
@@ -161,12 +159,25 @@ class BusinessRepository {
   /// One query rather than one per category: the map needs to know which
   /// category each pin belongs to, and there are only a couple of hundred
   /// links in total.
+  ///
+  /// Read a thousand at a time: the server returns at most 1000 rows to a
+  /// request and says nothing about the rest — 627 links today, so the list
+  /// would have been cut short silently as the directory grew.
   Future<List<Map<String, dynamic>>> fetchCategoryLinks() async {
-    final data = await _client
-        .from('entity_categories')
-        .select('entity_id, category_id')
-        .eq('entity_type', 'business');
-    return List<Map<String, dynamic>>.from(data);
+    const page = 1000;
+    final all = <Map<String, dynamic>>[];
+    for (var from = 0; ; from += page) {
+      final data = await _client
+          .from('entity_categories')
+          .select('entity_id, category_id')
+          .eq('entity_type', 'business')
+          .order('entity_id')
+          .order('category_id')
+          .range(from, from + page - 1);
+      final rows = List<Map<String, dynamic>>.from(data);
+      all.addAll(rows);
+      if (rows.length < page) return all;
+    }
   }
 
   /// One business, by its id or by its slug.

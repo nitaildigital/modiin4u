@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/widgets/network_photo.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
@@ -383,6 +384,7 @@ class _Photos extends StatelessWidget {
                   Image.network(
                     googlePhotoUri(p).toString(),
                     headers: kIsWeb ? null : googlePlacesHeaders,
+                    cacheWidth: nativeDecodeWidth(photos.length == 1 ? 398 : 300, MediaQuery.devicePixelRatioOf(context)),
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => Container(color: const Color(0xFFF0F2F5)),
                   ),

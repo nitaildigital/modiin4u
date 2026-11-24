@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import '../../../shared/widgets/network_photo.dart' show decodeWidth, photoTargetWidth;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -247,6 +250,14 @@ class _PlaceImage extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: place.image!,
                 fit: BoxFit.cover,
+                // Decoded at the size drawn (business originals run to several
+                // MB). At least 3x: the finished card is saved as a picture
+                // at pixelRatio 3 (urban_profile_done_screen), and must stay
+                // sharp there.
+                memCacheWidth: decodeWidth(
+                  photoTargetWidth(width, height),
+                  math.max(MediaQuery.devicePixelRatioOf(context), 3),
+                ),
                 errorWidget: (_, _, _) => _blank(),
               )
             : _blank(),

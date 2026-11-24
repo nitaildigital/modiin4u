@@ -29,15 +29,17 @@ final parkingLotOfPoi = Expando<ParkingLot>('parkingLot');
 /// from, and every return to the app after two minutes fetched the car
 /// parks again though no map was open (resume_refresh, 6 Nov).
 final mapPoisProvider = FutureProvider.autoDispose<List<MapPoi>>((ref) async {
-  final businesses = await ref.watch(businessesProvider.future);
-  // Only events still to come, as the events list shows them: every event
-  // put past ones on the map, as if they were on (found 21 Oct).
-  final events = await ref.watch(upcomingEventsProvider.future);
-  // Empty today, because the client has not supplied property content yet.
-  // The layer is wired anyway, so it fills the moment a listing exists rather
-  // than needing this file changed again.
-  final listings = await ref.watch(listingsProvider.future);
-  final parkingLots = await ref.watch(parkingLotsProvider.future);
+  // The four lists at once rather than one after the other. Events: only
+  // those still to come, as the events list shows them — every event put
+  // past ones on the map, as if they were on (found 21 Oct). Listings are
+  // empty today, because the client has not supplied property content yet;
+  // the layer is wired anyway, so it fills the moment a listing exists.
+  final (businesses, events, listings, parkingLots) = await (
+    ref.watch(businessesProvider.future),
+    ref.watch(upcomingEventsProvider.future),
+    ref.watch(listingsProvider.future),
+    ref.watch(parkingLotsProvider.future),
+  ).wait;
   // The pin card's kind of place follows the app's language; until the
   // links arrive it is the description, as it always was.
   final kinds = ref.watch(businessPrimaryCategoryProvider).valueOrNull;

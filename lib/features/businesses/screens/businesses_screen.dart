@@ -86,7 +86,7 @@ class _MobileBusinessesContentState
                 categories.when(
                   loading: () => const _CategoryGridSkeleton(),
                   error: (_, _) => ErrorRetry(
-                    onRetry: () => ref.invalidate(businessCategoriesProvider),
+                    onRetry: () => ref.invalidate(businessCategoryRowsProvider),
                   ),
                   data: (list) => _CategoryGrid(categories: list),
                 ),

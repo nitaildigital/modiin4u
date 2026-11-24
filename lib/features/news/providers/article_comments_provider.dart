@@ -18,7 +18,7 @@ final articleCommentsProvider =
       ref,
       articleId,
     ) async {
-      final me = kIsWeb ? null : ref.watch(authProvider)?.id;
+      final me = kIsWeb ? null : ref.watch(authProvider.select((u) => u?.id));
       final query = SupabaseConfig.client
           .from('comments')
           .select(

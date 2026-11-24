@@ -283,6 +283,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: CachedNetworkImage(
                               imageUrl: user.avatarUrl!,
                               fit: BoxFit.cover,
+                              // Blurred at sigma 25, a small decode looks the
+                              // same as the full one and costs far less.
+                              memCacheWidth: 200,
                               errorWidget: (_, _, _) => const ColoredBox(color: AppColors.midBlue),
                             ),
                           )

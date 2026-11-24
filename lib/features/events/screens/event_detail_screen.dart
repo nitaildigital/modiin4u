@@ -164,7 +164,8 @@ class _MobileEventDetailContentState
                 .valueOrNull?[event.id] ??
             const [])
         .firstOrNull;
-    final top = MediaQuery.of(context).padding.top + 7;
+    // paddingOf: the keyboard (the report sheet) does not rebuild the page.
+    final top = MediaQuery.paddingOf(context).top + 7;
 
     return SizedBox(
       height: 309,

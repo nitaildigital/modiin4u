@@ -1,3 +1,4 @@
+import '../../../core/providers/cache_for.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_config.dart';
@@ -42,6 +43,7 @@ final latestArticlesProvider = FutureProvider<List<Article>>((ref) async {
 /// them again in a session, so pull-to-refresh and a return to the app
 /// brought new stories into the list but not into their category (6 Nov).
 void refreshArticleFiling(void Function(ProviderOrFamily) invalidate) {
+  invalidate(_articleIdsByCategoryProvider);
   invalidate(_articleIdsInCategoryProvider);
   invalidate(articleFilingProvider);
   invalidate(navCategoriesProvider);
@@ -61,17 +63,37 @@ void refreshArticleFiling(void Function(ProviderOrFamily) invalidate) {
 /// an article filed after that never reached its category (6 Nov) — and
 /// held every article in memory, fetched again on each return to the app
 /// though News was closed.
+///
+/// One read of every article link, grouped here by category: the front of
+/// News shows a section per category and made one request for each (9 on
+/// every open, 24 Nov). Read a thousand at a time — the server stops at 1000
+/// rows without saying so, and there are 718 links today.
+final _articleIdsByCategoryProvider =
+    FutureProvider.autoDispose<Map<String, Set<String>>>((ref) async {
+      ref.cacheFor(const Duration(minutes: 2));
+      const page = 1000;
+      final byCategory = <String, Set<String>>{};
+      for (var from = 0; ; from += page) {
+        final rows = List<Map<String, dynamic>>.from(await SupabaseConfig.client
+            .from('entity_categories')
+            .select('entity_id, category_id')
+            .eq('entity_type', 'article')
+            .order('entity_id')
+            .order('category_id')
+            .range(from, from + page - 1));
+        for (final r in rows) {
+          byCategory
+              .putIfAbsent(r['category_id'] as String, () => <String>{})
+              .add(r['entity_id'] as String);
+        }
+        if (rows.length < page) return byCategory;
+      }
+    });
+
 final _articleIdsInCategoryProvider =
     FutureProvider.autoDispose.family<Set<String>, String>((ref, categoryId) async {
-      final rows = await SupabaseConfig.client
-          .from('entity_categories')
-          .select('entity_id')
-          .eq('entity_type', 'article')
-          .eq('category_id', categoryId);
-      return {
-        for (final r in List<Map<String, dynamic>>.from(rows))
-          r['entity_id'] as String,
-      };
+      final all = await ref.watch(_articleIdsByCategoryProvider.future);
+      return all[categoryId] ?? const <String>{};
     });
 
 /// Published articles in one category, newest first.
@@ -105,12 +127,23 @@ final articleCategoryNamesProvider = FutureProvider<Map<String, String>>((ref) a
 /// Related News" are the category's other stories, so both need the id.
 final articleFilingProvider =
     FutureProvider<Map<String, NavCategory>>((ref) async {
-      final rows = await SupabaseConfig.client
-          .from('entity_categories')
-          .select('entity_id, category_id, is_primary, categories(*)')
-          .eq('entity_type', 'article');
+      // Only the category's two names are used; the whole row was attached
+      // to every one of the ~718 links. Read a thousand at a time, as above.
+      const page = 1000;
+      final rows = <Map<String, dynamic>>[];
+      for (var from = 0; ; from += page) {
+        final chunk = List<Map<String, dynamic>>.from(await SupabaseConfig.client
+            .from('entity_categories')
+            .select('entity_id, category_id, is_primary, categories(name, name_en)')
+            .eq('entity_type', 'article')
+            .order('entity_id')
+            .order('category_id')
+            .range(from, from + page - 1));
+        rows.addAll(chunk);
+        if (chunk.length < page) break;
+      }
       final filed = <String, NavCategory>{};
-      for (final r in List<Map<String, dynamic>>.from(rows)) {
+      for (final r in rows) {
         final category = r['categories'] as Map?;
         final he = category?['name'] as String?;
         if (he == null || he.isEmpty) continue;

@@ -12,8 +12,13 @@ final eventRepositoryProvider = Provider<EventRepository>(
 );
 
 /// Every published event, earliest first.
+///
+/// Only events from today on: its one reader keeps the upcoming ones, and the
+/// list read every event ever published — a payload that only grew (24 Nov).
 final eventsProvider = FutureProvider<List<Event>>((ref) async {
-  final rows = await ref.watch(eventRepositoryProvider).fetchAll();
+  final rows = await ref
+      .watch(eventRepositoryProvider)
+      .fetchAll(fromDate: DateTime.now());
   return rows.map(Event.fromJson).toList();
 });
 
@@ -46,8 +51,8 @@ final isAttendingProvider = FutureProvider.family<bool, String>((
   ref,
   eventId,
 ) async {
-  final user = ref.watch(authProvider);
-  if (user == null) return false;
+  final userId = ref.watch(authProvider.select((u) => u?.id));
+  if (userId == null) return false;
   return ref.watch(eventRepositoryProvider).isAttending(eventId);
 });
 
@@ -103,13 +108,15 @@ final eventCategoriesProvider = FutureProvider<List<EventCategory>>((ref) async 
 /// than a category chosen for it.
 final eventCategoriesByEventProvider =
     FutureProvider<Map<String, List<EventCategory>>>((ref) async {
-      final categories = await ref.watch(eventCategoriesProvider.future);
+      // The categories and their links at once, not one after the other.
+      final (categories, rows) = await (
+        ref.watch(eventCategoriesProvider.future),
+        SupabaseConfig.client
+            .from('entity_categories')
+            .select('entity_id, category_id, is_primary')
+            .eq('entity_type', 'event'),
+      ).wait;
       final byId = {for (final c in categories) c.id: c};
-
-      final rows = await SupabaseConfig.client
-          .from('entity_categories')
-          .select('entity_id, category_id, is_primary')
-          .eq('entity_type', 'event');
 
       final links = List<Map<String, dynamic>>.from(rows)
         ..sort((a, b) {

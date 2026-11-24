@@ -111,7 +111,7 @@ class JobSeekerData {
 /// it under 00069's `can_view_job_seeker`).
 final jobSeekerProvider = FutureProvider.autoDispose.family<JobSeekerData, String>((ref, profileId) async {
   final repo = ref.watch(jobRepositoryProvider);
-  final mine = ref.watch(authProvider)?.id == profileId;
+  final mine = ref.watch(authProvider.select((u) => u?.id)) == profileId;
   final results = await Future.wait([
     repo.fetchProfile(profileId),
     repo.fetchExperiences(profileId),
@@ -128,7 +128,7 @@ final jobSeekerProvider = FutureProvider.autoDispose.family<JobSeekerData, Strin
 });
 
 final myJobSeekerProvider = FutureProvider.autoDispose<JobSeekerData>((ref) {
-  final id = ref.watch(authProvider)?.id;
+  final id = ref.watch(authProvider.select((u) => u?.id));
   if (id == null) return const JobSeekerData();
   return ref.watch(jobSeekerProvider(id).future);
 });

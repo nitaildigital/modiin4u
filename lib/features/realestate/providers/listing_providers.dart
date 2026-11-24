@@ -163,9 +163,9 @@ final nearbyListingsProvider = FutureProvider.family<List<Listing>, String>((
 // decided meanwhile: kept for the session, an approved listing still read
 // "Pending" until the app restarted.
 final myListingsProvider = FutureProvider.autoDispose<List<Listing>>((ref) async {
-  final user = ref.watch(authProvider);
-  if (user == null) return const [];
-  return ref.watch(listingRepositoryProvider).fetchMine(user.id);
+  final userId = ref.watch(authProvider.select((u) => u?.id));
+  if (userId == null) return const [];
+  return ref.watch(listingRepositoryProvider).fetchMine(userId);
 });
 
 /// The neighbourhoods a listing can be filed under, in the order the admin

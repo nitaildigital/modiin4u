@@ -371,7 +371,6 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
   /// One field and Send, with "Replying to …" over it while answering.
   Widget _writeBox() {
     final reply = _replyTo;
-    final canSend = _controller.text.trim().isNotEmpty && !_sending;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -415,7 +414,6 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
                 maxLength: 1000,
                 textInputAction: TextInputAction.newline,
                 keyboardType: TextInputType.multiline,
-                onChanged: (_) => setState(() {}),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: reply == null
@@ -428,27 +426,32 @@ class _MArticleCommentsState extends ConsumerState<MArticleComments> {
               ),
             ),
             const SizedBox(width: 8),
-            SizedBox(
-              width: 44,
-              height: 44,
-              child: FilledButton(
-                onPressed: canSend ? _send : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.midBlue,
-                  padding: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // Only the button follows the text: the whole thread was rebuilt
+            // on every keystroke to enable it (24 Nov).
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (context, value, _) => SizedBox(
+                width: 44,
+                height: 44,
+                child: FilledButton(
+                  onPressed: value.text.trim().isNotEmpty && !_sending ? _send : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.midBlue,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _sending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      // The paper plane points the way the text runs.
+                      : Transform.flip(
+                          flipX: Directionality.of(context) == TextDirection.rtl,
+                          child: const Icon(IconsaxPlusBold.send_1, size: 20, color: Colors.white),
+                        ),
                 ),
-                child: _sending
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    // The paper plane points the way the text runs.
-                    : Transform.flip(
-                        flipX: Directionality.of(context) == TextDirection.rtl,
-                        child: const Icon(IconsaxPlusBold.send_1, size: 20, color: Colors.white),
-                      ),
               ),
             ),
           ],

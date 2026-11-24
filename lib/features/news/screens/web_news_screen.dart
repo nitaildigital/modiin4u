@@ -304,6 +304,7 @@ class _WebNewsContentState extends ConsumerState<WebNewsContent>
         onTap: link == null ? null : () => launchUrl(Uri.parse(link)),
         child: Image.network(
           sizedPhotoUrl(banner.imageUrl, _kBannerWidth, MediaQuery.devicePixelRatioOf(context)),
+          cacheWidth: nativeDecodeWidth(_kBannerWidth, MediaQuery.devicePixelRatioOf(context)),
           width: _kBannerWidth,
           fit: BoxFit.fitWidth,
           // A creative that fails to load leaves no gap in the column.

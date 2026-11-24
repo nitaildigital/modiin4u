@@ -6,14 +6,24 @@ import '../../../shared/search_text.dart';
 class EventRepository {
   final SupabaseClient _client = SupabaseConfig.client;
 
+  /// With [fromDate], only events starting that day or later, or with no
+  /// date — what the app shows as upcoming; it decides "passed" by the hour
+  /// itself, so today's are all sent.
   Future<List<Map<String, dynamic>>> fetchAll({
     String? search,
     String status = 'published',
+    DateTime? fromDate,
   }) async {
     var query = _client.from('events').select();
 
     if (status.isNotEmpty) {
       query = query.eq('status', status);
+    }
+    if (fromDate != null) {
+      final day = '${fromDate.year.toString().padLeft(4, '0')}-'
+          '${fromDate.month.toString().padLeft(2, '0')}-'
+          '${fromDate.day.toString().padLeft(2, '0')}';
+      query = query.or('start_date.is.null,start_date.gte.$day');
     }
     if (search != null && search.isNotEmpty) {
       query = query.or(

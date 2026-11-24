@@ -10,7 +10,7 @@ import '../../../shared/search_text.dart';
 final categoriesBySlugProvider = FutureProvider<Map<String, BusinessCategory>>((
   ref,
 ) async {
-  final rows = await ref.watch(businessRepositoryProvider).fetchCategories();
+  final rows = await ref.watch(businessCategoryRowsProvider.future);
   return {
     for (final row in rows)
       (row['slug'] as String? ?? ''): BusinessCategory.fromJson(row),
@@ -130,10 +130,11 @@ class FoodPlace {
 /// first). With [withBars], businesses that describe themselves as a bar are
 /// included whether or not they are filed under a food category.
 Future<List<FoodPlace>> _loadFoodPlaces(Ref ref, {required bool withBars}) async {
-  final repo = ref.watch(businessRepositoryProvider);
-  final businesses = await ref.watch(businessesProvider.future);
-  final categories = await ref.watch(categoriesBySlugProvider.future);
-  final links = await repo.fetchCategoryLinks();
+  final (businesses, categories, links) = await (
+    ref.watch(businessesProvider.future),
+    ref.watch(categoriesBySlugProvider.future),
+    ref.watch(businessCategoryLinksProvider.future),
+  ).wait;
 
   final byId = {for (final c in categories.values) c.id: c};
 

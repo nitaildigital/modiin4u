@@ -92,7 +92,11 @@ TextTheme _asDesigned(TextTheme t) {
 }
 
 class AppTheme {
-  static ThemeData get dark {
+  /// Built once: a getter built a new ThemeData on every rebuild of the app
+  /// (a locale change, 24 Nov).
+  static final ThemeData dark = _buildDark();
+
+  static ThemeData _buildDark() {
     return ThemeData(
       useMaterial3: true,
       pageTransitionsTheme: appPageTransitions,
@@ -174,7 +178,11 @@ class AppTheme {
     );
   }
 
-  static ThemeData get light {
+  /// Built once: a getter built a new ThemeData on every rebuild of the app
+  /// (a locale change, 24 Nov).
+  static final ThemeData light = _buildLight();
+
+  static ThemeData _buildLight() {
     return ThemeData(
       useMaterial3: true,
       pageTransitionsTheme: appPageTransitions,

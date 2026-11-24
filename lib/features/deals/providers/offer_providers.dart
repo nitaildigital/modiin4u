@@ -40,9 +40,9 @@ final offerCategoriesProvider = FutureProvider<List<BusinessCategory>>((
 /// This person's claims, keyed by deal: their vouchers, used or not. Empty
 /// when signed out, so the screen can offer to sign in rather than fail.
 final myClaimsProvider = FutureProvider<Map<String, MyClaim>>((ref) async {
-  final user = ref.watch(authProvider);
-  if (user == null) return const {};
-  return ref.watch(offerRepositoryProvider).fetchMyClaimList(user.id);
+  final userId = ref.watch(authProvider.select((u) => u?.id));
+  if (userId == null) return const {};
+  return ref.watch(offerRepositoryProvider).fetchMyClaimList(userId);
 });
 
 /// Offers this person has claimed.

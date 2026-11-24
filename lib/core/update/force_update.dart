@@ -52,8 +52,23 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
     super.initState();
     if (kIsWeb) return;
     _check();
-    _lifecycle = AppLifecycleListener(onResume: _check);
+    // On a return after two minutes away, as the app's other data
+    // (ResumeRefresh): a quick look at another app asked the server again
+    // each time (24 Nov). A required update is still met at the next start
+    // or longer return.
+    _lifecycle = AppLifecycleListener(
+      onHide: () => _hiddenAt = DateTime.now(),
+      onResume: () {
+        final hidden = _hiddenAt;
+        _hiddenAt = null;
+        if (hidden == null || DateTime.now().difference(hidden) >= const Duration(minutes: 2)) {
+          _check();
+        }
+      },
+    );
   }
+
+  DateTime? _hiddenAt;
 
   @override
   void dispose() {

@@ -22,7 +22,7 @@ class ShellScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentIndex = _currentIndex(context);
-    final isWide = MediaQuery.of(context).size.width > 1100;
+    final isWide = MediaQuery.sizeOf(context).width > 1100;
 
     // Back from a tab other than Home returns to Home rather than leaving the
     // app; back from Home itself exits, which is what Android expects. Home
@@ -45,9 +45,9 @@ class ShellScaffold extends StatelessWidget {
             ? null
             : Container(
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom,
+                  bottom: MediaQuery.paddingOf(context).bottom,
                 ),
-                height: 72 + MediaQuery.of(context).padding.bottom,
+                height: 72 + MediaQuery.paddingOf(context).bottom,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   boxShadow: [

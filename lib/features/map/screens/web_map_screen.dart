@@ -18,7 +18,7 @@ import '../providers/map_providers.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
 import '../../../shared/widgets/app_map.dart' show MapCirclePin;
 import '../../municipal/providers/parking_providers.dart' show ParkingLot;
-import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../../../shared/widgets/network_photo.dart' show nativeDecodeWidth, photoTargetWidth, sizedPhotoUrl;
 
 const _kAssets = 'assets/web/map';
 const _kBorder = Color(0xFFE7E7E7);
@@ -830,6 +830,7 @@ class _WebMapSlideState extends State<WebMapSlide> {
       borderRadius: BorderRadius.circular(radius),
       child: Image.network(
         sizedPhotoUrl(url, w, 2),
+        cacheWidth: nativeDecodeWidth(photoTargetWidth(w, h), 2),
         fit: BoxFit.cover,
         width: w,
         height: h,

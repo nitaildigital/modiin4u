@@ -1,3 +1,4 @@
+import '../providers/cache_for.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../supabase/supabase_config.dart';
@@ -54,6 +55,10 @@ class PushFeedItem {
 final pushFeedProvider = FutureProvider.autoDispose<List<PushFeedItem>>((
   ref,
 ) async {
+  // Home is let go on every tab switch, and the bell's count was read again
+  // each time it came back (24 Nov). New notifications still refresh it at
+  // once: a foreground message and a return to the app invalidate it.
+  ref.cacheFor(const Duration(seconds: 60));
   final token = await ref.read(pushServiceProvider).token();
   final rows = await SupabaseConfig.client.rpc(
     'push_feed',

@@ -181,13 +181,15 @@ class MArticleBody extends StatefulWidget {
 class _MArticleBodyState extends State<MArticleBody> {
   String? _parsedBody;
   List<ArticleBlock> _blocks = const [];
-  final _recognizers = <TapGestureRecognizer>[];
+  /// One per link, kept across rebuilds: a new one was made for every link
+  /// on every rebuild and only let go when the story changed (24 Nov).
+  final _recognizers = <String, TapGestureRecognizer>{};
 
   List<ArticleBlock> get _currentBlocks {
     if (_parsedBody != widget.article.body) {
       _parsedBody = widget.article.body;
       _blocks = parseArticleBody(widget.article.body);
-      for (final r in _recognizers) {
+      for (final r in _recognizers.values) {
         r.dispose();
       }
       _recognizers.clear();
@@ -197,7 +199,7 @@ class _MArticleBodyState extends State<MArticleBody> {
 
   @override
   void dispose() {
-    for (final r in _recognizers) {
+    for (final r in _recognizers.values) {
       r.dispose();
     }
     super.dispose();
@@ -206,8 +208,8 @@ class _MArticleBodyState extends State<MArticleBody> {
   /// A link in the story. Links naming a business the way the old site did
   /// (`/business/<slug>/`) open the business here; anything else opens as
   /// written — the website's rule.
-  TapGestureRecognizer _linkRecognizer(String href) {
-    final r = TapGestureRecognizer()
+  TapGestureRecognizer _linkRecognizer(String href) =>
+      _recognizers.putIfAbsent(href, () => TapGestureRecognizer()
       ..onTap = () {
         final uri = Uri.tryParse(href.trim());
         if (uri == null) return;
@@ -218,10 +220,7 @@ class _MArticleBodyState extends State<MArticleBody> {
           return;
         }
         launchUrl(uri, mode: LaunchMode.externalApplication);
-      };
-    _recognizers.add(r);
-    return r;
-  }
+      });
 
   @override
   Widget build(BuildContext context) {

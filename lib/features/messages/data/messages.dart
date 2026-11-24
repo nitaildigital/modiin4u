@@ -1,3 +1,4 @@
+import '../../../core/providers/cache_for.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -160,6 +161,10 @@ final conversationsProvider = FutureProvider.autoDispose<List<Conversation>>((re
 /// The badge on the home page's message icon.
 final unreadMessagesProvider = FutureProvider.autoDispose<int>((ref) {
   ref.watch(authProvider.select((u) => u?.id));
+  // As the bell: kept a minute across tab switches; a new message, a return
+  // to the app and the Messages screen invalidate it at once, and a change
+  // of account reads it again (the watch above).
+  ref.cacheFor(const Duration(seconds: 60));
   return ref.watch(messageRepositoryProvider).unreadCount();
 });
 

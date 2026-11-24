@@ -139,8 +139,10 @@ class ProfessionalTrade {
 /// so it is left out.
 final professionalTradesProvider =
     FutureProvider<({Set<String> everyone, List<ProfessionalTrade> trades})>((ref) async {
-      final repo = ref.watch(businessRepositoryProvider);
-      final rows = await repo.fetchCategories();
+      final (rows, links) = await (
+        ref.watch(businessCategoryRowsProvider.future),
+        ref.watch(businessCategoryLinksProvider.future),
+      ).wait;
       final all = [for (final r in rows) BusinessCategory.fromJson(r)];
       final services = all.where((c) => c.parentId == null && c.slug == 'services').firstOrNull;
       if (services == null) return (everyone: const <String>{}, trades: const <ProfessionalTrade>[]);
@@ -148,7 +150,6 @@ final professionalTradesProvider =
       final children = all.where((c) => c.parentId == services.id).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-      final links = await repo.fetchCategoryLinks();
       final byCategory = <String, Set<String>>{};
       for (final l in links) {
         byCategory.putIfAbsent(l['category_id'] as String, () => {}).add(l['entity_id'] as String);

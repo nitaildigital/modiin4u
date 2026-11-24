@@ -15,7 +15,7 @@ import '../../../core/theme/app_fonts.dart';
 import '../providers/restaurant_providers.dart';
 import '../../../shared/widgets/web_map_tiles.dart';
 import '../widgets/restaurant_place_card.dart';
-import '../../../shared/widgets/network_photo.dart' show sizedPhotoUrl;
+import '../../../shared/widgets/network_photo.dart' show nativeDecodeWidth, sizedPhotoUrl;
 import '../../../shared/widgets/web_contact_menu.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -1045,6 +1045,7 @@ class _Thumbnail extends StatelessWidget {
     // A broken link should look like a place with no photo, not like an error.
     return Image.network(
       sizedPhotoUrl(src, 400, 2),
+      cacheWidth: nativeDecodeWidth(400, 2),
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => _fallback,
     );

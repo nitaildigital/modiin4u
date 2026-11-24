@@ -26,8 +26,8 @@ class PreferencesNotifier extends StateNotifier<NotificationPreferences?> {
 
   PreferencesNotifier(this._ref) : super(null) {
     _ref.listen(
-      authProvider,
-      (_, next) => _load(next?.id),
+      authProvider.select((u) => u?.id),
+      (_, id) => _load(id),
       fireImmediately: true,
     );
   }
