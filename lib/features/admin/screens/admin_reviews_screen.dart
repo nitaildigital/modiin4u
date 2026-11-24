@@ -9,9 +9,10 @@ import '../providers/admin_reviews_provider.dart';
 import '../ui/admin_kit.dart';
 import '../admin_language.dart';
 
-/// Whether the panel offers its own reply to a review. Off: see the note
-/// at the reply button.
-const _repliesEnabled = false;
+/// Whether the panel offers its own reply to a review. Back on 25 Nov: the
+/// client approved official replies (00089) — the business's owner from the
+/// app, the team from here — shown under the review with a badge.
+const _repliesEnabled = true;
 
 /// Reviews of businesses: approve, turn down, hide, and reply.
 ///
@@ -316,10 +317,8 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // The client: Modiin4u and the businesses do not reply to
-              // reviews at this stage — residents reply to each other, and
-              // those replies are moderated under תגובות. The dialog stays
-              // for when he wants it back.
+              // The team's official reply; the app shows it with the
+              // "Modiin4u" badge (the owner's own carries "Owner").
               if (_repliesEnabled)
               IconButton(
                 tooltip: response.isEmpty ? tr('תגובה', 'Comment') : tr('עריכת התגובה', 'Edit the comment'),

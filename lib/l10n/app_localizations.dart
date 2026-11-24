@@ -3262,7 +3262,7 @@ abstract class L {
   /// No description provided for @sortNewest.
   ///
   /// In he, this message translates to:
-  /// **'חדש ביותר'**
+  /// **'החדשות'**
   String get sortNewest;
 
   /// No description provided for @sortRating.
@@ -3726,6 +3726,102 @@ abstract class L {
   /// In he, this message translates to:
   /// **'חיבור'**
   String get sgConnect;
+
+  /// No description provided for @likeAction.
+  ///
+  /// In he, this message translates to:
+  /// **'אהבתי'**
+  String get likeAction;
+
+  /// No description provided for @helpfulAction.
+  ///
+  /// In he, this message translates to:
+  /// **'מועיל'**
+  String get helpfulAction;
+
+  /// No description provided for @signInToLike.
+  ///
+  /// In he, this message translates to:
+  /// **'התחברו כדי לסמן אהבתי'**
+  String get signInToLike;
+
+  /// No description provided for @ownerBadge.
+  ///
+  /// In he, this message translates to:
+  /// **'בעל העסק'**
+  String get ownerBadge;
+
+  /// No description provided for @teamReply.
+  ///
+  /// In he, this message translates to:
+  /// **'תגובת מודיעין בשבילך'**
+  String get teamReply;
+
+  /// No description provided for @replyAsOwner.
+  ///
+  /// In he, this message translates to:
+  /// **'תגובה כבעל העסק'**
+  String get replyAsOwner;
+
+  /// No description provided for @editReply.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת התגובה'**
+  String get editReply;
+
+  /// No description provided for @removeReply.
+  ///
+  /// In he, this message translates to:
+  /// **'הסרת התגובה'**
+  String get removeReply;
+
+  /// No description provided for @ownerReplyHint.
+  ///
+  /// In he, this message translates to:
+  /// **'כתבו את תגובתכם לביקורת'**
+  String get ownerReplyHint;
+
+  /// No description provided for @editReview.
+  ///
+  /// In he, this message translates to:
+  /// **'עריכת הביקורת'**
+  String get editReview;
+
+  /// No description provided for @withdrawReview.
+  ///
+  /// In he, this message translates to:
+  /// **'הסרת הביקורת שלי'**
+  String get withdrawReview;
+
+  /// No description provided for @withdrawReviewConfirm.
+  ///
+  /// In he, this message translates to:
+  /// **'להסיר את הביקורת? היא לא תוצג יותר, ותוכלו לכתוב ביקורת חדשה.'**
+  String get withdrawReviewConfirm;
+
+  /// No description provided for @reviewUpdatedPending.
+  ///
+  /// In he, this message translates to:
+  /// **'הביקורת עודכנה ותוצג שוב לאחר אישור.'**
+  String get reviewUpdatedPending;
+
+  /// No description provided for @sortHighest.
+  ///
+  /// In he, this message translates to:
+  /// **'הדירוג הגבוה'**
+  String get sortHighest;
+
+  /// No description provided for @sortMostHelpful.
+  ///
+  /// In he, this message translates to:
+  /// **'המועילות ביותר'**
+  String get sortMostHelpful;
+
+  /// No description provided for @showMoreReviews.
+  ///
+  /// In he, this message translates to:
+  /// **'עוד ביקורות'**
+  String get showMoreReviews;
 
   /// No description provided for @sgAllowMotion.
   ///

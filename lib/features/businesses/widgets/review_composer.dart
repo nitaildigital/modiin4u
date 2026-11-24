@@ -24,6 +24,12 @@ class ReviewComposer extends StatefulWidget {
   final String? userAvatar;
   final int initialRating;
 
+  /// Editing one's own review (00089): its words, and how many photos it
+  /// already has — they stay, and new ones are added up to [maxPhotos].
+  final String initialText;
+  final int keptPhotos;
+  bool get editing => initialText.isNotEmpty || keptPhotos > 0;
+
   /// Picks one photo; null when cancelled or refused (it says why itself).
   final Future<ReviewPhoto?> Function() onPickPhoto;
 
@@ -39,6 +45,8 @@ class ReviewComposer extends StatefulWidget {
     required this.userName,
     required this.userAvatar,
     required this.initialRating,
+    this.initialText = '',
+    this.keptPhotos = 0,
     required this.onPickPhoto,
     required this.onSubmit,
   });
@@ -49,7 +57,7 @@ class ReviewComposer extends StatefulWidget {
 
 class _ReviewComposerState extends State<ReviewComposer> {
   late int _rating = widget.initialRating;
-  final _text = TextEditingController();
+  late final _text = TextEditingController(text: widget.initialText);
   final _photos = <ReviewPhoto>[];
   final _tags = <String>{};
   bool _saving = false;
@@ -92,7 +100,7 @@ class _ReviewComposerState extends State<ReviewComposer> {
   void _toggleTag(String tag) => setState(() => _tags.contains(tag) ? _tags.remove(tag) : _tags.add(tag));
 
   Future<void> _addPhoto() async {
-    if (_photos.length >= ReviewComposer.maxPhotos || _saving) return;
+    if (_photos.length + widget.keptPhotos >= ReviewComposer.maxPhotos || _saving) return;
     final p = await widget.onPickPhoto();
     if (p != null && mounted) setState(() => _photos.add(p));
   }
@@ -358,7 +366,7 @@ class _ReviewComposerState extends State<ReviewComposer> {
                                 ],
                               ),
                             ),
-                          if (_photos.length < ReviewComposer.maxPhotos)
+                          if (_photos.length + widget.keptPhotos < ReviewComposer.maxPhotos)
                             GestureDetector(
                               onTap: _addPhoto,
                               child: Container(
@@ -430,7 +438,9 @@ class _ReviewComposerState extends State<ReviewComposer> {
           ),
           const SizedBox(height: 20),
           Text(
-            mTr(context, 'Thank you for your review!', 'תודה על הביקורת!'),
+            widget.editing
+                ? mTr(context, 'Your review was updated', 'הביקורת עודכנה')
+                : mTr(context, 'Thank you for your review!', 'תודה על הביקורת!'),
             style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),

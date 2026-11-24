@@ -293,13 +293,15 @@ class BusinessRepository {
       throw StateError('A review can only be left by a signed-in account.');
     }
 
+    // One review each — not counting one its author took back (00089).
     final existing = await _client
         .from('reviews')
-        .select('id')
+        .select()
         .eq('business_id', businessId)
-        .eq('author_id', uid)
-        .maybeSingle();
-    if (existing != null) throw StateError('already-reviewed');
+        .eq('author_id', uid);
+    if (List<Map<String, dynamic>>.from(existing).any((r) => r['withdrawn_at'] == null)) {
+      throw StateError('already-reviewed');
+    }
 
     await _client.from('reviews').insert({
       'business_id': businessId,
@@ -309,6 +311,42 @@ class BusinessRepository {
       if (photos.isNotEmpty) 'photos': photos,
     });
   }
+
+  /// Changes this person's own review: its rating, words and photos. Row
+  /// security lets an author update their review, and the guard (00075)
+  /// sends it back to the panel's queue, so it shows again once approved.
+  Future<void> updateReview({
+    required String reviewId,
+    required int rating,
+    String? body,
+    List<String> photos = const [],
+  }) async {
+    final uid = _client.auth.currentUser?.id;
+    if (uid == null) throw StateError('not signed in');
+    await _client
+        .from('reviews')
+        .update({
+          'rating': rating,
+          'body': (body ?? '').trim().isEmpty ? null : body!.trim(),
+          'photos': photos,
+        })
+        .eq('id', reviewId)
+        .eq('author_id', uid)
+        .select('id')
+        .single();
+  }
+
+  /// Takes this person's own review back (00089): hidden, in the panel's
+  /// trash rather than deleted, and they may write a new one.
+  Future<void> withdrawReview(String reviewId) =>
+      _client.rpc('withdraw_my_review', params: {'p_review': reviewId});
+
+  /// The business's owner answers a review (00089); empty text takes the
+  /// answer away.
+  Future<void> replyToReview(String reviewId, String text) => _client.rpc(
+    'reply_to_review',
+    params: {'p_review': reviewId, 'p_text': text},
+  );
 
   /// Whether this person agreed to show their profile photo next to what
   /// they write (true / false), or has not been asked (null) — and whether
@@ -339,13 +377,14 @@ class BusinessRepository {
     final uid = _client.auth.currentUser?.id;
     if (uid == null) return false;
 
-    final row = await _client
+    // Not counting a review they took back (00089). A list, not
+    // maybeSingle: a withdrawn review and a new one are two rows.
+    final rows = await _client
         .from('reviews')
-        .select('id')
+        .select()
         .eq('business_id', businessId)
-        .eq('author_id', uid)
-        .maybeSingle();
-    return row != null;
+        .eq('author_id', uid);
+    return List<Map<String, dynamic>>.from(rows).any((r) => r['withdrawn_at'] == null);
   }
 }
 

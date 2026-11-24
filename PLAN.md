@@ -5514,6 +5514,39 @@ further to do here; revisit only if a current device shows jank.
       timing through `dumpsys gfxinfo` and SurfaceFlinger returned nothing
       usable on this handset, because Flutter renders to its own surface.
 
+### Likes, "helpful", owner replies, a review taken back — 25 Nov (00089)
+
+The client (24 Nov): comments and reviews should feel like Facebook or
+Instagram, to draw residents in; he approved likes, "helpful" on reviews,
+the business owner's replies with a badge, editing or removing one's own
+review, and a smoother review list. The ♥ stays saving to Favourites; a like
+is a 👍 beside it (Harshit, 25 Nov).
+
+- **Likes (`reactions`, 00089):** on articles (the bar under the story),
+  businesses (the rating row), comments and replies, and reviews; "Helpful"
+  on reviews. Only published things can be liked, not by a blocked account,
+  one each. A screen's buttons ask for their counts together — one request
+  for the counts and one for "mine" per screen, not per item. A tap shows at
+  once, is put back if refused, and a second tap waits for the first.
+  Signed out, it offers sign-in. App only, as with all accounts.
+- **Owner replies:** `reply_to_review` lets the business's owner (or an
+  admin) answer a published review in `admin_response`; empty text takes it
+  away. The app shows it under the review with an "Owner" badge, or
+  "Modiin4u" for the team's; the panel's own reply is switched back on.
+- **One's own review:** Edit opens the review sheet with its stars, words
+  and photos (new photos up to four in all); saved, it goes back to the
+  queue (the guard, 00075). Remove calls `withdraw_my_review`: hidden — in
+  the panel's trash, not deleted — and the form to write a new one returns.
+  Only that function sets `withdrawn_at`; a review restored from the trash
+  is no longer withdrawn.
+- **The review list (phone):** Newest · Highest rated · Most helpful, five
+  at a time with "Show more", the notification's review always among those
+  shown; every action under a review or comment at least 44 high.
+- Tested on a local copy of the tables involved, 27 of 27 (likes only on
+  published things, privacy of who liked, owner and admin replies, edits
+  back to the queue, withdrawing and restoring). Production needs 00089
+  applied before an app with this ships.
+
 ### App performance, measured — 24 Nov
 
 Audited first (startup, requests, the database's own statistics), then only

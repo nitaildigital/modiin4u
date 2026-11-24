@@ -10,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
+import '../../../shared/reactions/reaction_button.dart';
+import '../../../shared/reactions/reactions.dart';
 import '../../../shared/widgets/network_photo.dart';
 import '../../favorites/providers/favorite_providers.dart';
 import '../../favorites/repositories/favorite_repository.dart';
@@ -491,7 +493,8 @@ class MNewsCard extends StatelessWidget {
 
 /// The design's bar holds comments, shares and Save. The comments are on
 /// the page under the story (MArticleComments), so the bar draws Share, its
-/// count once a share has been counted, and Save in the app.
+/// count once a share has been counted, Save in the app, and — in the app —
+/// the article's 👍 with its count (00089).
 class MArticleBottomBar extends ConsumerWidget {
   final Article article;
   final VoidCallback onShare;
@@ -534,6 +537,16 @@ class MArticleBottomBar extends ConsumerWidget {
                 ),
               ),
             ),
+            if (!kIsWeb)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 4),
+                child: ReactionButton(
+                  target: ReactionTarget.article,
+                  id: article.id,
+                  size: 19,
+                  color: Colors.black,
+                ),
+              ),
             if (!kIsWeb)
               Expanded(
                 child: GestureDetector(

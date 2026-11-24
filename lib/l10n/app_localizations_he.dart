@@ -1689,7 +1689,7 @@ class LHe extends L {
   String get sortBy => 'מיון';
 
   @override
-  String get sortNewest => 'חדש ביותר';
+  String get sortNewest => 'החדשות';
 
   @override
   String get sortRating => 'דירוג';
@@ -1952,6 +1952,55 @@ class LHe extends L {
 
   @override
   String get sgConnect => 'חיבור';
+
+  @override
+  String get likeAction => 'אהבתי';
+
+  @override
+  String get helpfulAction => 'מועיל';
+
+  @override
+  String get signInToLike => 'התחברו כדי לסמן אהבתי';
+
+  @override
+  String get ownerBadge => 'בעל העסק';
+
+  @override
+  String get teamReply => 'תגובת מודיעין בשבילך';
+
+  @override
+  String get replyAsOwner => 'תגובה כבעל העסק';
+
+  @override
+  String get editReply => 'עריכת התגובה';
+
+  @override
+  String get removeReply => 'הסרת התגובה';
+
+  @override
+  String get ownerReplyHint => 'כתבו את תגובתכם לביקורת';
+
+  @override
+  String get editReview => 'עריכת הביקורת';
+
+  @override
+  String get withdrawReview => 'הסרת הביקורת שלי';
+
+  @override
+  String get withdrawReviewConfirm =>
+      'להסיר את הביקורת? היא לא תוצג יותר, ותוכלו לכתוב ביקורת חדשה.';
+
+  @override
+  String get reviewUpdatedPending => 'הביקורת עודכנה ותוצג שוב לאחר אישור.';
+
+  @override
+  String get sortHighest => 'הדירוג הגבוה';
+
+  @override
+  String get sortMostHelpful => 'המועילות ביותר';
+
+  @override
+  String get showMoreReviews => 'עוד ביקורות';
 
   @override
   String get sgAllowMotion => 'אישור תנועה וכושר';

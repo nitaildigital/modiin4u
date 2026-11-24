@@ -1982,6 +1982,56 @@ class LEn extends L {
   String get sgConnect => 'Connect';
 
   @override
+  String get likeAction => 'Like';
+
+  @override
+  String get helpfulAction => 'Helpful';
+
+  @override
+  String get signInToLike => 'Sign in to like';
+
+  @override
+  String get ownerBadge => 'Owner';
+
+  @override
+  String get teamReply => 'Reply from Modiin4u';
+
+  @override
+  String get replyAsOwner => 'Reply as owner';
+
+  @override
+  String get editReply => 'Edit reply';
+
+  @override
+  String get removeReply => 'Remove reply';
+
+  @override
+  String get ownerReplyHint => 'Write your reply to this review';
+
+  @override
+  String get editReview => 'Edit review';
+
+  @override
+  String get withdrawReview => 'Remove my review';
+
+  @override
+  String get withdrawReviewConfirm =>
+      'Remove your review? It will no longer be shown, and you can write a new one.';
+
+  @override
+  String get reviewUpdatedPending =>
+      'Your review was updated and will show again once approved.';
+
+  @override
+  String get sortHighest => 'Highest rated';
+
+  @override
+  String get sortMostHelpful => 'Most helpful';
+
+  @override
+  String get showMoreReviews => 'Show more reviews';
+
+  @override
   String get sgAllowMotion => 'Allow Motion & Fitness';
 
   @override

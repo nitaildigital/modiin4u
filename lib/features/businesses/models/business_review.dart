@@ -24,6 +24,12 @@ class BusinessReview {
   final String? adminResponse;
   final DateTime? respondedAt;
 
+  /// Who wrote [adminResponse]: the business's owner, or the team (00089).
+  final String? respondedBy;
+
+  /// Its author took it back (00089): kept for the panel, shown to nobody.
+  final bool isWithdrawn;
+
   /// False only for the signed-in writer's own review while the panel has
   /// not approved it: the list shows it to them, marked, and leaves it out
   /// of the average and the counts.
@@ -46,6 +52,8 @@ class BusinessReview {
     this.createdAt,
     this.adminResponse,
     this.respondedAt,
+    this.respondedBy,
+    this.isWithdrawn = false,
     this.isApproved = true,
     this.isRemoved = false,
   });
@@ -81,6 +89,8 @@ class BusinessReview {
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       adminResponse: json['admin_response'] as String?,
       respondedAt: DateTime.tryParse(json['responded_at'] as String? ?? ''),
+      respondedBy: json['responded_by'] as String?,
+      isWithdrawn: json['withdrawn_at'] != null,
       isApproved: (json['status'] as String? ?? 'approved') == 'approved',
       isRemoved: const {'hidden', 'rejected'}.contains(json['status']),
     );

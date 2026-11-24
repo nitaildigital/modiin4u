@@ -32,6 +32,9 @@ import '../providers/business_providers.dart';
 import '../services/photo_submission.dart';
 import '../../favorites/widgets/favorite_button.dart';
 import '../../favorites/repositories/favorite_repository.dart';
+import '../models/business_review.dart';
+import '../../../shared/reactions/reaction_button.dart';
+import '../../../shared/reactions/reactions.dart';
 import '../../../shared/widgets/network_photo.dart';
 import 'web_business_detail_screen.dart';
 import '../../../core/router/app_router.dart' show AppNavigation;
@@ -584,6 +587,9 @@ class _BusinessDetailContentState
               ),
             ),
           ],
+          // The business's likes (00089); ♥ beside the cover still saves it.
+          const Spacer(),
+          ReactionButton(target: ReactionTarget.business, id: business.id),
         ],
       ),
     );
@@ -1750,6 +1756,32 @@ class _BusinessDetailContentState
             .where((r) => !hidden.contains(r.id) && !blocked.containsKey(r.authorId))
             .toList();
         if (visibleList.isEmpty) return const _NoReviewsYet();
+        final me = ref.watch(authProvider.select((u) => u?.id));
+        // Sorted as chosen (the Reviews tab offers the choice), five at a
+        // time with "Show more" — the whole list was laid out at once.
+        final reactions = ref.watch(reactionsProvider(ReactionTarget.review));
+        if (!kIsWeb && _reviewSort == _ReviewSort.helpful) {
+          final notifier = ref.read(reactionsProvider(ReactionTarget.review).notifier);
+          for (final r in visibleList) {
+            notifier.ensure(r.id);
+          }
+        }
+        visibleList.sort(switch (_reviewSort) {
+          _ReviewSort.newest => (a, b) =>
+              (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
+          _ReviewSort.highest => (a, b) => b.rating.compareTo(a.rating),
+          _ReviewSort.helpful => (a, b) =>
+              (reactions[b.id]?.helpful ?? 0).compareTo(reactions[a.id]?.helpful ?? 0),
+        });
+        // A notification's review is always among those shown.
+        final focusAt = visibleList.indexWhere((r) => r.id == widget.focusReviewId);
+        final shownCount = [
+          _reviewsShown,
+          if (focusAt >= 0) focusAt + 1,
+        ].reduce((a, b) => a > b ? a : b).clamp(0, visibleList.length);
+        final more = visibleList.length - shownCount;
+        final ownerId = business.ownerId;
+        final isOwner = !kIsWeb && me != null && me == ownerId;
         final repliesValue = ref.watch(reviewRepliesProvider(business.id));
         final replies = {
           for (final e in (repliesValue.valueOrNull ?? const <String, List<ReviewReply>>{}).entries)
@@ -1765,14 +1797,28 @@ class _BusinessDetailContentState
             !reviews.isLoading) {
           _scrollToFocus();
         }
-        final me = ref.watch(authProvider)?.id;
-
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              for (var i = 0; i < visibleList.length; i++)
+              if (withReply && visibleList.length > 1) _buildSortChips(),
+              for (var i = 0; i < shownCount; i++)
                 _ReviewCard(
+                  reviewId: visibleList[i].id,
+                  // Likes and "helpful" (00089) on published reviews.
+                  reactable: !kIsWeb && visibleList[i].isApproved,
+                  answer: visibleList[i].adminResponse,
+                  answerByOwner: visibleList[i].respondedBy != null &&
+                      visibleList[i].respondedBy == ownerId,
+                  onOwnerReply: isOwner && visibleList[i].isApproved
+                      ? () => _ownerReply(visibleList[i])
+                      : null,
+                  onEdit: !kIsWeb && me != null && visibleList[i].authorId == me
+                      ? () => _editReview(visibleList[i])
+                      : null,
+                  onWithdraw: !kIsWeb && me != null && visibleList[i].authorId == me
+                      ? () => _withdrawReview(visibleList[i])
+                      : null,
                   initials: visibleList[i].initials,
                   avatarUrl: visibleList[i].authorAvatarUrl,
                   photos: visibleList[i].photos,
@@ -1838,13 +1884,175 @@ class _BusinessDetailContentState
                           entityType: 'comment',
                           entityId: reply.id,
                         ),
-                  isLast: i == visibleList.length - 1,
+                  isLast: i == shownCount - 1 && more == 0,
+                ),
+              if (more > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _reviewsShown += 5),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFE7E7E7)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        '${L.of(context).showMoreReviews} ($more)',
+                        style: TextStyle(
+                          fontFamily: AppFonts.inter,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.midBlue,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
         );
       },
     );
+  }
+
+  _ReviewSort _reviewSort = _ReviewSort.newest;
+  int _reviewsShown = 5;
+
+  /// Newest · Highest rated · Most helpful — choice chips, 44 high.
+  Widget _buildSortChips() {
+    final l = L.of(context);
+    final options = [
+      (_ReviewSort.newest, l.sortNewest),
+      (_ReviewSort.highest, l.sortHighest),
+      if (!kIsWeb) (_ReviewSort.helpful, l.sortMostHelpful),
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (final (sort, label) in options)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8),
+                child: ChoiceChip(
+                  label: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13)),
+                  selected: _reviewSort == sort,
+                  onSelected: (_) => setState(() {
+                    _reviewSort = sort;
+                    _reviewsShown = 5;
+                  }),
+                  selectedColor: const Color(0xFFE3EDFB),
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The business's owner answers a review (00089), or changes or removes
+  /// their answer.
+  Future<void> _ownerReply(BusinessReview review) async {
+    final l = L.of(context);
+    final had = (review.adminResponse ?? '').trim().isNotEmpty;
+    final text = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ReplySheet(
+        initialText: review.adminResponse ?? '',
+        hint: l.ownerReplyHint,
+        maxLength: 2000,
+        canRemove: had,
+      ),
+    );
+    if (text == null || !mounted) return;
+    try {
+      await ref.read(businessRepositoryProvider).replyToReview(review.id, text);
+      ref.invalidate(businessReviewsProvider(business.id));
+      if (mounted) _reviewToast(l.replySent);
+    } catch (e) {
+      final blocked = await refusedAsBlocked(e);
+      if (!mounted) return;
+      _reviewToast(blocked ? accountBlockedMessage(context) : l.couldNotSendReply, error: true);
+    }
+  }
+
+  /// Opens the review sheet on this person's own review (00089). Saved, it
+  /// goes back to the panel's queue and shows again once approved.
+  Future<void> _editReview(BusinessReview review) async {
+    final user = ref.read(authProvider);
+    if (user == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ReviewComposer(
+        businessName: business.name,
+        businessLogo: business.logoUrl,
+        userName: user.name,
+        userAvatar: user.avatarUrl,
+        initialRating: review.rating,
+        initialText: review.body,
+        keptPhotos: review.photos.length,
+        onPickPhoto: _pickPhotoFile,
+        onSubmit: (rating, text, picked) async {
+          final l = L.of(context);
+          final blockedText = accountBlockedMessage(context);
+          try {
+            final added = <String>[];
+            for (final p in picked) {
+              added.add(await PhotoSubmissions.uploadForReview(bytes: p.bytes, fileName: p.name));
+            }
+            await ref.read(businessRepositoryProvider).updateReview(
+              reviewId: review.id,
+              rating: rating,
+              body: text,
+              photos: [...review.photos, ...added],
+            );
+            ref.invalidate(businessReviewsProvider(business.id));
+            return null;
+          } catch (e) {
+            return await refusedAsBlocked(e) ? blockedText : l.errCouldNotSave;
+          }
+        },
+      ),
+    );
+  }
+
+  /// Takes this person's own review back (00089): hidden — in the panel's
+  /// trash, not deleted — and the form to write a new one comes back.
+  Future<void> _withdrawReview(BusinessReview review) async {
+    final l = L.of(context);
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(l.withdrawReviewConfirm, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14, height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.withdrawReview, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
+    try {
+      await ref.read(businessRepositoryProvider).withdrawReview(review.id);
+      ref.invalidate(businessReviewsProvider(business.id));
+      ref.invalidate(hasReviewedProvider(business.id));
+    } catch (_) {
+      if (mounted) _reviewToast(l.errCouldNotSave, error: true);
+    }
   }
 
   /// "12 בספטמבר 2026" in Hebrew, "September 12, 2026" in English.
@@ -2158,7 +2366,23 @@ class _RatingBar extends StatelessWidget {
 // ═══════════════════════════════════════════════
 // Review card with reply functionality
 // ═══════════════════════════════════════════════
+enum _ReviewSort { newest, highest, helpful }
+
 class _ReviewCard extends StatefulWidget {
+  /// The review's id, for its likes and "helpful" (00089).
+  final String reviewId;
+  final bool reactable;
+
+  /// The answer to it, from the business's owner or the team (00089 — the
+  /// panel's reply was switched off before that), and which of the two.
+  final String? answer;
+  final bool answerByOwner;
+
+  /// The owner answering; this person editing or taking back their own.
+  final VoidCallback? onOwnerReply;
+  final VoidCallback? onEdit;
+  final VoidCallback? onWithdraw;
+
   final String initials;
 
   /// The author's photo when they agreed to show it; initials otherwise.
@@ -2183,8 +2407,7 @@ class _ReviewCard extends StatefulWidget {
   final bool replyMarked;
 
   /// Residents' replies to this review (approved, and the signed-in
-  /// person's own while it waits). Modiin4u and the businesses do not reply
-  /// at this stage, so the panel's `admin_response` is no longer shown.
+  /// person's own while it waits).
   final List<ReviewReply> replies;
   final String? myId;
   final String Function(DateTime?) formatDate;
@@ -2199,6 +2422,13 @@ class _ReviewCard extends StatefulWidget {
   final bool isLast;
 
   const _ReviewCard({
+    required this.reviewId,
+    this.reactable = false,
+    this.answer,
+    this.answerByOwner = false,
+    this.onOwnerReply,
+    this.onEdit,
+    this.onWithdraw,
     required this.initials,
     this.avatarUrl,
     this.photos = const [],
@@ -2383,6 +2613,7 @@ class _ReviewCardState extends State<_ReviewCard> {
                     ),
                   ),
                 ],
+                if ((widget.answer ?? '').trim().isNotEmpty) _answerBlock(context),
                 for (final reply in widget.replies)
                   _ReplyTile(
                     key: reply.id == widget.focusReplyId ? widget.focusReplyKey : null,
@@ -2393,73 +2624,125 @@ class _ReviewCardState extends State<_ReviewCard> {
                     onDelete: () => widget.onDeleteReply(reply.id),
                     onBlock: widget.onBlockReply == null ? null : () => widget.onBlockReply!(reply),
                   ),
-                if (widget.onReply != null || widget.onReport != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Row(
-                      children: [
-                        if (widget.onReply != null)
-                          GestureDetector(
-                            onTap: widget.onReply,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text(
-                                L.of(context).replyToReview,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.midBlue,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (widget.onReply != null && widget.onReport != null)
-                          const SizedBox(width: 20),
-                        if (widget.onReport != null)
-                          GestureDetector(
-                            onTap: widget.onReport,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text(
-                                Localizations.localeOf(context).languageCode == 'he'
-                                    ? 'דיווח'
-                                    : 'Report',
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF6D6D6D),
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (widget.onBlock != null) ...[
-                          const SizedBox(width: 20),
-                          GestureDetector(
-                            onTap: widget.onBlock,
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Text(
-                                mTr(context, 'Block', 'חסימה'),
-                                style: TextStyle(
-                                  fontFamily: AppFonts.inter,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF6D6D6D),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                _actions(context),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// One action under the review: a word, at least 44 high to hit easily.
+  Widget _action(String label, VoidCallback onTap, {Color? color, FontWeight weight = FontWeight.w500}) =>
+      InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppFonts.inter,
+                  fontSize: 12,
+                  fontWeight: weight,
+                  color: color ?? const Color(0xFF6D6D6D),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+  /// 👍, Helpful, Reply, the owner's answer, Edit / Remove for one's own,
+  /// Report, Block — wrapping onto a second line on a narrow phone.
+  Widget _actions(BuildContext context) {
+    final l = L.of(context);
+    final items = <Widget>[
+      if (widget.reactable) ...[
+        ReactionButton(target: ReactionTarget.review, id: widget.reviewId, size: 15),
+        ReactionButton(target: ReactionTarget.review, id: widget.reviewId, kind: ReactionKind.helpful, size: 15),
+      ],
+      if (widget.onReply != null)
+        _action(l.replyToReview, widget.onReply!, color: AppColors.midBlue, weight: FontWeight.w600),
+      if (widget.onOwnerReply != null)
+        _action(
+          (widget.answer ?? '').trim().isEmpty ? l.replyAsOwner : l.editReply,
+          widget.onOwnerReply!,
+          color: AppColors.midBlue,
+          weight: FontWeight.w600,
+        ),
+      if (widget.onEdit != null) _action(l.edit, widget.onEdit!),
+      if (widget.onWithdraw != null) _action(l.withdrawReview, widget.onWithdraw!, color: AppColors.error),
+      if (widget.onReport != null)
+        _action(Localizations.localeOf(context).languageCode == 'he' ? 'דיווח' : 'Report', widget.onReport!),
+      if (widget.onBlock != null) _action(mTr(context, 'Block', 'חסימה'), widget.onBlock!),
+    ];
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(top: 2),
+      // The first action's edge lines up with the text above.
+      child: Transform.translate(
+        offset: Offset(Directionality.of(context) == TextDirection.rtl ? 8 : -8, 0),
+        child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: items),
+      ),
+    );
+  }
+
+  /// The business's answer, set apart under the review with a badge: the
+  /// owner's, or the team's (00089).
+  Widget _answerBlock(BuildContext context) {
+    final l = L.of(context);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F6FD),
+        borderRadius: BorderRadius.circular(12),
+        border: const BorderDirectional(start: BorderSide(color: AppColors.midBlue, width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.midBlue,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified, size: 12, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.answerByOwner ? l.ownerBadge : 'Modiin4u',
+                      style: TextStyle(fontFamily: AppFonts.inter, fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  widget.answerByOwner ? l.ownerReply : l.teamReply,
+                  style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF1F1F1F)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            widget.answer!.trim(),
+            textDirection: RegExp(r'[\u0590-\u05FF]').hasMatch(widget.answer!) ? TextDirection.rtl : TextDirection.ltr,
+            style: TextStyle(fontFamily: AppFonts.inter, fontSize: 12, height: 1.4, color: const Color(0xFF3D3D3D)),
           ),
         ],
       ),
@@ -3438,14 +3721,27 @@ class _ReplyTile extends StatelessWidget {
 
 /// The reply box: one field and Send, above the keyboard. Returns the text.
 class _ReplySheet extends StatefulWidget {
-  const _ReplySheet();
+  /// The owner's answer (00089) reuses the sheet: with their earlier words,
+  /// its own hint, a longer limit, and "Remove reply" when there was one
+  /// (it closes with empty text, which takes the answer away).
+  final String initialText;
+  final String? hint;
+  final int maxLength;
+  final bool canRemove;
+
+  const _ReplySheet({
+    this.initialText = '',
+    this.hint,
+    this.maxLength = 1000,
+    this.canRemove = false,
+  });
 
   @override
   State<_ReplySheet> createState() => _ReplySheetState();
 }
 
 class _ReplySheetState extends State<_ReplySheet> {
-  final _controller = TextEditingController();
+  late final _controller = TextEditingController(text: widget.initialText);
 
   @override
   void dispose() {
@@ -3474,11 +3770,11 @@ class _ReplySheetState extends State<_ReplySheet> {
                 autofocus: true,
                 minLines: 1,
                 maxLines: 5,
-                maxLength: 1000,
+                maxLength: widget.maxLength,
                 onChanged: (_) => setState(() {}),
                 style: TextStyle(fontFamily: AppFonts.inter, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: l.writeReplyHint,
+                  hintText: widget.hint ?? l.writeReplyHint,
                   counterText: '',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -3491,6 +3787,14 @@ class _ReplySheetState extends State<_ReplySheet> {
               ),
             ),
             const SizedBox(width: 8),
+            if (widget.canRemove) ...[
+              IconButton(
+                tooltip: l.removeReply,
+                onPressed: () => Navigator.pop(context, ''),
+                icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              ),
+              const SizedBox(width: 4),
+            ],
             FilledButton(
               onPressed: _controller.text.trim().isEmpty
                   ? null

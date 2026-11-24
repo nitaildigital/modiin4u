@@ -407,9 +407,11 @@ final businessReviewsProvider =
               : query.or('status.eq.approved,author_id.eq.$me'))
           .order('created_at', ascending: false);
 
-      return List<Map<String, dynamic>>.from(
-        rows,
-      ).map(BusinessReview.fromJson).toList();
+      // A review its author took back (00089) is kept for the panel only.
+      return List<Map<String, dynamic>>.from(rows)
+          .map(BusinessReview.fromJson)
+          .where((r) => !r.isWithdrawn)
+          .toList();
     });
 
 /// Residents' replies to one business's reviews, by review id, oldest first

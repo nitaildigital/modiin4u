@@ -10,6 +10,8 @@ import '../../../core/supabase/account_blocked.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_fonts.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/reactions/reaction_button.dart';
+import '../../../shared/reactions/reactions.dart';
 import '../../../shared/widgets/block_user.dart';
 import '../../../shared/widgets/m_kit.dart' show mAgo;
 import '../../../shared/widgets/report_sheet.dart';
@@ -494,6 +496,9 @@ class _CommentTile extends StatelessWidget {
     final actionStyle = TextStyle(fontFamily: AppFonts.inter, fontSize: 11, color: _metaGrey);
 
     final actions = <Widget>[
+      // Its 👍 (00089), on a live comment, in the app.
+      if (!kIsWeb && comment.isApproved)
+        ReactionButton(target: ReactionTarget.comment, id: comment.id, size: 14, color: _metaGrey),
       // Only a live comment can be answered: nobody else sees a waiting one.
       // In the app only, where there are accounts.
       if (!kIsWeb && comment.isApproved)
@@ -593,7 +598,12 @@ class _CommentTile extends StatelessWidget {
                 if (actions.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Wrap(spacing: 16, children: actions),
+                    // Each action at least 44 high to hit easily (they were
+                    // about 17); lined up with the text above.
+                    child: Transform.translate(
+                      offset: Offset(Directionality.of(context) == TextDirection.rtl ? 8 : -8, 0),
+                      child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: actions),
+                    ),
                   ),
               ],
             ),
@@ -604,12 +614,15 @@ class _CommentTile extends StatelessWidget {
   }
 
   Widget _action(String label, VoidCallback onTap, TextStyle style) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Text(label, style: style),
+      borderRadius: BorderRadius.circular(8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Center(widthFactor: 1, child: Text(label, style: style)),
+        ),
       ),
     );
   }
