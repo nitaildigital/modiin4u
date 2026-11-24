@@ -1,7 +1,7 @@
 name: modiin4u
 description: "מודיעין בשבילך — סופר-אפליקציה עירונית מבוססת AI"
 publish_to: 'none'
-version: 1.0.0+9
+version: 1.0.0+10
 
 environment:
   sdk: ^3.9.0
@@ -62,6 +62,9 @@ dependencies:
   # 14.x ships a build script that Gradle 8.14 refuses to compile, so this is
   # pinned until the project moves to a newer Gradle.
   permission_handler: 12.0.1
+  # Health Connect on Android. Overridden below with the same 13.3.1 declared
+  # for Android only, so the iPhone app contains no HealthKit (App Review,
+  # Guideline 5.1.1(ix)); iPhone steps come from Core Motion.
   health: ^13.3.1
   webview_flutter: ^4.13.1
   android_intent_plus: ^6.1.0
@@ -89,6 +92,11 @@ dev_dependencies:
   build_runner: ^2.4.15
   flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.4.6
+
+dependency_overrides:
+  # See packages/health_android_only/README.md.
+  health:
+    path: packages/health_android_only
 
 # ─── App Icon Generator ───
 # Replace assets/images/app_icon.png with your branded 1024×1024 PNG,

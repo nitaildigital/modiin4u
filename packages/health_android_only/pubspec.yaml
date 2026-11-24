@@ -1,0 +1,26 @@
+name: health
+description: >-
+  carp health 13.3.1, unchanged, declared for Android only (Modiin4u):
+  Health Connect on Android; HealthKit is not built into the iPhone app.
+publish_to: none
+version: 13.3.1
+homepage: https://github.com/carp-dk/carp-health-flutter
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.6.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: '>=0.18.0 <0.21.0'
+  device_info_plus: '^12.1.0'
+  json_annotation: ^4.9.0
+  carp_serializable: ^2.0.1 # polymorphic json serialization
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: cachet.plugins.health
+        pluginClass: HealthPlugin

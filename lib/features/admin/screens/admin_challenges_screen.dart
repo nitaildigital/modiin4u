@@ -130,6 +130,13 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
 
   Widget _row(Map<String, dynamic> c, Map<String, int> counts, bool isWide) {
     final active = c['is_active'] as bool? ?? false;
+    final now = DateTime.now();
+    final start = DateTime.tryParse(c['start_at'] as String? ?? '');
+    final end = DateTime.tryParse(c['end_at'] as String? ?? '');
+    // Running now: it can be ended at this moment.
+    final running = active &&
+        start != null && end != null &&
+        !now.isBefore(start) && now.isBefore(end);
     final goal = (c['goal'] as num?)?.toInt();
     final joined = counts[c['id']] ?? 0;
 
@@ -153,7 +160,8 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                       color: AppColors.navy,
                     ),
                   ),
-                  // Named by the database, the first to reach the goal (00058).
+                  // Named by the database two hours after the end: the most
+                  // steps inside its hours (00088).
                   if ((c['winner_name'] as String?)?.isNotEmpty ?? false) ...[
                     const SizedBox(height: 2),
                     Text(
@@ -223,6 +231,14 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
                     style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
                   ),
                 ),
+                if (running)
+                  PopupMenuItem(
+                    value: 'end',
+                    child: Text(
+                      tr('סיום עכשיו', 'End now'),
+                      style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13),
+                    ),
+                  ),
                 PopupMenuItem(
                   value: active ? 'deactivate' : 'activate',
                   child: Text(
@@ -244,6 +260,8 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
     switch (action) {
       case 'edit':
         _showEditor(challenge: c);
+      case 'end':
+        _endNow(c);
       case 'activate':
         runAdminAction(
           context,
@@ -257,6 +275,46 @@ class _AdminChallengesScreenState extends ConsumerState<AdminChallengesScreen> {
           () => notifier.updateChallenge(id, {'is_active': false}),
         );
     }
+  }
+
+  /// Ends a running competition at this moment: its end becomes now, so
+  /// the phones stop counting it and the database stops taking its figures
+  /// — after two hours for the last phones — and then names the winner
+  /// (00088). Unlike Disable, which takes it away without a winner.
+  Future<void> _endNow(Map<String, dynamic> c) async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          tr('לסיים את התחרות עכשיו?', 'End the competition now?'),
+          style: TextStyle(fontFamily: AppFonts.rubik, fontWeight: FontWeight.w700),
+        ),
+        content: SizedBox(
+          width: 380,
+          child: Text(
+            tr('הצעדים נספרים עד הרגע הזה. הזוכה, מי שצבר הכי הרבה צעדים, ייקבע בעוד כשעתיים, כשכל הטלפונים שלחו את הצעדים שלהם.',
+                'Steps count up to this moment. The winner, whoever has the most steps, is named in about two hours, once every phone has sent its steps.'),
+            style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 13, color: AppColors.grayText),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('ביטול', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('סיום עכשיו', 'End now')),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
+    final done = await runAdminAction(
+      context,
+      () => endChallengeNow(c['id'] as String),
+    );
+    if (done && mounted) ref.read(adminChallengeListProvider.notifier).load();
   }
 
   void _showEditor({Map<String, dynamic>? challenge}) {
@@ -533,8 +591,8 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                       ),
                       subtitle: Text(
-                        tr('הראשון שמגיע ליעד ביום אחד זוכה. כבוי: הצעדים מצטברים מתחילת האתגר.',
-                            'The first to reach the goal in one day wins. Off: steps add up from the start.'),
+                        tr('זוכה מי שהיה לו היום הטוב ביותר. כבוי: זוכה מי שצבר הכי הרבה צעדים מההתחלה ועד הסוף.',
+                            'Whoever had the best single day wins. Off: whoever has the most steps from the start to the end wins.'),
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
                       ),
                     ),
@@ -547,7 +605,7 @@ class _ChallengeEditorState extends ConsumerState<_ChallengeEditor> {
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 14),
                       ),
                       subtitle: Text(
-                        tr('הזוכה וכל השאר מקבלים התראה כשיש זוכה.', 'The winner and everyone else are notified when there is a winner.'),
+                        tr('הזוכה וכל השאר מקבלים התראה כשיש זוכה, כשעתיים אחרי הסיום.', 'The winner and everyone else are notified when there is a winner, about two hours after the end.'),
                         style: TextStyle(fontFamily: AppFonts.rubik, fontSize: 12, color: AppColors.grayText),
                       ),
                     ),

@@ -3715,12 +3715,6 @@ abstract class L {
   /// **'חיבור ל-Health Connect'**
   String get sgConnectHealthConnect;
 
-  /// No description provided for @sgConnectAppleHealth.
-  ///
-  /// In he, this message translates to:
-  /// **'חיבור ל-Apple Health'**
-  String get sgConnectAppleHealth;
-
   /// No description provided for @sgConnectHealthBody.
   ///
   /// In he, this message translates to:
@@ -3732,6 +3726,42 @@ abstract class L {
   /// In he, this message translates to:
   /// **'חיבור'**
   String get sgConnect;
+
+  /// No description provided for @sgAllowMotion.
+  ///
+  /// In he, this message translates to:
+  /// **'אישור תנועה וכושר'**
+  String get sgAllowMotion;
+
+  /// No description provided for @sgAllowMotionBody.
+  ///
+  /// In he, this message translates to:
+  /// **'ספירת הצעדים ומרחק ההליכה באייפון, גם כשהאפליקציה סגורה.'**
+  String get sgAllowMotionBody;
+
+  /// No description provided for @sgMotionOff.
+  ///
+  /// In he, this message translates to:
+  /// **'תנועה וכושר כבוי'**
+  String get sgMotionOff;
+
+  /// No description provided for @sgMotionOffBody.
+  ///
+  /// In he, this message translates to:
+  /// **'כדי לספור צעדים, יש להפעיל תנועה וכושר עבור מודיעין בשבילך בהגדרות.'**
+  String get sgMotionOffBody;
+
+  /// No description provided for @sgOpenSettings.
+  ///
+  /// In he, this message translates to:
+  /// **'הגדרות'**
+  String get sgOpenSettings;
+
+  /// No description provided for @sgSourceMotion.
+  ///
+  /// In he, this message translates to:
+  /// **'נספר באייפון'**
+  String get sgSourceMotion;
 
   /// No description provided for @sgInstallHealthConnect.
   ///
@@ -3756,12 +3786,6 @@ abstract class L {
   /// In he, this message translates to:
   /// **'מתוך Health Connect'**
   String get sgSourceHealthConnect;
-
-  /// No description provided for @sgSourceAppleHealth.
-  ///
-  /// In he, this message translates to:
-  /// **'מתוך Apple Health'**
-  String get sgSourceAppleHealth;
 
   /// No description provided for @sgSourceSensor.
   ///

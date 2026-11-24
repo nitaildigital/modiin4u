@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/businesses/providers/business_providers.dart'
     show businessByIdProvider, businessReviewsProvider, reviewRepliesProvider;
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/steps/providers/steps_providers.dart' show activeChallengeProvider;
+import '../../features/steps/providers/steps_providers.dart' show myRecentWinProvider;
 import '../../features/steps/widgets/challenge_prize.dart' show showChallengeWin;
 import '../providers/locale_provider.dart';
 import '../router/app_router.dart';
@@ -53,6 +53,8 @@ class _PushHostState extends ConsumerState<PushHost> {
   /// Back from the background, the badges ask again: a notification may
   /// have arrived while the app was away.
   late final AppLifecycleListener _lifecycle;
+  /// When the competitions won lately were last read again on a return.
+  DateTime? _winReadAt;
 
   @override
   void initState() {
@@ -63,22 +65,28 @@ class _PushHostState extends ConsumerState<PushHost> {
     _lifecycle = AppLifecycleListener(
       onResume: () {
         ref.invalidate(pushFeedProvider);
+        // At most every half hour: the win also arrives as a notification.
+        final now = DateTime.now();
+        if (!kIsWeb && (_winReadAt == null || now.difference(_winReadAt!) >= const Duration(minutes: 30))) {
+          _winReadAt = now;
+          ref.invalidate(myRecentWinProvider);
+        }
         _push.retryIfMissing();
       },
     );
     _push.start().then((_) => _onRoute());
-    // The step competition's win message (00058), wherever the winner is
-    // when their steps are saved: the challenge is read again after every
-    // save, and names them. Once per challenge (showChallengeWin keeps it).
+    // The step competition's win message, wherever the winner is. The
+    // winner is named once the competition has ended (00088), so it is read
+    // from the competitions this person won lately, again on every return
+    // to the app. Once per challenge (showChallengeWin keeps it).
     if (!kIsWeb) {
       // `fireImmediately`: also for the value already there — a win named
       // while the app was closed is shown at the next start, on any page.
       ref.listenManual(
-        activeChallengeProvider,
+        myRecentWinProvider,
         (_, next) => _maybeShowWin(next.valueOrNull),
         fireImmediately: true,
       );
-      ref.listenManual(authProvider, (_, _) => _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull));
     }
   }
 
@@ -122,7 +130,7 @@ class _PushHostState extends ConsumerState<PushHost> {
     if (!_inApp) return;
     _openPending();
     // A win found while the splash was up waits for the first page.
-    if (!kIsWeb) _maybeShowWin(ref.read(activeChallengeProvider).valueOrNull);
+    if (!kIsWeb) _maybeShowWin(ref.read(myRecentWinProvider).valueOrNull);
     // Asked on the app's own pages — the tabs — not over sign-in or a form.
     if (_onTab) _askOnHome();
   }

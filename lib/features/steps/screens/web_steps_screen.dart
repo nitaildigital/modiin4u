@@ -943,7 +943,7 @@ class _WebStepsContentState extends ConsumerState<WebStepsContent>
                           'אף אחד עדיין לא מודד צעדים',
                         )
                       : _t(
-                          'Turn on health data in Settings to appear in the leaderboard',
+                          'Turn on Fitness data in Settings to appear in the leaderboard',
                           'הפעילו ״נתוני כושר״ בהגדרות כדי להופיע בטבלה',
                         ),
                 ),

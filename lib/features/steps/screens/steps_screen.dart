@@ -261,10 +261,13 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
   /// Offers the phone's health store where it is not connected yet: the
   /// permission screen, or on an older Android the Play Store page of
   /// Health Connect. Nothing once it is connected, or where there is none.
+  /// On an iPhone it is Motion & Fitness: Apple's question, or once that was
+  /// refused — iOS asks only once — the way to Settings.
   Widget _buildHealthOffer(StepState counter) {
     final l = L.of(context);
     final install = counter.health == HealthAccess.needsInstall;
-    if (!install && counter.health != HealthAccess.notConnected) {
+    final motionOff = Platform.isIOS && counter.health == HealthAccess.denied;
+    if (!install && !motionOff && counter.health != HealthAccess.notConnected) {
       return const SizedBox.shrink();
     }
     final notifier = ref.read(stepCounterProvider.notifier);
@@ -290,8 +293,10 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                 Text(
                   install
                       ? l.sgInstallHealthConnect
+                      : motionOff
+                      ? l.sgMotionOff
                       : Platform.isIOS
-                      ? l.sgConnectAppleHealth
+                      ? l.sgAllowMotion
                       : l.sgConnectHealthConnect,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
@@ -302,7 +307,13 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  install ? l.sgInstallHealthConnectBody : l.sgConnectHealthBody,
+                  install
+                      ? l.sgInstallHealthConnectBody
+                      : motionOff
+                      ? l.sgMotionOffBody
+                      : Platform.isIOS
+                      ? l.sgAllowMotionBody
+                      : l.sgConnectHealthBody,
                   style: TextStyle(
                     fontFamily: AppFonts.inter,
                     fontSize: 12,
@@ -322,7 +333,13 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
             onPressed: install
                 ? notifier.installHealthConnect
                 : notifier.connectHealth,
-            child: Text(install ? l.sgInstall : l.sgConnect),
+            child: Text(
+              install
+                  ? l.sgInstall
+                  : motionOff
+                  ? l.sgOpenSettings
+                  : l.sgConnect,
+            ),
           ),
         ],
       ),
@@ -554,7 +571,7 @@ class _StepsScreenState extends ConsumerState<StepsScreen> {
                 child: Text(
                   fromHealth
                       ? (Platform.isIOS
-                            ? l.sgSourceAppleHealth
+                            ? l.sgSourceMotion
                             : l.sgSourceHealthConnect)
                       : l.sgSourceSensor,
                   style: TextStyle(

@@ -1947,14 +1947,31 @@ class LHe extends L {
   String get sgConnectHealthConnect => 'חיבור ל-Health Connect';
 
   @override
-  String get sgConnectAppleHealth => 'חיבור ל-Apple Health';
-
-  @override
   String get sgConnectHealthBody =>
       'ספירת הצעדים המלאה של היום, החודש האחרון, מרחק וקלוריות — מהטלפון ומכל שעון.';
 
   @override
   String get sgConnect => 'חיבור';
+
+  @override
+  String get sgAllowMotion => 'אישור תנועה וכושר';
+
+  @override
+  String get sgAllowMotionBody =>
+      'ספירת הצעדים ומרחק ההליכה באייפון, גם כשהאפליקציה סגורה.';
+
+  @override
+  String get sgMotionOff => 'תנועה וכושר כבוי';
+
+  @override
+  String get sgMotionOffBody =>
+      'כדי לספור צעדים, יש להפעיל תנועה וכושר עבור מודיעין בשבילך בהגדרות.';
+
+  @override
+  String get sgOpenSettings => 'הגדרות';
+
+  @override
+  String get sgSourceMotion => 'נספר באייפון';
 
   @override
   String get sgInstallHealthConnect => 'התקנת Health Connect';
@@ -1968,9 +1985,6 @@ class LHe extends L {
 
   @override
   String get sgSourceHealthConnect => 'מתוך Health Connect';
-
-  @override
-  String get sgSourceAppleHealth => 'מתוך Apple Health';
 
   @override
   String get sgSourceSensor => 'נספר בטלפון כשהאפליקציה פתוחה';

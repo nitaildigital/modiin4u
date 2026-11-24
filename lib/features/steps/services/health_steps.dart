@@ -29,11 +29,20 @@ enum HealthAccess {
   /// Available, but the person has not allowed the app to read it.
   notConnected,
 
+  /// iPhone only: Motion & Fitness was refused, and iOS will not ask again —
+  /// only Settings can turn it on.
+  denied,
+
   connected,
 }
 
-/// Reads steps, distance and active calories from Health Connect on Android
-/// and Apple Health on an iPhone.
+/// Reads steps, distance and active calories from Health Connect on Android.
+///
+/// It read Apple Health on an iPhone too, until 24 Nov 2026: App Review
+/// turned 1.0 (4) down under Guideline 5.1.1(ix), and the iPhone now counts
+/// with Core Motion (motion_steps.dart). The `health` plugin is declared for
+/// Android only (packages/health_android_only), so on an iPhone this class
+/// is never used and answers [HealthAccess.unavailable].
 ///
 /// The phone's own step sensor only counts while the app is open to listen,
 /// and starts again at every restart, so on its own it misses the morning
@@ -80,9 +89,6 @@ class HealthSteps {
         final has = await _health.hasPermissions(_types, permissions: _read);
         return has == true ? HealthAccess.connected : HealthAccess.notConnected;
       }
-      if (Platform.isIOS) {
-        return askedBefore ? HealthAccess.connected : HealthAccess.notConnected;
-      }
     } catch (e) {
       debugPrint('Health access check failed: $e');
     }
@@ -98,6 +104,19 @@ class HealthSteps {
     } catch (e) {
       debugPrint('Health permission request failed: $e');
       return false;
+    }
+  }
+
+  /// The steps Health Connect has between [from] and [to] — a competition's
+  /// own hours (00088). Null when it could not be read.
+  Future<int?> stepsBetween(DateTime from, DateTime to) async {
+    if (!to.isAfter(from)) return 0;
+    try {
+      await _configure();
+      return await _health.getTotalStepsInInterval(from, to);
+    } catch (e) {
+      debugPrint('Health steps between failed: $e');
+      return null;
     }
   }
 

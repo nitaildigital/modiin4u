@@ -848,10 +848,9 @@ packages:
   health:
     dependency: "direct main"
     description:
-      name: health
-      sha256: "2d9e119f3a1d281139f93149b41032b9f80b759960875bc784c5a25dd3c17524"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/health_android_only"
+      relative: true
+    source: path
     version: "13.3.1"
   html:
     dependency: "direct main"

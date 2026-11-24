@@ -56,21 +56,29 @@ class AdminChallengeListNotifier extends AdminTableNotifier {
       update(id, f);
 }
 
-/// How many people have joined each challenge, keyed by challenge id.
+/// How many people have steps in each challenge, keyed by challenge id.
 ///
 /// Shown on the row so the client can see whether a challenge is being taken
-/// up, rather than guessing.
+/// up, rather than guessing. Everyone with step counting on takes part, so
+/// it counts who has steps inside its hours — counted in the database
+/// (`challenge_participant_counts`, 00088), so it is right however many
+/// rows there are; `challenge_participants` is written by nothing.
 final challengeParticipantCountsProvider = FutureProvider<Map<String, int>>((
   ref,
 ) async {
-  final rows = await SupabaseConfig.client
-      .from('challenge_participants')
-      .select('challenge_id');
-
-  final counts = <String, int>{};
-  for (final r in List<Map<String, dynamic>>.from(rows)) {
-    final id = r['challenge_id'] as String?;
-    if (id != null) counts[id] = (counts[id] ?? 0) + 1;
-  }
-  return counts;
+  final rows = await SupabaseConfig.client.rpc('challenge_participant_counts');
+  return {
+    for (final r in List<Map<String, dynamic>>.from(rows ?? const []))
+      r['challenge_id'] as String: (r['participants'] as num).toInt(),
+  };
 });
+
+/// Ends a running challenge at this moment by the database's clock
+/// (`end_challenge_now`, 00088). False when it was not running any more.
+Future<bool> endChallengeNow(String id) async {
+  final ended = await SupabaseConfig.client.rpc(
+    'end_challenge_now',
+    params: {'p_challenge': id},
+  );
+  return ended != null;
+}

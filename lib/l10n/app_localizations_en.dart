@@ -1088,7 +1088,7 @@ class LEn extends L {
 
   @override
   String get enableHealthToJoin =>
-      'Turn on health data in Settings to appear in the leaderboard';
+      'Turn on Fitness data in Settings to appear in the leaderboard';
 
   @override
   String get weekdayMon => 'Mon';
@@ -1975,14 +1975,31 @@ class LEn extends L {
   String get sgConnectHealthConnect => 'Connect Health Connect';
 
   @override
-  String get sgConnectAppleHealth => 'Connect Apple Health';
-
-  @override
   String get sgConnectHealthBody =>
       'See today\'s full count, the past month, distance and calories — from your phone and any watch.';
 
   @override
   String get sgConnect => 'Connect';
+
+  @override
+  String get sgAllowMotion => 'Allow Motion & Fitness';
+
+  @override
+  String get sgAllowMotionBody =>
+      'Count your steps and walking distance with your iPhone, even while the app is closed.';
+
+  @override
+  String get sgMotionOff => 'Motion & Fitness is off';
+
+  @override
+  String get sgMotionOffBody =>
+      'To count your steps, turn on Motion & Fitness for Modiin4U in Settings.';
+
+  @override
+  String get sgOpenSettings => 'Settings';
+
+  @override
+  String get sgSourceMotion => 'Counted by your iPhone';
 
   @override
   String get sgInstallHealthConnect => 'Install Health Connect';
@@ -1996,9 +2013,6 @@ class LEn extends L {
 
   @override
   String get sgSourceHealthConnect => 'From Health Connect';
-
-  @override
-  String get sgSourceAppleHealth => 'From Apple Health';
 
   @override
   String get sgSourceSensor => 'Counted by the phone while the app is open';
