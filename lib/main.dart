@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_quill/flutter_quill.dart' show FlutterQuillLocalizations;
+import 'package:flutter_quill/flutter_quill.dart'
+    show FlutterQuillLocalizations;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart' show GoRouter;
@@ -74,7 +75,10 @@ void main() async {
   if (kIsWeb) {
     final languageChosen = await restoreWebLanguage();
     _linkWebLanguage(container, languageChosen: languageChosen);
-    await pictures.timeout(const Duration(milliseconds: 1500), onTimeout: () {});
+    await pictures.timeout(
+      const Duration(milliseconds: 1500),
+      onTimeout: () {},
+    );
   }
   if (kIsWeb) _keepServedTitle();
   // The items this person hid, read from the phone before any list is
@@ -84,7 +88,9 @@ void main() async {
       .read(hiddenContentProvider.notifier)
       .ready
       .timeout(const Duration(milliseconds: 500), onTimeout: () {});
-  runApp(UncontrolledProviderScope(container: container, child: const Modiin4uApp()));
+  runApp(
+    UncontrolledProviderScope(container: container, child: const Modiin4uApp()),
+  );
 }
 
 /// One language for the whole website.
@@ -98,15 +104,23 @@ void main() async {
 /// A reader who has not chosen yet keeps the defaults as they were — the
 /// desktop pages in English, the phone-width ones in Hebrew; once they
 /// choose, the choice they saved wins over the app's.
-void _linkWebLanguage(ProviderContainer container, {required bool languageChosen}) {
+void _linkWebLanguage(
+  ProviderContainer container, {
+  required bool languageChosen,
+}) {
   void follow(bool hebrew) {
     final code = hebrew ? 'he' : 'en';
     if (container.read(localeProvider).languageCode == code) return;
-    container.read(localeProvider.notifier).setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
+    container
+        .read(localeProvider.notifier)
+        .setLocale(supportedLocales.firstWhere((l) => l.languageCode == code));
   }
 
   webIsHebrew.addListener(() => follow(webIsHebrew.value));
-  container.listen<Locale>(localeProvider, (_, next) => webIsHebrew.value = next.languageCode == 'he');
+  container.listen<Locale>(
+    localeProvider,
+    (_, next) => webIsHebrew.value = next.languageCode == 'he',
+  );
   if (languageChosen) follow(webIsHebrew.value);
 }
 
@@ -126,7 +140,9 @@ void _keepServedTitle() {
   _servedTitle.value = title;
   String page(Uri uri) {
     final path = Uri.decodeFull(uri.path);
-    return path.length > 1 && path.endsWith('/') ? path.substring(0, path.length - 1) : path;
+    return path.length > 1 && path.endsWith('/')
+        ? path.substring(0, path.length - 1)
+        : path;
   }
 
   final arrivedAt = page(Uri.base);
@@ -181,7 +197,11 @@ class Modiin4uApp extends ConsumerWidget {
           value: statusBarIconsDark,
           child: ForceUpdateGate(
             child: ResumeRefresh(
-              child: PushHost(child: UrbanProfileGate(child: child ?? const SizedBox.shrink())),
+              child: PushHost(
+                child: UrbanProfileGate(
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
             ),
           ),
         ),
