@@ -62,6 +62,8 @@ package-lock.json
 
 # Server-side secrets — never committed
 .env.local
+# Production credentials (service role, database, deploy, test account).
+.env
 
 # Playwright MCP scratch output
 .playwright-mcp/
