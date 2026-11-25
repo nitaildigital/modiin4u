@@ -41,6 +41,7 @@ import '../../features/auth/screens/profile_screen.dart';
 import '../../features/auth/screens/edit_profile_screen.dart';
 import '../../features/auth/screens/favorites_screen.dart';
 import '../../features/auth/screens/notifications_screen.dart';
+import '../../features/auth/screens/my_activity_screen.dart';
 import '../../features/auth/screens/settings_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/auth/screens/auth_callback_screen.dart';
@@ -885,6 +886,11 @@ final appRouter = GoRouter(
       path: '/notifications',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/my-activity',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const MyActivityScreen(),
     ),
     GoRoute(
       path: '/settings',

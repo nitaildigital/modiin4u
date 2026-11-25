@@ -182,6 +182,14 @@ class _SideMenuPanel extends ConsumerWidget {
                     onTap: () => _go(context, '/notifications'),
                   ),
                   if (!isBusiness) ...[
+                    // The resident's own reviews and comments, and what came
+                    // of them (the client, 25 Nov). Writing needs an account.
+                    if (user != null)
+                      _MenuRow(
+                        icon: IconsaxPlusLinear.message_text_1,
+                        label: mTr(context, 'My activity', 'הפעילות שלי'),
+                        onTap: () => _go(context, '/my-activity'),
+                      ),
                     _MenuRow(
                       svg: 'assets/icons/m_menu_steps.svg',
                       label: l.stepCounter,

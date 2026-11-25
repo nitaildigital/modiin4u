@@ -5550,6 +5550,37 @@ is a 👍 beside it (Harshit, 25 Nov).
   back to the queue, withdrawing and restoring). Production needs 00089
   applied before an app with this ships.
 
+### Notifications for likes and answers, and "My activity" — 25 Nov (00090)
+
+The client's "later" items, asked for now (Harshit, 25 Nov).
+
+- **Notifications (00090):** a like on your review or comment, "helpful" on
+  your review, and an answer to your review — the owner's ("The business
+  replied to your review") or the panel's ("Modiin4u replied…") — tell you.
+  They go to 'profiles', the audience behind the "Replies to my reviews"
+  switch, so one switch covers what others do with your writing. Who liked
+  is not said (likes are private). Once a day per item and kind, so ten
+  likes in an hour are one notification and a like taken back and given
+  again is not two; your own like tells nobody; rewording an answer or
+  removing it tells nobody. Likes on articles and businesses have no writer
+  to tell. Tested in a transaction rolled back on production, all cases.
+- **Applying 00090 changes the live app at once:** an answer written in the
+  panel starts telling the reviewer, with the app as it is in the stores.
+- **My activity** (menu, signed-in residents): your reviews and comments,
+  newest first, each with its place, its state (waiting for approval, not
+  published), likes, "helpful" and whether it was answered; tapping one opens
+  it where it was written. A withdrawn review is not listed; a reply whose
+  review is no longer shown is left out, having nowhere to open. Profile's
+  older "My activity" row still leads to the step counter.
+- **The website (Next.js):** what the app adds, the site shows (Harshit, 25
+  Nov: every app feature goes to the site too). Reviews carry their likes,
+  "helpful" and the answer with its "Owner" / "Modiin4u" badge, and sort by
+  "Most helpful"; an article's comments section is always there, with likes.
+  Writing stays the app's: 👍, Helpful, Reply, "Write a review" and "Write a
+  comment" each open a prompt to get the app with the store badges (the
+  client, 25 Nov: show the comments and the way to answer, and lead to the
+  app). "My activity" on the site is not built yet.
+
 ### App performance, measured — 24 Nov
 
 Audited first (startup, requests, the database's own statistics), then only
