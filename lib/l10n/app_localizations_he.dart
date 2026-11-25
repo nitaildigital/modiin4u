@@ -1689,7 +1689,7 @@ class LHe extends L {
   String get sortBy => 'מיון';
 
   @override
-  String get sortNewest => 'החדשות';
+  String get sortNewest => 'חדש ביותר';
 
   @override
   String get sortRating => 'דירוג';
@@ -1992,6 +1992,9 @@ class LHe extends L {
 
   @override
   String get reviewUpdatedPending => 'הביקורת עודכנה ותוצג שוב לאחר אישור.';
+
+  @override
+  String get sortNewestReviews => 'החדשות';
 
   @override
   String get sortHighest => 'הדירוג הגבוה';

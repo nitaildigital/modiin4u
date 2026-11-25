@@ -2023,6 +2023,9 @@ class LEn extends L {
       'Your review was updated and will show again once approved.';
 
   @override
+  String get sortNewestReviews => 'Newest';
+
+  @override
   String get sortHighest => 'Highest rated';
 
   @override

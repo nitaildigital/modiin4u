@@ -852,7 +852,7 @@
   "withdrawReview": "הסרת הביקורת שלי",
   "withdrawReviewConfirm": "להסיר את הביקורת? היא לא תוצג יותר, ותוכלו לכתוב ביקורת חדשה.",
   "reviewUpdatedPending": "הביקורת עודכנה ותוצג שוב לאחר אישור.",
-  "sortNewest": "החדשות",
+  "sortNewestReviews": "החדשות",
   "sortHighest": "הדירוג הגבוה",
   "sortMostHelpful": "המועילות ביותר",
   "showMoreReviews": "עוד ביקורות",

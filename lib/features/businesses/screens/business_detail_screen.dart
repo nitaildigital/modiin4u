@@ -1942,7 +1942,7 @@ class _BusinessDetailContentState
   Widget _buildSortChips() {
     final l = L.of(context);
     final options = [
-      (_ReviewSort.newest, l.sortNewest),
+      (_ReviewSort.newest, l.sortNewestReviews),
       (_ReviewSort.highest, l.sortHighest),
       if (!kIsWeb) (_ReviewSort.helpful, l.sortMostHelpful),
     ];

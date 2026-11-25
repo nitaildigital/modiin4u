@@ -831,7 +831,7 @@
   "withdrawReview": "Remove my review",
   "withdrawReviewConfirm": "Remove your review? It will no longer be shown, and you can write a new one.",
   "reviewUpdatedPending": "Your review was updated and will show again once approved.",
-  "sortNewest": "Newest",
+  "sortNewestReviews": "Newest",
   "sortHighest": "Highest rated",
   "sortMostHelpful": "Most helpful",
   "showMoreReviews": "Show more reviews",

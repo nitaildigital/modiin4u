@@ -3262,7 +3262,7 @@ abstract class L {
   /// No description provided for @sortNewest.
   ///
   /// In he, this message translates to:
-  /// **'החדשות'**
+  /// **'חדש ביותר'**
   String get sortNewest;
 
   /// No description provided for @sortRating.
@@ -3804,6 +3804,12 @@ abstract class L {
   /// In he, this message translates to:
   /// **'הביקורת עודכנה ותוצג שוב לאחר אישור.'**
   String get reviewUpdatedPending;
+
+  /// No description provided for @sortNewestReviews.
+  ///
+  /// In he, this message translates to:
+  /// **'החדשות'**
+  String get sortNewestReviews;
 
   /// No description provided for @sortHighest.
   ///
