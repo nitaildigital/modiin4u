@@ -5540,8 +5540,11 @@ is a 👍 beside it (Harshit, 25 Nov).
   Only that function sets `withdrawn_at`; a review restored from the trash
   is no longer withdrawn.
 - **The review list (phone):** Newest · Highest rated · Most helpful, five
-  at a time with "Show more", the notification's review always among those
-  shown; every action under a review or comment at least 44 high.
+  at a time, the next five coming in as the reader nears the bottom of the
+  page (25 Nov, as the client's list asked: "loading more as you scroll");
+  "Show more" stays for a page too short to scroll. The notification's review
+  is always among those shown; every action under a review or comment at
+  least 44 high.
 - Tested on a local copy of the tables involved, 27 of 27 (likes only on
   published things, privacy of who liked, owner and admin replies, edits
   back to the queue, withdrawing and restoring). Production needs 00089

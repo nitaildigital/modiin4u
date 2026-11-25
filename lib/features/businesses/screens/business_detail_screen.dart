@@ -200,7 +200,20 @@ class _BusinessDetailContentState
     return Scaffold(
       backgroundColor: Colors.white,
       body: StatusBarScrim(
-        child: SingleChildScrollView(
+        // The next five reviews come in as the reader nears the bottom of
+        // the page (the client, 24 Nov: "loading more as you scroll"); the
+        // "Show more" button stays for when the page is too short to scroll.
+        child: NotificationListener<ScrollUpdateNotification>(
+          onNotification: (n) {
+            if (_reviewsMore > 0 && n.metrics.extentAfter < 600) {
+              // Once per build: a fling sends many updates before the list
+              // lays out the five it just added.
+              _reviewsMore = 0;
+              setState(() => _reviewsShown += 5);
+            }
+            return false;
+          },
+          child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -292,6 +305,7 @@ class _BusinessDetailContentState
           ],
         ),
       ),
+        ),
       ),
     );
   }
@@ -1780,6 +1794,9 @@ class _BusinessDetailContentState
           if (focusAt >= 0) focusAt + 1,
         ].reduce((a, b) => a > b ? a : b).clamp(0, visibleList.length);
         final more = visibleList.length - shownCount;
+        // Read by the page's scroll listener; set during build, so no
+        // setState.
+        _reviewsMore = more;
         final ownerId = business.ownerId;
         final isOwner = !kIsWeb && me != null && me == ownerId;
         final repliesValue = ref.watch(reviewRepliesProvider(business.id));
@@ -1919,6 +1936,7 @@ class _BusinessDetailContentState
 
   _ReviewSort _reviewSort = _ReviewSort.newest;
   int _reviewsShown = 5;
+  int _reviewsMore = 0;
 
   /// Newest · Highest rated · Most helpful — choice chips, 44 high.
   Widget _buildSortChips() {
