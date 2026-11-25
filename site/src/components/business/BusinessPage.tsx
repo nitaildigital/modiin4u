@@ -5,13 +5,15 @@ import { getLang, tr, type Lang } from '@/lib/i18n';
 import { h1For, breadcrumb, href, SITE_NAME } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
 import {
-  businessGallery, businessMenu, businessReviews, localName, moreBusinesses, primaryKinds, reviewReplies,
+  businessGallery, businessMenu, businessReviews, localName, moreBusinesses, primaryKinds, reactionCounts, reviewReplies,
   type Business, type BusinessCard, type Kind, type MenuItem,
 } from '@/lib/data/business';
 import { JsonLd } from '@/components/JsonLd';
 import { directionsUrl, shownPhone, telNumber, waNumber } from '@/lib/contact';
 import { BusinessUI, BackButton, CallMenu, CoverPhoto, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
-import { DesktopReviews, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
+import { DesktopReviews, ReviewActions, ReviewAnswer, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
+import { AppAction, GetAppProvider } from '@/components/engage/GetApp';
+import { storeLinks } from '@/lib/data/steps';
 import { GoogleHours } from './GoogleHours';
 import { BusinessMap } from './BusinessMap';
 import { ShareMark, WhatsAppMark, DirectionMark } from './icons';
@@ -70,6 +72,11 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     businessGallery(b.id), businessReviews(b.id), businessMenu(b.id), primaryKinds(), moreBusinesses(b),
   ]);
   const replies = await reviewReplies(raw.map((r) => r.id));
+  const [reviewCounts, replyCounts, stores] = await Promise.all([
+    reactionCounts('review', raw.map((r) => r.id)),
+    reactionCounts('comment', Object.values(replies).flat().map((x) => x.id)),
+    storeLinks(),
+  ]);
   const resident = t('תושב', 'Resident');
 
   const name = localName(b.name, b.name_en, lang);
@@ -96,7 +103,13 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
         rating: r.rating, body: r.body ?? '', avatar: r.author_avatar_url || null, photos: r.photos ?? [],
         replies: (replies[r.id] ?? []).map((x) => ({
           id: x.id, author: x.author_name?.trim() || resident, date: reviewDate(x.created_at, lang), body: (x.body ?? '').trim(),
+          likes: replyCounts[x.id]?.likes ?? 0,
         })),
+        likes: reviewCounts[r.id]?.likes ?? 0,
+        helpful: reviewCounts[r.id]?.helpful ?? 0,
+        answer: r.admin_response?.trim()
+          ? { body: r.admin_response.trim(), owner: !!b.owner_id && r.responded_by === b.owner_id }
+          : null,
       };
     }),
     menu: menuRows.filter((m) => m.is_available !== false),
@@ -139,9 +152,11 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
 
   return (
     <BusinessUI businessId={b.id} photos={photos} alts={alts}>
+      <GetAppProvider he={he} ios={stores.ios} android={stores.android}>
       <JsonLd data={[ld, breadcrumb([[SITE_NAME, '/'], section, [b.name, path]])]} />
       <div className="hidden desk:block"><Desktop v={v} kinds={more.kinds} more={more.cards} inNeighborhood={more.inNeighborhood} /></div>
       <div className="desk:hidden"><Phone v={v} /></div>
+      </GetAppProvider>
     </BusinessUI>
   );
 }
@@ -182,7 +197,10 @@ function Desktop({ v, more, kinds, inNeighborhood }: { v: View; more: BusinessCa
               </section>
             )}
             <section className="max-w-[918px]">
-              <h2 className={title}>{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
+              <div className="flex items-center justify-between gap-4">
+                <h2 className={title}>{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
+                <AppAction className="h-[42px] shrink-0 rounded-full bg-midblue px-6 text-sm font-medium text-white">{t('כתבו ביקורת', 'Write a review')}</AppAction>
+              </div>
               <div className="mt-[39px]">
                 {v.reviews.length === 0 ? (
                   // Nothing to average, and no place on the website to write
@@ -704,16 +722,26 @@ function PhoneStars({ value, size, className = '' }: { value: number; size: numb
  *  there are none. */
 function PhoneReviewList({ v }: { v: View }) {
   const { t } = v;
+  const write = (
+    <div className="px-4 pt-2">
+      <AppAction className="h-11 w-full rounded-full bg-midblue text-sm font-medium text-white">{t('כתבו ביקורת', 'Write a review')}</AppAction>
+    </div>
+  );
   if (!v.reviews.length) {
     return (
-      <div className="flex flex-col items-center px-4 py-8 text-center">
-        <span className="flex size-16 items-center justify-center rounded-full bg-[#F5F5F5]"><MessageText1 size={28} color="#6D6D6D" /></span>
-        <p className="mt-4 text-base font-semibold text-[#1F1F1F]">{t('אין עדיין ביקורות', 'No reviews yet')}</p>
-        <p className="mt-1.5 text-[13px] text-[#6D6D6D]">{t('היו הראשונים לכתוב ביקורת על המקום הזה', 'Be the first to review this place')}</p>
-      </div>
+      <>
+        <div className="flex flex-col items-center px-4 py-8 text-center">
+          <span className="flex size-16 items-center justify-center rounded-full bg-[#F5F5F5]"><MessageText1 size={28} color="#6D6D6D" /></span>
+          <p className="mt-4 text-base font-semibold text-[#1F1F1F]">{t('אין עדיין ביקורות', 'No reviews yet')}</p>
+          <p className="mt-1.5 text-[13px] text-[#6D6D6D]">{t('היו הראשונים לכתוב ביקורת על המקום הזה', 'Be the first to review this place')}</p>
+        </div>
+        {write}
+      </>
     );
   }
   return (
+    <>
+    {write}
     <ul className="px-4">
       {v.reviews.map((r) => (
         <li key={r.id} className="flex gap-3 border-b border-line py-4 last:border-b-0">
@@ -726,6 +754,8 @@ function PhoneReviewList({ v }: { v: View }) {
             <PhoneStars value={r.rating} size={14} className="mt-[7px] gap-1" />
             <p className="mt-[7px] whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{r.body}</p>
             <ReviewPhotos photos={r.photos} size={72} />
+            <ReviewAnswer a={r.answer} he={v.he} small />
+            <ReviewActions likes={r.likes} helpful={r.helpful} he={v.he} small />
             {r.replies.map((x) => (
               <div key={x.id} className="mt-2.5 flex gap-2 border-s-2 border-line py-1 ps-2.5">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E8EEF7] text-[9px] font-semibold text-midblue">{x.author ? initials(x.author) : '?'}</span>
@@ -735,6 +765,7 @@ function PhoneReviewList({ v }: { v: View }) {
                     <span className="text-[10px] text-[#6D6D6D]">{x.date}</span>
                   </p>
                   <p className="mt-1 whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{x.body}</p>
+                  <ReviewActions likes={x.likes} he={v.he} small />
                 </div>
               </div>
             ))}
@@ -742,6 +773,7 @@ function PhoneReviewList({ v }: { v: View }) {
         </li>
       ))}
     </ul>
+    </>
   );
 }
 

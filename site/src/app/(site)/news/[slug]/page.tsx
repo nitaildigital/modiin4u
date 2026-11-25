@@ -7,6 +7,10 @@ import { slugParam, formatDate, formatTime } from '@/lib/params';
 import { pageMetadata, h1For, plain, organization, breadcrumb, href, SITE_NAME, SUFFIX } from '@/lib/seo';
 import { SITE_URL } from '@/lib/config';
 import { articleBySlug, articleComments, categoriesOf, categoryName, relatedArticles } from '@/lib/data/articles';
+import { reactionCounts } from '@/lib/data/business';
+import { storeLinks } from '@/lib/data/steps';
+import { AppAction, GetAppProvider } from '@/components/engage/GetApp';
+import { Like1, MessageText1 } from 'iconsax-react';
 import { articleBanner, articleBannerDefaults, banners } from '@/lib/data/banners';
 import { JsonLd } from '@/components/JsonLd';
 import { BannerImage } from '@/components/ui/Banner';
@@ -46,7 +50,8 @@ export default async function ArticlePage({ params }: Props) {
   const lang = await getLang();
   const t = tr(lang);
   const path = `/news/${slug}/`;
-  const [cats, comments, side, defaults] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), articleBannerDefaults()]);
+  const [cats, comments, side, defaults, stores] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), articleBannerDefaults(), storeLinks()]);
+  const likes = await reactionCounts('comment', comments.map((c) => c.id));
   const related = await relatedArticles(a.id, cats.map((c) => c.id), 4);
   const cat = cats[0];
   const image = a.featured_image || a.og_image;
@@ -153,26 +158,40 @@ export default async function ArticlePage({ params }: Props) {
           {/* The banner under the story; nothing when there is none. */}
           {end && <div className="mt-14 max-w-[796px]"><BannerImage banner={end} phone /></div>}
 
-          {comments.length > 0 && (
+          {/* Always there, so there is always a way in: reading is the
+              website's, writing the app's — each button opens the prompt
+              to get it (the client, 25 Nov). */}
+          <GetAppProvider he={lang === 'he'} ios={stores.ios} android={stores.android}>
             <section className="mt-12 border-t border-line pt-8">
-              <h2 className="mb-5 text-xl font-semibold text-midblue">{t('תגובות', 'Comments')} ({comments.length})</h2>
-              <ul className="flex flex-col gap-5">
-                {comments.filter((c) => !c.parent_id).map((c) => (
-                  <li key={c.id} className="rounded-xl bg-section p-4">
-                    <p className="text-sm font-semibold">{c.author_name || t('תושב/ת', 'Resident')} · <span className="font-normal text-gray-meta">{formatDate(c.created_at, lang)}</span></p>
-                    <p className="mt-1 whitespace-pre-line text-[15px]">{c.body}</p>
-                    {comments.filter((r) => r.parent_id === c.id).map((r) => (
-                      <div key={r.id} className="ms-6 mt-3 border-s-2 border-line ps-3">
-                        <p className="text-sm font-semibold">{r.author_name || t('תושב/ת', 'Resident')}</p>
-                        <p className="whitespace-pre-line text-[15px]">{r.body}</p>
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <h2 className="text-xl font-semibold text-midblue">{t('תגובות', 'Comments')}{comments.length > 0 && ` (${comments.length})`}</h2>
+                <AppAction className="h-10 shrink-0 rounded-full bg-midblue px-5 text-sm font-medium text-white">{t('כתבו תגובה', 'Write a comment')}</AppAction>
+              </div>
+              {comments.length === 0 ? (
+                <p className="text-sm text-gray-meta">{t('עדיין אין תגובות. היו הראשונים להגיב.', 'No comments yet. Be the first to comment.')}</p>
+              ) : (
+                <ul className="flex flex-col gap-5">
+                  {comments.filter((c) => !c.parent_id).map((c) => (
+                    <li key={c.id} className="rounded-xl bg-section p-4">
+                      <p className="text-sm font-semibold">{c.author_name || t('תושב/ת', 'Resident')} · <span className="font-normal text-gray-meta">{formatDate(c.created_at, lang)}</span></p>
+                      <p className="mt-1 whitespace-pre-line text-[15px]">{c.body}</p>
+                      <div className="flex items-center gap-5">
+                        <AppAction label={t('לייק', 'Like')} className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-[#6D6D6D]"><Like1 size={18} color="#6D6D6D" />{(likes[c.id]?.likes ?? 0) > 0 && likes[c.id].likes}</AppAction>
+                        <AppAction className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-midblue"><MessageText1 size={18} color="#123A72" />{t('הגבה', 'Reply')}</AppAction>
                       </div>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-sm text-gray-meta">{t('מגיבים באפליקציה של מודיעין בשבילך.', 'Comments are written in the Modiin4u app.')}</p>
+                      {comments.filter((r) => r.parent_id === c.id).map((r) => (
+                        <div key={r.id} className="ms-6 mt-3 border-s-2 border-line ps-3">
+                          <p className="text-sm font-semibold">{r.author_name || t('תושב/ת', 'Resident')}</p>
+                          <p className="whitespace-pre-line text-[15px]">{r.body}</p>
+                          <AppAction label={t('לייק', 'Like')} className="flex min-h-[44px] items-center gap-1.5 text-sm font-medium text-[#6D6D6D]"><Like1 size={16} color="#6D6D6D" />{(likes[r.id]?.likes ?? 0) > 0 && likes[r.id].likes}</AppAction>
+                        </div>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
-          )}
+          </GetAppProvider>
         </div>
 
         <aside className="flex flex-col gap-10">

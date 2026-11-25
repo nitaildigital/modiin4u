@@ -1,12 +1,48 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { Like1, MessageText1, TickCircle } from 'iconsax-react';
 import { ownPhoto } from '@/lib/photos';
+import { AppAction } from '@/components/engage/GetApp';
 
 export type ReviewView = {
   id: string; author: string; initials: string; date: string; rating: number; body: string;
   avatar: string | null; photos: string[];
-  replies: { id: string; author: string; date: string; body: string }[];
+  replies: { id: string; author: string; date: string; body: string; likes: number }[];
+  /** Likes and "helpful" (00089). */
+  likes: number; helpful: number;
+  /** The answer under it, and whether the business's owner wrote it (else the team). */
+  answer: { body: string; owner: boolean } | null;
 };
+
+/** The answer under a review, badged "Owner" or "Modiin4u" as in the app. */
+export function ReviewAnswer({ a, he, small = false }: { a: ReviewView['answer']; he: boolean; small?: boolean }) {
+  if (!a) return null;
+  return (
+    <div className={`mt-3 rounded-[10px] bg-section ${small ? 'p-2.5' : 'p-3'}`}>
+      <span className="inline-block rounded-full bg-midblue px-2 py-0.5 text-[10px] font-semibold text-white">
+        {a.owner ? (he ? 'בעל העסק' : 'Owner') : (he ? 'מודיעין בשבילך' : 'Modiin4u')}
+      </span>
+      <p dir={dirOf(a.body)} className={`mt-1.5 whitespace-pre-line leading-[1.4] text-[#3D3D3D] ${small ? 'text-xs' : 'text-sm'}`}>{a.body}</p>
+    </div>
+  );
+}
+
+/** 👍, "Helpful" and Reply under a review or a reply. On the website each
+ *  opens the app prompt; the counts are the real ones. */
+export function ReviewActions({ likes, helpful, he, small = false }: { likes: number; helpful?: number; he: boolean; small?: boolean }) {
+  const t = (h: string, e: string) => (he ? h : e);
+  const cls = `flex min-h-[44px] items-center gap-1.5 font-medium text-[#6D6D6D] ${small ? 'text-xs' : 'text-sm'}`;
+  const size = small ? 16 : 18;
+  return (
+    <div className="flex flex-wrap items-center gap-x-5">
+      <AppAction className={cls} label={t('לייק', 'Like')}><Like1 size={size} color="#6D6D6D" />{likes > 0 && likes}</AppAction>
+      {helpful !== undefined && (
+        <AppAction className={cls}><TickCircle size={size} color="#6D6D6D" />{t('מועיל', 'Helpful')}{helpful > 0 && ` · ${helpful}`}</AppAction>
+      )}
+      <AppAction className={`${cls} text-midblue`}><MessageText1 size={size} color="#123A72" />{t('הגבה', 'Reply')}</AppAction>
+    </div>
+  );
+}
 
 const HEBREW = /[֐-׿]/;
 const dirOf = (s: string) => (HEBREW.test(s) ? 'rtl' : 'ltr');
@@ -23,7 +59,7 @@ export function Stars({ value, big = false }: { value: number; big?: boolean }) 
   );
 }
 
-type Order = 'recent' | 'highest' | 'lowest';
+type Order = 'recent' | 'highest' | 'lowest' | 'helpful';
 
 /** "Sort By: Most Recent ⌄": a 40-tall ringed box opening its choices under it. */
 function Dropdown<T extends string | number | null>({ label, options, selected, onSelect }: {
@@ -75,10 +111,11 @@ export function DesktopReviews({ reviews, he }: { reviews: ReviewView[]; he: boo
   // Newest first as they arrive; a stable sort keeps that within a score.
   if (order === 'highest') filtered.sort((a, b) => b.rating - a.rating);
   if (order === 'lowest') filtered.sort((a, b) => a.rating - b.rating);
+  if (order === 'helpful') filtered.sort((a, b) => b.helpful - a.helpful);
   const list = filtered.slice(0, shown);
   const more = filtered.length > list.length;
 
-  const orders: [Order, string][] = [['recent', t('האחרונות', 'Most Recent')], ['highest', t('הדירוג הגבוה', 'Highest Rated')], ['lowest', t('הדירוג הנמוך', 'Lowest Rated')]];
+  const orders: [Order, string][] = [['recent', t('האחרונות', 'Most Recent')], ['highest', t('הדירוג הגבוה', 'Highest Rated')], ['lowest', t('הדירוג הנמוך', 'Lowest Rated')], ['helpful', t('המועילות ביותר', 'Most Helpful')]];
   const ratingLabel = (s: number | null) => (s == null ? t('הכל', 'All') : `${s} ★`);
 
   return (
@@ -116,7 +153,7 @@ export function DesktopReviews({ reviews, he }: { reviews: ReviewView[]; he: boo
         {filtered.length === 0 ? (
           <p className="py-4 text-base text-[#3D3D3D]">{t('אין ביקורות בדירוג הזה.', 'No reviews with this rating.')}</p>
         ) : (
-          <ul>{list.map((r) => <ReviewRow key={r.id} r={r} />)}</ul>
+          <ul>{list.map((r) => <ReviewRow key={r.id} r={r} he={he} />)}</ul>
         )}
         {more && (
           <>
@@ -155,7 +192,7 @@ export function ReviewPhotos({ photos, size }: { photos: string[]; size: number 
   );
 }
 
-function ReviewRow({ r }: { r: ReviewView }) {
+function ReviewRow({ r, he }: { r: ReviewView; he: boolean }) {
   return (
     <li className="flex gap-[15px] border-b border-line py-4">
       <ReviewAvatar r={r} className="size-10 text-sm" />
@@ -167,6 +204,8 @@ function ReviewRow({ r }: { r: ReviewView }) {
         <div className="mt-[7px]"><Stars value={r.rating} /></div>
         {r.body && <p dir={dirOf(r.body)} className="mt-[7px] whitespace-pre-line text-sm leading-[1.4] text-[#3D3D3D]">{r.body}</p>}
         <ReviewPhotos photos={r.photos} size={96} />
+        <ReviewAnswer a={r.answer} he={he} />
+        <ReviewActions likes={r.likes} helpful={r.helpful} he={he} />
         {r.replies.map((x) => (
           <div key={x.id} className="mt-3 border-s-2 border-line ps-3.5">
             <p className="flex items-center gap-3">
@@ -174,6 +213,7 @@ function ReviewRow({ r }: { r: ReviewView }) {
               <span className="text-xs text-[#6D6D6D]">{x.date}</span>
             </p>
             <p dir={dirOf(x.body)} className="mt-[5px] whitespace-pre-line text-sm leading-[1.4] text-[#3D3D3D]">{x.body}</p>
+            <ReviewActions likes={x.likes} he={he} small />
           </div>
         ))}
       </div>

@@ -68,13 +68,16 @@ export type Review = {
   /** Photographs attached to the review (00076). */
   photos: string[] | null;
   profiles: { full_name: string | null } | null;
+  /** The answer under it — the business's owner's or the team's (00089). */
+  admin_response: string | null;
+  responded_by: string | null;
 };
 
 /** The approved reviews, newest first. The website has no accounts, so no
  *  one's own pending review is ever among them (businessReviewsProvider). */
 export const businessReviews = cache(async (id: string): Promise<Review[]> => {
   const { data } = await db.from('reviews')
-    .select('id,author_name,author_avatar_url,photos,rating,body,created_at,profiles!reviews_author_id_fkey(full_name)')
+    .select('id,author_name,author_avatar_url,photos,rating,body,created_at,admin_response,responded_by,profiles!reviews_author_id_fkey(full_name)')
     .eq('business_id', id).eq('status', 'approved').order('created_at', { ascending: false });
   return (data ?? []) as unknown as Review[];
 });
@@ -180,4 +183,16 @@ export async function moreBusinesses(b: Business): Promise<{ cards: BusinessCard
   const photo = (x: BusinessCard) => !!(x.cover_url || x.og_image_url);
   picked = [...picked.filter(photo), ...picked.filter((x) => !photo(x))].slice(0, 5);
   return { cards: picked, inNeighborhood, kinds };
+}
+
+/** Likes and "helpful" (00089) for a page's items, by id; who reacted is not
+ *  given. A failed read shows no counts rather than no page. */
+export async function reactionCounts(type: 'review' | 'comment' | 'article' | 'business', ids: string[]): Promise<Record<string, { likes: number; helpful: number }>> {
+  if (!ids.length) return {};
+  const { data } = await db.rpc('reaction_counts', { p_entity_type: type, p_ids: ids }).then((r) => r, () => ({ data: null }));
+  const out: Record<string, { likes: number; helpful: number }> = {};
+  for (const r of (data ?? []) as { entity_id: string; likes: number; helpful: number }[]) {
+    out[r.entity_id] = { likes: Number(r.likes) || 0, helpful: Number(r.helpful) || 0 };
+  }
+  return out;
 }
