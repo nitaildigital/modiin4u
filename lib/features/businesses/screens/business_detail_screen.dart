@@ -1938,7 +1938,12 @@ class _BusinessDetailContentState
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
                 child: ChoiceChip(
-                  label: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13)),
+                  // Colours stated outright: left to the theme, the
+                  // unselected labels came out invisible on Android.
+                  label: Text(label, style: TextStyle(fontFamily: AppFonts.inter, fontSize: 13, color: AppColors.navy)),
+                  backgroundColor: AppColors.white,
+                  side: const BorderSide(color: AppColors.border),
+                  checkmarkColor: AppColors.navy,
                   selected: _reviewSort == sort,
                   onSelected: (_) => setState(() {
                     _reviewSort = sort;
