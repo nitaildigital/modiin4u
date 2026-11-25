@@ -10,6 +10,8 @@ import {
   type Listing, type ListingKind,
 } from '@/lib/data/realestate';
 import { JsonLd } from '@/components/JsonLd';
+import { AppAction, GetAppProvider } from '@/components/engage/GetApp';
+import { storeLinks } from '@/lib/data/steps';
 import { ListingCard } from '@/components/realestate/ListingCard';
 import { BusinessCard } from '@/components/realestate/BusinessCard';
 import { Carousel } from '@/components/realestate/Carousel';
@@ -54,6 +56,14 @@ export default async function NeighborhoodPage({ params }: Props) {
     neighborhoodPhotos(n), neighborhoodFigures(n.id), neighborhoodRating(n.id),
     hoodListings(n.id, 'sale'), hoodListings(n.id, 'rent'), hoodBusinesses(n.id, lang),
   ]);
+  const stores = await storeLinks();
+  // Rating is the app's; here the way in is a prompt to get it (the client,
+  // 25 Nov: reviewing a neighbourhood or a park leads to the app too).
+  const rate = (
+    <AppAction className="mt-4 flex h-10 items-center rounded-full bg-midblue px-5 text-sm font-medium text-white">
+      {t('דרגו את השכונה', 'Rate this neighbourhood')}
+    </AppAction>
+  );
 
   // The client's text, one paragraph per entry: the first is the short
   // introduction under the name on the website, the rest its "About". The
@@ -105,6 +115,7 @@ export default async function NeighborhoodPage({ params }: Props) {
   };
 
   return (
+    <GetAppProvider he={lang === 'he'} ios={stores.ios} android={stores.android}>
     <article className="pb-10 desk:pb-[124px]">
       <JsonLd data={[
         {
@@ -145,6 +156,7 @@ export default async function NeighborhoodPage({ params }: Props) {
                 <span className="text-[#6D6D6D]">({ratingCount(rating.count, lang)})</span>
               </p>
             )}
+            <div className="hidden desk:block">{rate}</div>
             {intro && <p dir="auto" className={`mt-8 hidden whitespace-pre-line text-base leading-[1.6] text-[#3D3D3D] desk:block ${align}`}>{intro}</p>}
 
             {/* The figures the database can answer (a dash where a count
@@ -192,17 +204,19 @@ export default async function NeighborhoodPage({ params }: Props) {
           </section>
         )}
 
-        {/* The residents' rating, read only (phone), when anyone has rated. */}
-        {rating && (
-          <section className="mt-8 rounded-xl border border-line bg-white p-4 desk:hidden">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
+        {/* The residents' rating (phone), read only, and the way to add
+            one — in the app. */}
+        <section className="mt-8 rounded-xl border border-line bg-white p-4 desk:hidden">
+          <h2 className="text-base font-semibold text-[#1F1F1F]">{t('מה חושבים תושבי העיר?', 'What Locals Are Saying')}</h2>
+          {rating && (
             <p className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-xl font-semibold text-black">{rating.average.toFixed(1)}</span>
               <Stars value={rating.average} size={18} />
               <span className="text-sm text-[#6D6D6D]">({ratingCount(rating.count, lang)})</span>
             </p>
-          </section>
-        )}
+          )}
+          {rate}
+        </section>
 
         {listingStrip('sale', sale)}
         {listingStrip('rent', rent)}
@@ -225,6 +239,7 @@ export default async function NeighborhoodPage({ params }: Props) {
         )}
       </div>
     </article>
+    </GetAppProvider>
   );
 }
 

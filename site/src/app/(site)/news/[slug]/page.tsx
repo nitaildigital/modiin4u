@@ -51,7 +51,8 @@ export default async function ArticlePage({ params }: Props) {
   const t = tr(lang);
   const path = `/news/${slug}/`;
   const [cats, comments, side, defaults, stores] = await Promise.all([categoriesOf('article', a.id), articleComments(a.id), banners('NEWS_SIDEBAR'), articleBannerDefaults(), storeLinks()]);
-  const likes = await reactionCounts('comment', comments.map((c) => c.id));
+  const [likes, own] = await Promise.all([reactionCounts('comment', comments.map((c) => c.id)), reactionCounts('article', [a.id])]);
+  const articleLikes = own[a.id]?.likes ?? 0;
   const related = await relatedArticles(a.id, cats.map((c) => c.id), 4);
   const cat = cats[0];
   const image = a.featured_image || a.og_image;
@@ -165,7 +166,13 @@ export default async function ArticlePage({ params }: Props) {
             <section className="mt-12 border-t border-line pt-8">
               <div className="mb-5 flex items-center justify-between gap-4">
                 <h2 className="text-xl font-semibold text-midblue">{t('תגובות', 'Comments')}{comments.length > 0 && ` (${comments.length})`}</h2>
-                <AppAction className="h-10 shrink-0 rounded-full bg-midblue px-5 text-sm font-medium text-white">{t('כתבו תגובה', 'Write a comment')}</AppAction>
+                <span className="flex items-center gap-2">
+                  {/* The article's own 👍 (00089), as under the story in the app. */}
+                  <AppAction label={t('לייק', 'Like')} className="flex h-10 shrink-0 items-center gap-1.5 rounded-full border border-line px-4 text-sm font-medium text-[#3D3D3D]">
+                    <Like1 size={18} color="#3D3D3D" />{articleLikes > 0 ? articleLikes : t('לייק', 'Like')}
+                  </AppAction>
+                  <AppAction className="h-10 shrink-0 rounded-full bg-midblue px-5 text-sm font-medium text-white">{t('כתבו תגובה', 'Write a comment')}</AppAction>
+                </span>
               </div>
               {comments.length === 0 ? (
                 <p className="text-sm text-gray-meta">{t('עדיין אין תגובות. היו הראשונים להגיב.', 'No comments yet. Be the first to comment.')}</p>

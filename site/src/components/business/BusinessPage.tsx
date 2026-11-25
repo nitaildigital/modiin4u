@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Buildings2, Call, Clock, Export, Gallery, Global, Instagram, Location, MessageText, MessageText1, Messages2, Reserve, Shop, Star1, Verify, ArrowLeft2 } from 'iconsax-react';
+import { Like1, Buildings2, Call, Clock, Export, Gallery, Global, Instagram, Location, MessageText, MessageText1, Messages2, Reserve, Shop, Star1, Verify, ArrowLeft2 } from 'iconsax-react';
 import { MessageBusiness } from '@/components/messages/MessageBusiness';
 import { getLang, tr, type Lang } from '@/lib/i18n';
 import { h1For, breadcrumb, href, SITE_NAME } from '@/lib/seo';
@@ -11,7 +11,7 @@ import {
 import { JsonLd } from '@/components/JsonLd';
 import { directionsUrl, shownPhone, telNumber, waNumber } from '@/lib/contact';
 import { BusinessUI, BackButton, CallMenu, CoverPhoto, ExpandableText, GalleryStrip, PhoneTabs, PhotoThumb, ShareMenu, ShowAllPhotos, TrackedLink } from './ui';
-import { DesktopReviews, ReviewActions, ReviewAnswer, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
+import { DesktopReviews, PhoneReviews, ReviewAvatar, ReviewPhotos, type ReviewView } from './Reviews';
 import { AppAction, GetAppProvider } from '@/components/engage/GetApp';
 import { storeLinks } from '@/lib/data/steps';
 import { GoogleHours } from './GoogleHours';
@@ -53,6 +53,8 @@ type View = {
   name: string; heading: string; kind: string | null; about: string;
   cover: string | null; photos: string[]; hours: Hours[]; hoursText: string | null;
   reviews: ReviewView[]; menu: MenuItem[]; isPark: boolean; hasPlace: boolean;
+  /** The business's own likes (00089). */
+  likes: number;
   phone: string; website: string; whatsapp: string; instagram: string;
   /** The phone and the WhatsApp as their links take them; null for none. */
   tel: string | null; wa: string | null;
@@ -72,11 +74,13 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
     businessGallery(b.id), businessReviews(b.id), businessMenu(b.id), primaryKinds(), moreBusinesses(b),
   ]);
   const replies = await reviewReplies(raw.map((r) => r.id));
-  const [reviewCounts, replyCounts, stores] = await Promise.all([
+  const [reviewCounts, replyCounts, stores, own] = await Promise.all([
     reactionCounts('review', raw.map((r) => r.id)),
     reactionCounts('comment', Object.values(replies).flat().map((x) => x.id)),
     storeLinks(),
+    reactionCounts('business', [b.id]),
   ]);
+  const likes = own[b.id]?.likes ?? 0;
   const resident = t('תושב', 'Resident');
 
   const name = localName(b.name, b.name_en, lang);
@@ -113,6 +117,7 @@ export async function BusinessPage({ b, path }: { b: Business; path: string }) {
       };
     }),
     menu: menuRows.filter((m) => m.is_available !== false),
+    likes,
     isPark,
     hasPlace: !!b.latitude && !!b.longitude,
     phone: isPark ? '' : shownPhone(b.phone),
@@ -260,12 +265,14 @@ function Hero({ v }: { v: View }) {
           <div className="min-w-0 flex-1">
             <p role="heading" aria-level={1} dir={dirOf(v.heading)} className="line-clamp-2 font-nunito text-[48px] font-semibold leading-[1.23] text-white">{v.heading}</p>
             {facts && <p className="mt-3.5 text-base text-white">{facts}</p>}
-            {(count > 0 || kosher) && (
-              <div className="mt-6 flex gap-4">
-                {count > 0 && <GlassPill icon="/web/business/star14.svg" label={t(`${(b.rating ?? 0).toFixed(1)} · ${count} ביקורות`, `${(b.rating ?? 0).toFixed(1)} · ${count} reviews`)} />}
-                {kosher && <GlassPill icon="/web/business/check14.svg" label={he ? kosher : 'Kosher'} />}
-              </div>
-            )}
+            <div className="mt-6 flex gap-4">
+              {count > 0 && <GlassPill icon="/web/business/star14.svg" label={t(`${(b.rating ?? 0).toFixed(1)} · ${count} ביקורות`, `${(b.rating ?? 0).toFixed(1)} · ${count} reviews`)} />}
+              {kosher && <GlassPill icon="/web/business/check14.svg" label={he ? kosher : 'Kosher'} />}
+              {/* The app's 👍 beside the rating (00089); liking is the app's. */}
+              <AppAction label={t('לייק', 'Like')} className="flex items-center gap-[7px] rounded-full border border-white/50 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20">
+                <Like1 size={14} color="#FFFFFF" />{v.likes > 0 ? v.likes : t('לייק', 'Like')}
+              </AppAction>
+            </div>
             <div className="mt-8" />
             {now && (
               <p className="mb-4 flex items-center gap-2 text-sm font-medium">
@@ -584,6 +591,10 @@ function Phone({ v }: { v: View }) {
             {now.open ? t('פתוח עכשיו', 'Open now') : t('סגור', 'Closed')}
           </span>
         )}
+        <span className="flex-1" />
+        <AppAction label={t('לייק', 'Like')} className="flex min-h-[44px] items-center gap-1.5 font-medium text-[#6D6D6D]">
+          <Like1 size={20} color="#6D6D6D" />{v.likes > 0 && v.likes}
+        </AppAction>
       </div>
 
       <p className="mt-4 flex items-center gap-2 px-4 text-sm text-[#6D6D6D]">
@@ -718,63 +729,10 @@ function PhoneStars({ value, size, className = '' }: { value: number; size: numb
   );
 }
 
-/** The approved reviews and their residents' replies; an empty state when
- *  there are none. */
+/** The approved reviews and their residents' replies, sorted and loaded as
+ *  the app's list (./Reviews PhoneReviews); an empty state when none. */
 function PhoneReviewList({ v }: { v: View }) {
-  const { t } = v;
-  const write = (
-    <div className="px-4 pt-2">
-      <AppAction className="h-11 w-full rounded-full bg-midblue text-sm font-medium text-white">{t('כתבו ביקורת', 'Write a review')}</AppAction>
-    </div>
-  );
-  if (!v.reviews.length) {
-    return (
-      <>
-        <div className="flex flex-col items-center px-4 py-8 text-center">
-          <span className="flex size-16 items-center justify-center rounded-full bg-[#F5F5F5]"><MessageText1 size={28} color="#6D6D6D" /></span>
-          <p className="mt-4 text-base font-semibold text-[#1F1F1F]">{t('אין עדיין ביקורות', 'No reviews yet')}</p>
-          <p className="mt-1.5 text-[13px] text-[#6D6D6D]">{t('היו הראשונים לכתוב ביקורת על המקום הזה', 'Be the first to review this place')}</p>
-        </div>
-        {write}
-      </>
-    );
-  }
-  return (
-    <>
-    {write}
-    <ul className="px-4">
-      {v.reviews.map((r) => (
-        <li key={r.id} className="flex gap-3 border-b border-line py-4 last:border-b-0">
-          <ReviewAvatar r={r} className="size-8 text-[11.2px]" />
-          <div className="min-w-0 flex-1">
-            <p className="flex flex-wrap items-center gap-x-3">
-              <span className="text-sm font-medium text-black">{r.author}</span>
-              <span className="text-[10px] text-[#6D6D6D]">{r.date}</span>
-            </p>
-            <PhoneStars value={r.rating} size={14} className="mt-[7px] gap-1" />
-            <p className="mt-[7px] whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{r.body}</p>
-            <ReviewPhotos photos={r.photos} size={72} />
-            <ReviewAnswer a={r.answer} he={v.he} small />
-            <ReviewActions likes={r.likes} helpful={r.helpful} he={v.he} small />
-            {r.replies.map((x) => (
-              <div key={x.id} className="mt-2.5 flex gap-2 border-s-2 border-line py-1 ps-2.5">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E8EEF7] text-[9px] font-semibold text-midblue">{x.author ? initials(x.author) : '?'}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-x-2">
-                    <span className="text-xs font-medium text-black">{x.author}</span>
-                    <span className="text-[10px] text-[#6D6D6D]">{x.date}</span>
-                  </p>
-                  <p className="mt-1 whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{x.body}</p>
-                  <ReviewActions likes={x.likes} he={v.he} small />
-                </div>
-              </div>
-            ))}
-          </div>
-        </li>
-      ))}
-    </ul>
-    </>
-  );
+  return <PhoneReviews reviews={v.reviews} he={v.he} />;
 }
 
 function PhoneMenu({ v }: { v: View }) {

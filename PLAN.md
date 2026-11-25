@@ -5579,7 +5579,11 @@ The client's "later" items, asked for now (Harshit, 25 Nov).
   Writing stays the app's: 👍, Helpful, Reply, "Write a review" and "Write a
   comment" each open a prompt to get the app with the store badges (the
   client, 25 Nov: show the comments and the way to answer, and lead to the
-  app). "My activity" on the site is not built yet.
+  app). Then the rest, so the site matches the app: the article's and the
+  business's own 👍 with its count, the phone-width review list sorted
+  (Newest · Highest rated · Most helpful) and loading as it scrolls, "Rate
+  this neighbourhood" (the prompt), and /my-activity/ behind the site's
+  sign-in (Messages' session), linked from the phone menu and Messages.
 
 ### App performance, measured — 24 Nov
 

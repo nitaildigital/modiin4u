@@ -54,6 +54,7 @@ export function ConversationList({ lang }: { lang: Lang }) {
               {/* A resident's own Urban Profile: the three steps, or the
                   finished profile (a business account sees a short note). */}
               <Link href="/urban-profile/" className="text-sm font-medium text-midblue hover:underline">{t('הפרופיל העירוני שלי', 'My Urban Profile')}</Link>
+              <Link href="/my-activity/" className="text-sm font-medium text-midblue hover:underline">{t('הפעילות שלי', 'My activity')}</Link>
               <SignOutLink lang={lang} />
             </span>
           )}

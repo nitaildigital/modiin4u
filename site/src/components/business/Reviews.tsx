@@ -220,3 +220,101 @@ function ReviewRow({ r, he }: { r: ReviewView; he: boolean }) {
     </li>
   );
 }
+
+type PhoneOrder = 'recent' | 'highest' | 'helpful';
+
+/** The phone's review list, as the app's: Newest · Highest rated · Most
+ *  helpful, five at a time with the next five coming in as the reader nears
+ *  the end ("loading more as you scroll", 25 Nov), "Write a review" first. */
+export function PhoneReviews({ reviews, he }: { reviews: ReviewView[]; he: boolean }) {
+  const t = (h: string, e: string) => (he ? h : e);
+  const [order, setOrder] = useState<PhoneOrder>('recent');
+  const [shown, setShown] = useState(5);
+  const end = useRef<HTMLDivElement>(null);
+  const sorted = [...reviews];
+  if (order === 'highest') sorted.sort((a, b) => b.rating - a.rating);
+  if (order === 'helpful') sorted.sort((a, b) => b.helpful - a.helpful);
+  const list = sorted.slice(0, shown);
+  const more = sorted.length > list.length;
+
+  useEffect(() => {
+    const el = end.current;
+    if (!el || !more) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) setShown((n) => n + 5);
+    }, { rootMargin: '600px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [more, shown]);
+
+  const write = (
+    <div className="px-4 pt-2">
+      <AppAction className="h-11 w-full rounded-full bg-midblue text-sm font-medium text-white">{t('כתבו ביקורת', 'Write a review')}</AppAction>
+    </div>
+  );
+  if (!reviews.length) {
+    return (
+      <>
+        <div className="flex flex-col items-center px-4 py-8 text-center">
+          <span className="flex size-16 items-center justify-center rounded-full bg-[#F5F5F5]"><MessageText1 size={28} color="#6D6D6D" /></span>
+          <p className="mt-4 text-base font-semibold text-[#1F1F1F]">{t('אין עדיין ביקורות', 'No reviews yet')}</p>
+          <p className="mt-1.5 text-[13px] text-[#6D6D6D]">{t('היו הראשונים לכתוב ביקורת על המקום הזה', 'Be the first to review this place')}</p>
+        </div>
+        {write}
+      </>
+    );
+  }
+  const chips: [PhoneOrder, string][] = [['recent', t('החדשות', 'Newest')], ['highest', t('הדירוג הגבוה', 'Highest rated')], ['helpful', t('המועילות ביותר', 'Most helpful')]];
+  return (
+    <>
+      {write}
+      {reviews.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto px-4 pt-3">
+          {chips.map(([k, label]) => (
+            <button key={k} type="button" onClick={() => { setOrder(k); setShown(5); }}
+              className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[13px] text-navy ${order === k ? 'border-[#E3EDFB] bg-[#E3EDFB]' : 'border-line bg-white'}`}>
+              {order === k && <span aria-hidden>✓</span>}{label}
+            </button>
+          ))}
+        </div>
+      )}
+      <ul className="px-4">
+        {list.map((r) => (
+          <li key={r.id} className="flex gap-3 border-b border-line py-4 last:border-b-0">
+            <ReviewAvatar r={r} className="size-8 text-[11.2px]" />
+            <div className="min-w-0 flex-1">
+              <p className="flex flex-wrap items-center gap-x-3">
+                <span dir={dirOf(r.author)} className="text-sm font-medium text-black">{r.author}</span>
+                <span className="text-[10px] text-[#6D6D6D]">{r.date}</span>
+              </p>
+              {/* Under the name, on its side, as the app's. */}
+              <div className="mt-[7px] w-fit"><Stars value={r.rating} /></div>
+              {r.body && <p dir={dirOf(r.body)} className="mt-[7px] whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{r.body}</p>}
+              <ReviewPhotos photos={r.photos} size={72} />
+              <ReviewAnswer a={r.answer} he={he} small />
+              <ReviewActions likes={r.likes} helpful={r.helpful} he={he} small />
+              {r.replies.map((x) => (
+                <div key={x.id} className="mt-2.5 border-s-2 border-line py-1 ps-2.5">
+                  <p className="flex flex-wrap items-center gap-x-2">
+                    <span className="text-xs font-medium text-black">{x.author}</span>
+                    <span className="text-[10px] text-[#6D6D6D]">{x.date}</span>
+                  </p>
+                  <p dir={dirOf(x.body)} className="mt-1 whitespace-pre-line text-xs leading-[1.4] text-[#3D3D3D]">{x.body}</p>
+                  <ReviewActions likes={x.likes} he={he} small />
+                </div>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {more && (
+        <div ref={end} className="px-4 pb-4">
+          <button type="button" onClick={() => setShown(shown + 5)}
+            className="h-11 w-full rounded-xl border border-[#E7E7E7] text-sm font-semibold text-midblue">
+            {t(`עוד ביקורות (${sorted.length - list.length})`, `Show more reviews (${sorted.length - list.length})`)}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}

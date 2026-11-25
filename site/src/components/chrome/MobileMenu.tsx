@@ -42,6 +42,8 @@ export function MobileMenu({ lang, menus, items }: { lang: Lang; menus: Menus; i
               <li><Link href="/notifications/" onClick={() => setOpen(false)} className="text-lg font-medium text-ink">{t('התראות', 'Notifications')}</Link></li>
               {/* Messages with businesses (9 Oct); the sign-in page when signed out. */}
               <li><Link href="/messages/" onClick={() => setOpen(false)} className="text-lg font-medium text-ink">{t('הודעות', 'Messages')}</Link></li>
+              {/* The resident's reviews and comments (25 Nov); sign-in when signed out. */}
+              <li><Link href="/my-activity/" onClick={() => setOpen(false)} className="text-lg font-medium text-ink">{t('הפעילות שלי', 'My activity')}</Link></li>
             </ul>
             {groups.map(([title, links]) => links.length > 0 && (
               <details key={title} className="border-t border-line py-3">
