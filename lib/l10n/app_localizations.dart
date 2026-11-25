@@ -1006,8 +1006,14 @@ abstract class L {
   /// No description provided for @stepsReviewsRewards.
   ///
   /// In he, this message translates to:
-  /// **'צעדים, ביקורות ותגמולים'**
+  /// **'הביקורות והתגובות שלך'**
   String get stepsReviewsRewards;
+
+  /// No description provided for @stepsChallengesRewards.
+  ///
+  /// In he, this message translates to:
+  /// **'צעדים, אתגרים ותגמולים'**
+  String get stepsChallengesRewards;
 
   /// No description provided for @myActivity.
   ///

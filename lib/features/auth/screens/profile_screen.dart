@@ -39,7 +39,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _MenuItem(IconsaxPlusLinear.notification, l.manageYourAlerts, l.notifications, '/notifications'),
     _MenuItem(IconsaxPlusLinear.heart, l.savedPlacesListings, l.favorites, '/favorites'),
     _MenuItem(IconsaxPlusLinear.setting_2, l.appPreferences, l.settings, '/settings'),
-    _MenuItem(IconsaxPlusLinear.activity, l.stepsReviewsRewards, l.myActivity, '/steps'),
+    // "My activity" is the resident's reviews and comments (25 Nov), as in
+    // the side menu; the step counter keeps its own row.
+    _MenuItem(IconsaxPlusLinear.message_text_1, l.stepsReviewsRewards, l.myActivity, '/my-activity'),
+    _MenuItem(IconsaxPlusLinear.activity, l.stepsChallengesRewards, l.stepCounter, '/steps'),
     _MenuItem(IconsaxPlusLinear.building_3, l.propertiesYouPosted, l.myApartments, '/my-apartments'),
     _MenuItem(IconsaxPlusLinear.info_circle, l.faqsContactUs, l.helpSupport, '/help-support'),
   ];

@@ -28,7 +28,11 @@ class ReviewComposer extends StatefulWidget {
   /// already has — they stay, and new ones are added up to [maxPhotos].
   final String initialText;
   final int keptPhotos;
-  bool get editing => initialText.isNotEmpty || keptPhotos > 0;
+
+  /// Changing a review already written: the button saves rather than posts.
+  /// Said by the caller — a review of stars alone has no words or photos to
+  /// tell it by.
+  final bool editing;
 
   /// Picks one photo; null when cancelled or refused (it says why itself).
   final Future<ReviewPhoto?> Function() onPickPhoto;
@@ -47,6 +51,7 @@ class ReviewComposer extends StatefulWidget {
     required this.initialRating,
     this.initialText = '',
     this.keptPhotos = 0,
+    this.editing = false,
     required this.onPickPhoto,
     required this.onSubmit,
   });
@@ -406,7 +411,7 @@ class _ReviewComposerState extends State<ReviewComposer> {
                     ),
                     child: _saving
                         ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                        : Text(mTr(context, 'Post review', 'פרסום הביקורת'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w600)),
+                        : Text(widget.editing ? mTr(context, 'Save changes', 'שמירת שינויים') : mTr(context, 'Post review', 'פרסום הביקורת'), style: TextStyle(fontFamily: AppFonts.inter, fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

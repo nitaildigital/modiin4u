@@ -481,7 +481,10 @@ class LHe extends L {
   String get appPreferences => 'העדפות אפליקציה';
 
   @override
-  String get stepsReviewsRewards => 'צעדים, ביקורות ותגמולים';
+  String get stepsReviewsRewards => 'הביקורות והתגובות שלך';
+
+  @override
+  String get stepsChallengesRewards => 'צעדים, אתגרים ותגמולים';
 
   @override
   String get myActivity => 'הפעילות שלי';

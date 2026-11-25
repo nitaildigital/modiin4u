@@ -59,9 +59,11 @@ decision and why — when you make one, add it there in the same plain style.
   at https://panel.modiin4u.co.il, plain `tool/deploy_web.sh`. Don't pass
   `AUTH_REDIRECT_URL`: the script's default (`app.modiin4u.co.il`) is what
   the live panel uses, and the old `http://45.93.94.49/...` breaks its
-  sign-in and reset links. Both scripts log in with `~/.ssh/modiin4u_deploy`;
-  without that key, the server password (`KAMATERA_SERVER_PASSWORD` in
-  `.env.local`) works through `SSH_ASKPASS` — never typed or printed.
+  sign-in and reset links. Both scripts read `.env.local`; a machine that
+  keeps its keys in `.env` links one to the other (`ln -s .env .env.local`).
+  They log in with `~/.ssh/modiin4u_deploy`; without that key, the server
+  password works through `SSH_ASKPASS` — `KAMATERA_SERVER_PASSWORD` in
+  `.env.local`, or `KAMATERA_PASSWORD` in `.env` — never typed or printed.
 - Figma file `4mO5MlsuSDY2E0A7JFqqQx`: web page `0:1`, mobile page `412:6567`.
   Figma asset URLs expire after 7 days — download what you use.
 - With the Playwright MCP, open your own browser context for each check and

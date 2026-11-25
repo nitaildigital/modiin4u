@@ -2026,6 +2026,7 @@ class _BusinessDetailContentState
         initialRating: review.rating,
         initialText: review.body,
         keptPhotos: review.photos.length,
+        editing: true,
         onPickPhoto: _pickPhotoFile,
         onSubmit: (rating, text, picked) async {
           final l = L.of(context);

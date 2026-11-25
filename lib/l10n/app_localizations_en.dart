@@ -487,7 +487,10 @@ class LEn extends L {
   String get appPreferences => 'App preferences';
 
   @override
-  String get stepsReviewsRewards => 'Steps, reviews & rewards';
+  String get stepsReviewsRewards => 'Your reviews and comments';
+
+  @override
+  String get stepsChallengesRewards => 'Steps, challenges & rewards';
 
   @override
   String get myActivity => 'My Activity';
