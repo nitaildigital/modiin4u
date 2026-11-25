@@ -47,8 +47,10 @@ export function CookieConsent({ lang }: { lang: Lang }) {
     {
       key: 'marketing',
       title: t('שיווק', 'Marketing'),
-      text: t('מאפשרות למדוד את הפרסום שלנו ברשתות החברתיות: Meta Pixel (פייסבוק ואינסטגרם).',
-        'Let us measure our advertising on social networks: the Meta Pixel (Facebook and Instagram).'),
+      // The chat is here since 25 Nov: loaded in advance with this consent
+      // (ChatPreload), it keeps the ad tags and site the visitor came from.
+      text: t('מאפשרות למדוד את הפרסום שלנו ברשתות החברתיות: Meta Pixel (פייסבוק ואינסטגרם). וגם לטעון מראש את צ׳אט הבינה המלאכותית של PersonaAI כדי שייפתח מיד. הצ׳אט שומר מאיפה הגעתם לאתר.',
+        'Let us measure our advertising on social networks: the Meta Pixel (Facebook and Instagram). They also let the AI chat (PersonaAI) load in advance, so it opens at once; the chat keeps where you came to the site from.'),
     },
   ];
 

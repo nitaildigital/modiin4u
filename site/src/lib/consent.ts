@@ -15,7 +15,8 @@ import { useSyncExternalStore } from 'react';
  *
  * - analytics: Google Analytics, Microsoft Clarity, Hotjar, and the browser's
  *   own random visitor id behind the panel's statistics (stats.ts).
- * - marketing: the Meta Pixel.
+ * - marketing: the Meta Pixel, and the PersonaAI chat loaded before the
+ *   visitor asks for it (AskButton.tsx).
  *
  * Essential, never asked: the language, the sign-in session for Messages,
  * notifications the visitor turned on, the map and the place they chose, and

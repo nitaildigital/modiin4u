@@ -6196,6 +6196,47 @@ outside it. Now:
 - The win check on returning to the app runs at most every half hour.
 - Version 1.0.0+10: a new upload needs a build number above anything sent.
 
+### The PersonaAI chat loaded in advance — 25 Nov
+
+On the website, "Ask" opened PersonaAI's window on its grey placeholder for
+up to a minute. Measured: their chat can start only once it has
+`assets/shared-language-….js`, published by PersonaAI that morning, 4.6 MB
+(1.7 MB compressed), served from one nginx server in Tel Aviv at about
+25 KB/s to us in India (72 s). Their chat page alone is fast once that file
+is there. simplecrypto.co.il, with the same widget, took 55 s from an empty
+browser too. It only seems fast because it loads the widget with the page,
+so the chat is ready before anyone clicks. A message to PersonaAI asking
+them to split the file, put it behind a CDN or compress it better was
+drafted for Harshit.
+
+What the site now does (`AskButton.tsx`, the layout):
+- **Loaded in advance with marketing consent.** For a visitor who accepted
+  marketing cookies, the widget's script loads once the page has settled
+  (after `load`, when the browser is idle). It builds its chat window
+  hidden, so the chat is ready by the time they ask. Checked: nothing shows,
+  no bubble, the page scrolls and the phone's tab bar works. Once it is
+  ready, "Ask" opens the chat with its content in about 0.1 s, at 1300 and
+  390 px. It waits for marketing because the script keeps, for 30 days,
+  where the visitor came from (ad tags, click ids, the referring site).
+  The cookie window's "Marketing" text now says so, in both languages.
+  The consent version is not raised: measuring where visitors come from
+  from ads is what marketing already covered. A new version would ask
+  everyone again; that is the client's call.
+- **Without that consent, as before:** the first "Ask" loads it. Only the
+  address is looked up in advance (`dns-prefetch`, the visitor's own DNS).
+  The connection is opened (`preconnect`) when a pointer, finger or the
+  keyboard reaches an "Ask" button. Neither sends PersonaAI anything or
+  stores anything.
+- Not done: warming the browser's copy of PersonaAI's files for everyone
+  (a hidden frame on their file). It would send every visitor to PersonaAI
+  before any choice and download 1.7 MB on every first visit, chat or not.
+- With the widget on the page, PersonaAI's own features run too: a
+  `?pai_link=` link from their WhatsApp opens the chat by itself, and a
+  proactive trigger set to open the chat would now do so. The client has
+  none (`/api/public/triggers` empty on 25 Nov).
+- The app opens the same chat page and waits on the same file. Only the
+  first opening is slow, as the WebView keeps it.
+
 ## 9. How the data layer is built
 
 The pattern established in A1. Everything else follows it.
