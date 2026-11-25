@@ -53,7 +53,12 @@ fi
 # Supabase's redirect allow-list (LAUNCH_RUNBOOK.md).
 AUTH_REDIRECT="${AUTH_REDIRECT_URL:-https://www.modiin4u.co.il/auth/callback}"
 
+# The Places key under either name: GOOGLE_PLACES_ANDROID_KEY, or
+# GOOGLE_PLACE_API_ANDROID as some machines' .env has it.
+PLACES_KEY="$(get GOOGLE_PLACES_ANDROID_KEY)"
+[ -n "$PLACES_KEY" ] || PLACES_KEY="$(get GOOGLE_PLACE_API_ANDROID)"
+
 flutter build "$KIND" --"$MODE" \
-  --dart-define=PLACES_ANDROID_KEY="$(get GOOGLE_PLACES_ANDROID_KEY)" \
+  --dart-define=PLACES_ANDROID_KEY="$PLACES_KEY" \
   --dart-define=PLACES_ANDROID_CERT="$CERT" \
   --dart-define=AUTH_REDIRECT_URL="$AUTH_REDIRECT"

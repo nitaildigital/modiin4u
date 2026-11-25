@@ -30,9 +30,12 @@ for line in open('.env.local', encoding='utf-8'):
 " "$1"
 }
 
+# Under either name: GOOGLE_PLACES_IOS_KEY, or GOOGLE_PLACE_API_IOS as some
+# machines' .env has it.
 KEY="$(get GOOGLE_PLACES_IOS_KEY)"
+[ -n "$KEY" ] || KEY="$(get GOOGLE_PLACE_API_IOS)"
 if [ -z "$KEY" ]; then
-  echo "GOOGLE_PLACES_IOS_KEY is missing from .env.local" >&2
+  echo "GOOGLE_PLACES_IOS_KEY (or GOOGLE_PLACE_API_IOS) is missing from .env.local" >&2
   exit 1
 fi
 
