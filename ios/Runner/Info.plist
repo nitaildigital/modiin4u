@@ -53,6 +53,8 @@
 	<true/>
 	<key>MAPS_API_KEY</key>
 	<string>$(MAPS_API_KEY)</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Modiin4U uses your location only while you use the app, to show nearby businesses, events, and real estate on the map.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Modiin4U uses your location to show nearby businesses, events, and real estate on the map.</string>
 	<key>NSMotionUsageDescription</key>
